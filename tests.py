@@ -2,6 +2,9 @@ import logging
 from ChiPSeqReader import ChiPSeqReader
 from Contacts_reader import ContactsReader
 from shared import Interval
+from matrix_plotter import MatrixPlotter
+import matplotlib.pyplot as plt
+import numpy as np
 
 
 logging.basicConfig(level=logging.DEBUG)
@@ -20,4 +23,16 @@ def test_contacts():
     c = contacts_reader.get_contacts(Interval("chr1",5000000,6000000))
     logging.info(c)
 
-test_contacts()
+def test_matrix_plot():
+    contacts_reader = ContactsReader()
+    contacts_reader.read_files(["C:/Users/FishmanVS/Desktop/RNF3D_beds/chr1.5MB.Hepat.contacts"])
+    #c = contacts_reader.get_contacts(Interval("chr1",5000000,10000000))
+    mp = MatrixPlotter()
+    chr1contacts = contacts_reader.get_all_chr_contacts("chr1")
+    mp.set_data(chr1contacts)
+    m = mp.getMatrix4plot(Interval("chr1",5000000,10000000))
+    m = np.log(m)
+    plt.imshow(m,cmap="OrRd")
+    plt.show()
+
+test_matrix_plot()

@@ -30,7 +30,7 @@ class Position(Interval):
             return self.chr > other.chr
         return self.start > other.start
 
-class FileReader():
+class FileReader(object):
     def __init__(self,fname):
         self.fname = fname
         if not os.path.isfile(fname):

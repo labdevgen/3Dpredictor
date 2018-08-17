@@ -7,7 +7,7 @@ import numpy as np
 class ChiPSeqReader(FileReader): #Class proccess files with ChipSeq peaks
     def __init__(self,fname):
         self.data = None
-        super(self,fname)
+        super(ChiPSeqReader,self).__init__(fname)
 
     def read_file(self): # store CTCF peaks as sorted pandas dataframe
         logging.log(msg="Reading CTCF file"+self.fname, level=logging.INFO)
@@ -45,7 +45,6 @@ class ChiPSeqReader(FileReader): #Class proccess files with ChipSeq peaks
 
         #save
         self.chr_data = chr_data
-        logging.debug(list(self.chr_data.values())[0].head())
 
     def get_interval(self,interval): #return all peaks intersecting interval as pd.dataframen
         try:
