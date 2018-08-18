@@ -10,7 +10,7 @@ class ChiPSeqReader(FileReader): #Class proccess files with ChipSeq peaks
         super(ChiPSeqReader,self).__init__(fname)
 
     def read_file(self): # store CTCF peaks as sorted pandas dataframe
-        logging.log(msg="Reading CTCF file"+self.fname, level=logging.INFO)
+        logging.log(msg="Reading CTCF file "+self.fname, level=logging.INFO)
 
         # set random temporary labels
         Nfields = len(open(self.fname).readline().strip().split())
@@ -18,8 +18,9 @@ class ChiPSeqReader(FileReader): #Class proccess files with ChipSeq peaks
         data = pd.read_csv(self.fname,sep="\t",header=None,names=names)
 
         # subset and rename
-        data = data.iloc[:,0:3]
-        data.rename(columns={"0":"chr","1":"start","2":"end"},inplace=True)
+        data = data.iloc[:,[0,1,2,6]]
+        data.rename(columns={"0":"chr","1":"start","2":"end","6":"sigVal"},
+                    inplace=True)
 
         #check duplicats
         duplicated = data.duplicated(subset = ["chr","start","end"])
@@ -36,15 +37,43 @@ class ChiPSeqReader(FileReader): #Class proccess files with ChipSeq peaks
         del data
 
         logging.warning(
-            msg="Filling orientation and peak strength with mock values!") #TODO fill with real data
+            msg="Filling orientation with mock values!") #TODO fill with real data
 
         for data in chr_data.values():
             data.sort_values(by=["chr","start"],inplace=True)
             data["orientation"] = [1]*len(data)
-            data["strength"] = [1]*len(data)
 
         #save
         self.chr_data = chr_data
+
+    def get_nearest_peaks(self,point,side,N,N_is_strict=True):
+        def get_mock_data(N,midpos):
+            data = pd.DataFrame(columns=self.chr_data[point.chr].columns)
+            data["mids"] = [midpos]*N
+            data["sigVal"] = [0]*N
+
+        #Some checks removed to speed up proccess
+        #assert point.start == point.end
+        #assert point.chr in self.chr_data.keys()
+        #try:
+        #    self.chr_data
+        #except:
+        #    logging.error("Please read data first")
+        #    return None
+
+        search_id = np.searchsorted(self.chr_data[point.chr]["mids"].values,point.start,side)
+        if side == "left":
+            result = self.chr_data[point.chr].iloc[max(search_id-N,0),:]
+            if len(result) < N and N_is_strict:
+                return result.append(N=get_mock_data(N - len(result)),midpos=0)
+            return result
+        elif side == "right"
+            result = self.chr_data[point.chr].iloc[min(search_id+N,len(self.chr_data[point.chr])),:]
+            if len(result) < N and N_is_strict:
+                return result.append(N=get_mock_data(N - len(result)),midpos=self.chr_data[point.chr]["mids"].iat[-1])
+            return result
+        else:
+            raise Exception()
 
     def get_interval(self,interval): #return all peaks intersecting interval as pd.dataframen
         try:
@@ -91,6 +120,5 @@ class ChiPSeqReader(FileReader): #Class proccess files with ChipSeq peaks
             right = max(0,right)
             assert left <= right
             if left != right:
-                result_strength[ind] = self.chr_data[interval.chr].strength.iloc[left:right].sum()
+                result_strength[ind] = self.chr_data[interval.chr].sigVal.iloc[left:right].sum()
         return result_strength
-

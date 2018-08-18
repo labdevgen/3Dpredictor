@@ -20,6 +20,10 @@ class E1Reader():
     def __init__(self,binsize=0):
         self.binsize = binsize
         self.data = {}
+        self.N_warns = 0
+
+    def get_binsize(self):
+        return self.binsize
 
     def read_file(self,fname,chrName):
         if self.binsize == 0:
@@ -46,7 +50,7 @@ class E1Reader():
             chrName = os.path.basename(file).split(".")[0]
             self.read_file(file,chrName)
 
-    def get_E1inInterval(self,interval,make_consistent_bins=True):
+    def get_E1inInterval(self,interval,make_consistent_bins=True,verbose = logging.NOTSET):
         #How it works:
         #Find the beginning of the interval
         #Add a number of bins equal to interval_size // binsize
@@ -65,11 +69,13 @@ class E1Reader():
             end_id += 1
 
         if end_id > len(data):
-            logging.warning("End of the interval over the chromsome end")
-            logging.debug(str(interval))
-            logging.debug("start id "+str("start_id"))
-            logging.debug("end id "+str("end_id"))
-            logging.debug("binsize "+str(self.binsize))
+            logging.log(msg="End of the interval over the chromsome end",
+                        level=verbose)
+            logging.log(msg=str(interval),level=verbose)
+            self.N_warns += 1
+            #logging.debug("start id "+str("start_id"))
+            #logging.debug("end id "+str("end_id"))
+            #logging.debug("binsize "+str(self.binsize))
             result = data.iloc[start_id:len(data),:]
 
             if make_consistent_bins:
@@ -89,3 +95,10 @@ class E1Reader():
             return result
         else:
             return data[start_id:end_id]
+
+    def print_varnings(self,verbose=logging.INFO,reset=True):
+        if self.N_warns > 0:
+            logging.log(msg=str(self.N_warns)+" warnings in module E1_reader",
+                        level=verbose)
+            if reset:
+                self.N_warns = 0
