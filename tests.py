@@ -3,6 +3,7 @@ from ChiPSeqReader import ChiPSeqReader
 from Contacts_reader import ContactsReader
 from shared import Interval
 from matrix_plotter import MatrixPlotter
+from E1_Reader import E1Reader, fileName2binsize
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -35,4 +36,17 @@ def test_matrix_plot():
     plt.imshow(m,cmap="OrRd")
     plt.show()
 
-test_matrix_plot()
+def test_E1reader():
+    files = ["input/chr1.Hepat.E1.50k",
+             "input/chr2.Hepat.E1.50k"]
+    eig = E1Reader()
+    eig.read_files(fnames=files,binSizeFromName = fileName2binsize)
+    print(eig.get_E1inInterval(Interval("chr1",1,200000)))
+    print("-----------------")
+    print(eig.get_E1inInterval(Interval("chr1",194600000,195600000)))
+    print("-----------------")
+    print(eig.get_E1inInterval(Interval("chr1",189500000,190500000)))
+    print("-----------------")
+    #print(eig.get_E1inInterval(Interval("chr1",200000000,250000000)))
+
+test_E1reader()
