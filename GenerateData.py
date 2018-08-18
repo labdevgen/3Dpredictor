@@ -1,6 +1,7 @@
 import logging
 from ChiPSeqReader import ChiPSeqReader
 from Contacts_reader import ContactsReader
+from E1_Reader import E1Reader,fileName2binsize
 from shared import Interval
 
 # Move with 1MB windows though chromosome
@@ -9,8 +10,8 @@ from shared import Interval
 # CTCF track and coordinates relative to window
 
 
-def contacts_to_file(contacts_sample,ctcf_reader,out_file_name,window_size,binsize,):
-    def contact_to_file(contact, file, ctcf_reader, binsize, window_size, N_fields): #write one contact to file
+def contacts_to_file(contacts_sample,ctcf_reader,eig_reader,out_file_name,window_size,binsize):
+    def contact_to_file(contact, file, ctcf_reader,eig_reader, binsize, window_size, N_fields): #write one contact to file
         window_start = max(0, contact.contact_st - ((window_size - contact.dist) // 2))
         window_end = window_start + window_size
         contacts_relative_start = contact.contact_st - window_start
@@ -19,7 +20,9 @@ def contacts_to_file(contacts_sample,ctcf_reader,out_file_name,window_size,binsi
         assert contacts_relative_end >= contacts_relative_start
         line = [contact.chr, contact.contact_st, contact.contact_en, window_start, window_end,
                 contacts_relative_start, contacts_relative_end, contact["contact_count"]]
-        line += ctcf_reader.get_binned_interval(Interval(contact.chr, window_start, window_end), binsize=binsize)
+        interval = Interval(contact.chr, window_start, window_end)
+        line += ctcf_reader.get_binned_interval(interval, binsize=binsize)
+        line += eig_reader.get_E1inInterval(interval)["E1"].tolist()
         assert len(line) == N_fields
         file.write("\t".join(map(str, line)) + "\n")
 
@@ -27,36 +30,46 @@ def contacts_to_file(contacts_sample,ctcf_reader,out_file_name,window_size,binsi
     logging.info("Writing data to file "+out_file_name)
     file = open(out_file_name,"w")
     header = ["chr","contact_st","contact_en","window_start","window_end",
-                "contacts_relative_start","contacts_relative_end","contact_count"] \
-             + [str(i) for i in range(window_size//binsize)]
+                "contacts_relative_start","contacts_relative_end","contact_count"]
+    header += ["CTCF_bin"+str(i) for i in range(window_size // binsize)] #CTCF_values
+    header += ["E1_bin" + str(i) for i in range(window_size // eig_reader.get_binsize())]  # E1_values
     file.write("\t".join(header)+"\n")
     contacts_sample.apply(contact_to_file,axis="columns",
-                   file=file,ctcf_reader=ctcf_reader,binsize=binsize,window_size=window_size,
+                          file=file,ctcf_reader=ctcf_reader,eig_reader=eig_reader,
+                          binsize=binsize,window_size=window_size,
                           N_fields = len(header))
+    eig_reader.print_varnings()
     file.close()
 
 
 logging.basicConfig(level=logging.DEBUG)
 
 #constants
-window_size = 1000000
-mindist = 50000
+window_size = 500000
+mindist = 50001
 maxdist = window_size
-binsize = 5000
+binsize = 20000
 sample_size = 500000
 
 training_file_name = "training.RandOnChr1"+".".join(map(str,[window_size,mindist,maxdist,binsize,sample_size]))+".txt"
 validation_file_name = "validating.38Mb_58MbOnChr2"+".".join(map(str,[window_size,mindist,maxdist,binsize,sample_size]))+".txt"
-
+#input_folder = "D:/Lab Archive/ForChrRearrModel/"
+input_folder = "input/"
 
 #Read contacts data
 contacts_reader = ContactsReader()
-contacts_reader.read_files(["C:/Users/FishmanVS/Desktop/RNF3D_beds/chr1.5MB.Hepat.contacts",
-                            "C:/Users/FishmanVS/Desktop/RNF3D_beds/chr2.5MB.Hepat.contacts"])
+contacts_reader.read_files([input_folder + "chr1.5MB.Hepat.contacts",
+                            input_folder + "chr2.5MB.Hepat.contacts"])
 
 # Read CTCF data
-ctcf_reader = ChiPSeqReader("D:/Lab Archive/ForChrRearrModel/Hepat_WT_MboI_rep1-rep2.IDR0.05.filt.narrowPeak")
+ctcf_reader = ChiPSeqReader(input_folder + "Hepat_WT_MboI_rep1-rep2.IDR0.05.filt.narrowPeak")
 ctcf_reader.read_file()
+
+#Read E1 data
+eig_reader = E1Reader()
+eig_reader.read_files([input_folder + "chr1.Hepat.E1.50k",
+                       input_folder + "chr2.Hepat.E1.50k"],
+                      binSizeFromName=fileName2binsize)
 
 
 def generate_training(sample_size):
@@ -69,17 +82,29 @@ def generate_training(sample_size):
     sample_size = min(sample_size,len(contacts))
     logging.info("Using sample size "+str(sample_size))
     contacts_sample = contacts.sample(n=sample_size)
-    contacts_to_file(contacts_sample,ctcf_reader,training_file_name,window_size,binsize)
+    contacts_to_file(contacts_sample,ctcf_reader,eig_reader,
+                     training_file_name,window_size,binsize)
 
 
 def generate_test(sample_size):
     #Select random contacts on chromosome chr1 for trainings
-    region = Interval("chr2",38000000,58000000)
+    region = Interval("chr2",39800000,40000000)
     contacts = contacts_reader.get_contacts(region,mindist=mindist,maxdist=maxdist)
     sample_size = min(sample_size,len(contacts))
     logging.info("Using sample size "+str(sample_size))
-    contacts_sample = contacts.sample(n=sample_size)
-    contacts_to_file(contacts_sample,ctcf_reader,validation_file_name,window_size,binsize)
+    contacts_sample = contacts#.sample(n=sample_size)
+    contacts_to_file(contacts_sample,ctcf_reader,eig_reader,
+                     validation_file_name,window_size,binsize)
 
 generate_test(sample_size)
-generate_training(sample_size)
+#generate_training(sample_size)
+
+from GenerateData2 import DataGenerator,E1PredictorGenerator,CTCFPredictorGenerator
+
+generator = DataGenerator()
+e1pg = E1PredictorGenerator(eig_reader,window_size)
+ctcfpg = CTCFPredictorGenerator(ctcf_reader,binsize,window_size)
+region = Interval("chr2", 39800000, 40000000)
+contacts = contacts_reader.get_contacts(region, mindist=mindist, maxdist=maxdist)
+print("----------",len(contacts))
+generator.contacts2file(contacts,[ctcfpg,e1pg],validation_file_name+".v2")

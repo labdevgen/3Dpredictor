@@ -6,25 +6,29 @@ import matplotlib.pyplot as plt
 from matrix_plotter import MatrixPlotter
 import pickle
 import os
-from numpy import int64,float64,byte
+from numpy import int64,float32
+import numpy as np
 from shared import Interval
 import logging
-import numpy as np
 
-logFunc = False
+logging.basicConfig(level=logging.DEBUG)
+logFunc = True
 
 def train(model,inp_file):
     dtypes = {"chr":str,"contact_st":int64,"contact_en":int64,
             "window_start":int64,"window_end":int64,
             "contacts_relative_start":int64,"contacts_relative_end":int64,
-            "contact_count":object}
-    for i in range(0,200):
-        dtypes[str(i)] = byte
+            "contact_count":float32}
+    header = open(inp_file,"r").readline().split("\t")
+
+    for i in header:
+        if i.startswith("CTCF") or i.startswith("E1"):
+            dtypes[i] = float32
 
     logging.info("Reading data")
     input_data = pd.read_csv(inp_file,delimiter="\t",dtype=dtypes)
-    input_data["contact_count"] = pd.to_numeric(input_data["contact_count"])
-    input_data.dropna(inplace=True)
+    #input_data["contact_count"] = pd.to_numeric(input_data["contact_count"])
+    #input_data.dropna(inplace=True)
 
     if logFunc:
         results = input_data["contact_count"].apply(math.log)
@@ -87,14 +91,19 @@ def validate(model,inp_file):
 #lm = linear_model.HuberRegressor()
 #lm = ensemble.AdaBoostRegressor()
 #lm = ensemble.RandomForestRegressor()
+#training_file = "training.RandOnChr11000000.50001.1000000.5000.100000.txt"
+training_file = "training.RandOnChr13000000.50001.3000000.10000.500000.txt"
+#validation_file = "validating.38Mb_58MbOnChr21000000.50001.1000000.5000.100000.txt"
+validation_file = "validating.38Mb_58MbOnChr23000000.50001.3000000.10000.500000.txt"
+model_file = training_file + ".model.log"+str(logFunc)+".dump"
 model = ensemble.GradientBoostingRegressor()
 
-#if 0:
-if os.path.exists("model"+str(logFunc)+".dump"):
-    model = pickle.load(open("model"+str(logFunc)+".dump","rb"))
+if 0:
+#if os.path.exists(model_file):
+    model = pickle.load(open(model_file,"rb"))
 else:
-    model = train(model,"training.RandOnChr11000000.50000.1000000.5000.500000.txt")
-    pickle.dump(model,open("model"+str(logFunc)+".dump","wb"))
+    model = train(model,training_file)
+    pickle.dump(model,open(model_file,"wb"))
 
 logging.info("Validating model")
-validate(model,"validating.38Mb_58MbOnChr21000000.50000.1000000.5000.500000.txt")
+validate(model,validation_file)
