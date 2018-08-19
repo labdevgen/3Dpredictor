@@ -63,14 +63,21 @@ class ChiPSeqReader(FileReader): #Class proccess files with ChipSeq peaks
 
         search_id = np.searchsorted(self.chr_data[point.chr]["mids"].values,point.start,side)
         if side == "left":
-            result = self.chr_data[point.chr].iloc[max(search_id-N,0),:]
+            print(search_id,N)
+            result = self.chr_data[point.chr].iloc[max(search_id-N,0):search_id,:]
+            print ("-result-\n",result)
             if len(result) < N and N_is_strict:
-                return result.append(N=get_mock_data(N - len(result)),midpos=0)
+                return result.append(get_mock_data(N - len(result)),midpos=0)
+            print ("-result2-\n",result)
             return result
-        elif side == "right"
-            result = self.chr_data[point.chr].iloc[min(search_id+N,len(self.chr_data[point.chr])),:]
+        elif side == "right":
+            if search_id == len(self.chr_data[point.chr]):
+                return get_mock_data(N,point.start + 1)
+            result = self.chr_data[point.chr].iloc[search_id:min(search_id+N,
+                                                                 len(self.chr_data[point.chr])),:]
             if len(result) < N and N_is_strict:
-                return result.append(N=get_mock_data(N - len(result)),midpos=self.chr_data[point.chr]["mids"].iat[-1])
+                return result.append(get_mock_data(N - len(result)),
+                                     midpos=self.chr_data[point.chr]["mids"].iat[-1])
             return result
         else:
             raise Exception()
