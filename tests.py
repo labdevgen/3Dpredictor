@@ -11,11 +11,13 @@ import numpy as np
 logging.basicConfig(level=logging.DEBUG)
 
 def test_ctcf(): #comment
-    ctcf_reader = ChiPSeqReader("D:/Lab Archive/ForChrRearrModel/Hepat_WT_MboI_rep1-rep2.IDR0.05.filt.narrowPeak")
+    ctcf_reader = ChiPSeqReader("D:/Lab Archive/ForChrRearrModel/input/Hepat_WT_MboI_rep1-rep2.IDR0.05.filt.narrowPeak")
     ctcf_reader.read_file()
     d = ctcf_reader.get_interval(Interval("chr1",3448235,3456306))
-    logging.info(d)
+    #logging.info(d)
     d1 = ctcf_reader.get_binned_interval(Interval("chr1",3448200,3457000),binsize=500)
+    logging.info(d1)
+    #d1 = ctcf_reader.get_nearest_peaks(Interval("chr1",3025000,3025000),N=5,side="left")
     logging.info(d1)
 
 def test_contacts():
@@ -49,4 +51,5 @@ def test_E1reader():
     print("-----------------")
     #print(eig.get_E1inInterval(Interval("chr1",200000000,250000000)))
 
-test_E1reader()
+#test_E1reader()
+test_ctcf()

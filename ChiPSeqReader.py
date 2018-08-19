@@ -26,10 +26,11 @@ class ChiPSeqReader(FileReader): #Class proccess files with ChipSeq peaks
         duplicated = data.duplicated(subset = ["chr","start","end"])
         if sum(duplicated) > 0:
             logging.warning("Duplicates by genomic positions found in file "+self.fname) #TODO check why this happens
+        data.drop_duplicates(inplace=True) #Keep peaks with same coordinate and different sigVal, if such peask exist
         del duplicated
 
         #get peak mids
-        data["mids"] = (data["start"] + data["end"]) / 2
+        data["mids"] = (data["start"] + data["end"]) // 2
 
         #convert to chr-dict
         chr_data = dict([(chr,data[data["chr"]==chr]) \
@@ -51,6 +52,7 @@ class ChiPSeqReader(FileReader): #Class proccess files with ChipSeq peaks
             data = pd.DataFrame(columns=self.chr_data[point.chr].columns)
             data["mids"] = [midpos]*N
             data["sigVal"] = [0]*N
+            return data
 
         #Some checks removed to speed up proccess
         #assert point.start == point.end
@@ -63,21 +65,20 @@ class ChiPSeqReader(FileReader): #Class proccess files with ChipSeq peaks
 
         search_id = np.searchsorted(self.chr_data[point.chr]["mids"].values,point.start,side)
         if side == "left":
-            print(search_id,N)
             result = self.chr_data[point.chr].iloc[max(search_id-N,0):search_id,:]
-            print ("-result-\n",result)
+            if len(result) == 0:
+                return get_mock_data(N,midpos=0)
             if len(result) < N and N_is_strict:
-                return result.append(get_mock_data(N - len(result)),midpos=0)
-            print ("-result2-\n",result)
+                return result.append(get_mock_data(N - len(result),midpos=0))
             return result
         elif side == "right":
             if search_id == len(self.chr_data[point.chr]):
-                return get_mock_data(N,point.start + 1)
+                return get_mock_data(N=N,midpos=(point.start + 1))
             result = self.chr_data[point.chr].iloc[search_id:min(search_id+N,
                                                                  len(self.chr_data[point.chr])),:]
             if len(result) < N and N_is_strict:
-                return result.append(get_mock_data(N - len(result)),
-                                     midpos=self.chr_data[point.chr]["mids"].iat[-1])
+                return result.append(get_mock_data(N=(N - len(result)),
+                                     midpos=self.chr_data[point.chr]["mids"].iat[-1]))
             return result
         else:
             raise Exception()

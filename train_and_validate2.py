@@ -14,15 +14,13 @@ import logging
 logging.basicConfig(level=logging.DEBUG)
 logFunc = True
 
-def train(model,inp_file):
-    dtypes = {"chr":str,"contact_st":int64,"contact_en":int64,
-            "window_start":int64,"window_end":int64,
-            "contacts_relative_start":int64,"contacts_relative_end":int64,
-            "contact_count":float32}
+def train(model,inp_file,drop):
+    dtypes = {"chr":str,"contact_st":int64,"contact_en":int64,"contact_count":float32}
     header = open(inp_file,"r").readline().split("\t")
 
-    for i in header:
-        if i.startswith("CTCF") or i.startswith("E1"):
+    fixed_dtypes_count = len(dtypes.keys())
+    for i in header[fixed_dtypes_count:]:
+#        if i.startswith("CTCF") or i.startswith("E1"):
             dtypes[i] = float32
 
     logging.info("Reading data")
@@ -34,7 +32,6 @@ def train(model,inp_file):
         results = input_data["contact_count"].apply(math.log)
     else:
         results = input_data["contact_count"]
-    drop = ["chr","contact_count"]
     #drop += ["contact.st","contact.en",
     #                 "window_start","window_end","contact_relative_start",
     #                 "contact_relative_end"]
@@ -44,13 +41,12 @@ def train(model,inp_file):
     model.fit(input_data,results)
     return model
 
-def validate(model,inp_file):
+def validate(model,inp_file,drop):
     input_data = pd.read_csv(inp_file,delimiter="\t")
     if logFunc:
         results = input_data["contact_count"].apply(math.log)
     else:
         results = input_data["contact_count"]
-    drop = ["chr","contact_count"]
     #drop += ["contact.st","contact.en",
     #                 "window_start","window_end","contact_relative_start",
     #                 "contact_relative_end"]
@@ -58,13 +54,24 @@ def validate(model,inp_file):
     predicted = model.predict(input_data)
     r2 = sklearn.metrics.r2_score(predicted, results)
 
-    plt.scatter(predicted,results,c=(input_data["contact_en"]-input_data["contact_st"]).values)
+    #plt.scatter(predicted,results,c=(input_data["contact_en"]-input_data["contact_st"]).values)
     plt.title("Test: Predicted vs real, r^2 score = "+str(r2)+"\nModel: "+str(model.__class__))
     plt.xlabel("Log(Predicted Contact)")
     plt.ylabel("Log(Real Contact)")
     plt.savefig(inp_file+".scatter"+str(logFunc)+".png",dpi=300)
+    #plt.show()
+    plt.clf()
+
+    plt.plot(range(len( model.feature_importances_)), model.feature_importances_, marker = "o")
+    print (input_data.columns.names)
+    plt.xticks(range(len( model.feature_importances_)), input_data.columns.get_values(), rotation='vertical')
+    plt.xlabel("Feature")
+    plt.ylabel("Importance")
+    plt.title("Feature importances")
+    plt.savefig(validation_file+".featImportance."+str(logFunc)+".png",dpi=300)
     plt.show()
     plt.clf()
+
 
     mp = MatrixPlotter()
     input_data = pd.read_csv(inp_file,delimiter="\t") #read again to get chr and conacts count
@@ -73,15 +80,14 @@ def validate(model,inp_file):
     predicted_data["contact_count"] = predicted
     mp.set_data(input_data)
     mp.set_control(predicted_data)
-    matrix = mp.getMatrix4plot(Interval("chr2",38000000,48000000))
+    matrix = mp.getMatrix4plot(Interval(input_data["chr"].iloc[0],
+                                        min(input_data["contact_st"].values),
+                                        max(input_data["contact_en"].values)))
     if not logFunc:
         matrix = np.log(matrix)
     plt.imshow(matrix,cmap="OrRd")
     plt.show()
     plt.savefig(inp_file+".matrix"+str(logFunc)+".png")
-
-
-
 
 
 #lm = linear_model.LinearRegression()
@@ -92,18 +98,26 @@ def validate(model,inp_file):
 #lm = ensemble.AdaBoostRegressor()
 #lm = ensemble.RandomForestRegressor()
 #training_file = "training.RandOnChr11000000.50001.1000000.5000.100000.txt"
-training_file = "training.RandOnChr13000000.50001.3000000.10000.500000.txt"
+#training_file = "training.RandOnChr13000000.50001.3000000.10000.500000.txt"
+training_file = "trainingSmall.RandOnChr1.20000.contacts.3000000.50001.500000.25000.txt"
 #validation_file = "validating.38Mb_58MbOnChr21000000.50001.1000000.5000.100000.txt"
-validation_file = "validating.38Mb_58MbOnChr23000000.50001.3000000.10000.500000.txt"
-model_file = training_file + ".model.log"+str(logFunc)+".dump"
+#validation_file = "validating.38Mb_58MbOnChr23000000.50001.3000000.10000.500000.txt"
+#validation_file = "validatingSmall.38Mb_58MbOnChr2.20000.contacts.3000000.50001.500000.25000.txt"
+#validation_file = "Interval_chr10_59000000_62000000validatingSmall.20000.contacts.3000000.50001.500000.25000.txt"
+validation_file = "Interval_chr2_47900000_53900000validatingSmall.noChr2.20000.contacts.3000000.50001.500000.25000.txt"
+
+drop = ["chr", "contact_count"]#,"E1_L","E1_R"]
+prefix = ""#"noE1"
+
+model_file = training_file + ".model.log"+str(logFunc)+prefix+".dump"
 model = ensemble.GradientBoostingRegressor()
 
-if 0:
-#if os.path.exists(model_file):
+#if 0:
+if os.path.exists(model_file):
     model = pickle.load(open(model_file,"rb"))
 else:
-    model = train(model,training_file)
+    model = train(model,training_file,drop=drop)
     pickle.dump(model,open(model_file,"wb"))
 
 logging.info("Validating model")
-validate(model,validation_file)
+validate(model,validation_file,drop=drop)

@@ -20,7 +20,7 @@ class E1Reader():
     def __init__(self,binsize=0):
         self.binsize = binsize
         self.data = {}
-        self.N_warns = 0
+        self.warnings = {"Interval length < binsize":0,"End of the interval over the chromsome end":0}
 
     def get_binsize(self):
         return self.binsize
@@ -65,14 +65,15 @@ class E1Reader():
         end_id = start_id + ((interval.end - interval.start) // self.binsize)
         if end_id == start_id:
             assert (interval.end - interval.start) < self.binsize
-            logging.warning("Interval length < binsize")
+            logging.log(msg="Interval length < binsize",level = verbose)
+            self.warnings["Interval length < binsize"] += 1
             end_id += 1
 
         if end_id > len(data):
             logging.log(msg="End of the interval over the chromsome end",
                         level=verbose)
             logging.log(msg=str(interval),level=verbose)
-            self.N_warns += 1
+            self.warnings["End of the interval over the chromsome end"] += 1
             #logging.debug("start id "+str("start_id"))
             #logging.debug("end id "+str("end_id"))
             #logging.debug("binsize "+str(self.binsize))
@@ -96,9 +97,10 @@ class E1Reader():
         else:
             return data[start_id:end_id]
 
-    def print_varnings(self,verbose=logging.INFO,reset=True):
-        if self.N_warns > 0:
-            logging.log(msg=str(self.N_warns)+" warnings in module E1_reader",
+    def print_warnings(self,verbose=logging.INFO,reset=True):
+        if sum(self.warnings.values()) > 0:
+            for (key, val) in self.warnings.items():
+                logging.log(msg=key+" warning occured "+str(val)+" times",
                         level=verbose)
             if reset:
-                self.N_warns = 0
+                self.warnings = {"Interval length < binsize": 0, "End of the interval over the chromsome end": 0}

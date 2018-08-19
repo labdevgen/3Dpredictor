@@ -53,8 +53,9 @@ sample_size = 500000
 
 training_file_name = "training.RandOnChr1"+".".join(map(str,[window_size,mindist,maxdist,binsize,sample_size]))+".txt"
 validation_file_name = "validating.38Mb_58MbOnChr2"+".".join(map(str,[window_size,mindist,maxdist,binsize,sample_size]))+".txt"
-#input_folder = "D:/Lab Archive/ForChrRearrModel/"
-input_folder = "input/"
+input_folder = "D:/Lab Archive/ForChrRearrModel/input/"
+#input_folder =  "input"
+logging.debug("Using input folder "+input_folder)
 
 #Read contacts data
 contacts_reader = ContactsReader()
@@ -100,7 +101,7 @@ def generate_test(sample_size):
 generate_test(sample_size)
 #generate_training(sample_size)
 
-from GenerateData2 import DataGenerator,E1PredictorGenerator,CTCFPredictorGenerator, \
+from DataGenerators import DataGenerator,E1PredictorGenerator,CTCFPredictorGenerator, \
                             SmallCTCFPredictorGenerator,SmallE1PredictorGenerator
 generator = DataGenerator()
 validation_file_name = validation_file_name + ".v1"
@@ -116,4 +117,3 @@ window_size = 12500
 e1pg_small = SmallE1PredictorGenerator(eig_reader,window_size)
 ctcfpg_small = SmallCTCFPredictorGenerator(ctcf_reader,binsize,window_size,N_closest=5)
 generator.contacts2file(contacts,[ctcfpg_small,e1pg_small],validation_file_name+".v3")
-

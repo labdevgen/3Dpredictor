@@ -1,12 +1,24 @@
 import logging
 from shared import Interval
+import numpy as np
+import datetime
 
+processed = 0
 
-def contact2file(contact,DataGeneratorObj):
+def contact2file(contact,DataGeneratorObj,report = 5000):
+        global processed
+        processed += 1
+        if (processed > report) and (processed % report == 0):
+            print(str(datetime.datetime.now())+"Processed: "+str(processed))
+
         line = [contact.chr, contact.contact_st, contact.contact_en, contact["contact_count"]]
+
         for pg in DataGeneratorObj.predictor_generators:
             line += pg.get_predictors(contact)
-        assert len(line) == DataGeneratorObj.N_fields
+        if len(line) != DataGeneratorObj.N_fields:
+            logging.error(str(len(line))+" "+str(DataGeneratorObj.N_fields))
+            logging.error(line)
+            raise Exception("Length of predictors does not match header")
         DataGeneratorObj.out_file.write("\t".join(map(str, line)) + "\n")
 
 class DataGenerator():
@@ -27,7 +39,11 @@ class DataGenerator():
             header += pg.get_header(contacts.iloc[0,:])
         self.N_fields = len(header)
         self.out_file.write("\t".join(header) + "\n")
+
+        logging.debug("Goint to generate predictors for "+str(len(contacts))+" contacts")
         contacts.apply(contact2file, DataGeneratorObj=self, axis="columns")
+        for pg in predictor_generators:
+            pg.print_warnings_occured_during_predGeneration()
         self.out_file.close()
 
 class PredictorGenerator(object):
@@ -57,6 +73,8 @@ class PredictorGenerator(object):
                          contact.contact_en - half,
                          contact.contact_en + half ),
                 )
+    def print_warnings_occured_during_predGeneration(self):
+        pass
 
 
 class CTCFPredictorGenerator(PredictorGenerator):
@@ -98,14 +116,14 @@ class SmallCTCFPredictorGenerator(CTCFPredictorGenerator):
 
     def get_predictors(self,contact):
         intL,intM,intR = self.intevals_around_ancor(contact)
-        CTCF_L = self.ctcf_reader.get_interval(intL).sigVal.sum
-        CTCF_R = self.ctcf_reader.get_interval(intR).sigVal.sum
-        CTCF_mid = self.ctcf_reader.get_interval(intM).sigVal.sum
+        CTCF_L = self.ctcf_reader.get_interval(intL).sigVal.sum()
+        CTCF_R = self.ctcf_reader.get_interval(intR).sigVal.sum()
+        CTCF_mid = self.ctcf_reader.get_interval(intM).sigVal.sum()
         Left_top = self.ctcf_reader.get_nearest_peaks(Interval(contact.chr,
                                                                contact.contact_st -self.window_size,
                                                                contact.contact_st-self.window_size),
                                                       N=self.N_closest,side="left")
-        print (Left_top)
+
         Left_top = Left_top["sigVal"].values.tolist() + \
                    ((contact.contact_st-self.window_size)-Left_top["mids"]).values.tolist()
 
@@ -137,6 +155,8 @@ class E1PredictorGenerator(PredictorGenerator):
         return [window_start, window_end, contacts_relative_start, contacts_relative_end] + \
                 self.eig_reader.get_E1inInterval(interval)["E1"].tolist()
 
+    def print_warnings_occured_during_predGeneration(self):
+        self.eig_reader.print_warnings()
 
 class SmallE1PredictorGenerator(E1PredictorGenerator):
     # Less predictors:
@@ -147,5 +167,5 @@ class SmallE1PredictorGenerator(E1PredictorGenerator):
 
     def get_predictors(self,contact):
         intL,intM,intR = self.intevals_around_ancor(contact)
-        return self.eig_reader.get_E1inInterval(intL)["E1"].tolist() + \
-               self.eig_reader.get_E1inInterval(intR)["E1"].tolist()
+        return list(map(np.average,[self.eig_reader.get_E1inInterval(intL)["E1"].tolist(),
+               self.eig_reader.get_E1inInterval(intR)["E1"].tolist()]))
