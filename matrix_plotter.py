@@ -45,6 +45,10 @@ class MatrixPlotter(): #A class that plot fragments of heatmap
 
         if binsize == None: #infer binsize from data
             dist = pd.unique(self.data["contact_en"]-self.data["contact_st"])
+            sored_starts = np.sort(self.data["contact_st"].values[:min(1000,len(self.data))])
+            dist2 = np.unique(np.subtract(sored_starts[1:],sored_starts[:-1]))
+            assert (dist2 >= 0).all()
+            dist = np.unique(np.concatenate((dist,dist2)))
             dist = dist[np.nonzero(dist)]
             assert len(dist) > 0
             binsize = min(dist)

@@ -11,7 +11,8 @@ def contact2file(contact,DataGeneratorObj,report = 5000):
         if (processed > report) and (processed % report == 0):
             print(str(datetime.datetime.now())+"Processed: "+str(processed))
 
-        line = [contact.chr, contact.contact_st, contact.contact_en, contact["contact_count"]]
+        line = [contact.chr, contact.contact_st, contact.contact_en,
+                contact.contact_en - contact.contact_st, contact["contact_count"]]
 
         for pg in DataGeneratorObj.predictor_generators:
             line += pg.get_predictors(contact)
@@ -34,13 +35,13 @@ class DataGenerator():
         self.out_file = open(out_file_name, "w")
         self.predictor_generators = predictor_generators
 
-        header = ["chr", "contact_st", "contact_en", "contact_count"]
+        header = ["chr", "contact_st", "contact_en", "contact_dist", "contact_count"]
         for pg in predictor_generators:
             header += pg.get_header(contacts.iloc[0,:])
         self.N_fields = len(header)
         self.out_file.write("\t".join(header) + "\n")
 
-        logging.debug("Goint to generate predictors for "+str(len(contacts))+" contacts")
+        logging.debug("Going to generate predictors for "+str(len(contacts))+" contacts")
         contacts.apply(contact2file, DataGeneratorObj=self, axis="columns")
         for pg in predictor_generators:
             pg.print_warnings_occured_during_predGeneration()
@@ -62,7 +63,7 @@ class PredictorGenerator(object):
 
     def intevals_around_ancor(self,contact):
         half = self.window_size // 2
-        assert contact.contact_en - contact.contact_st > (half)
+        assert contact.contact_en - contact.contact_st > half
         return (Interval(contact.chr,
                          contact.contact_st - half,
                          contact.contact_st + half),
@@ -120,19 +121,19 @@ class SmallCTCFPredictorGenerator(CTCFPredictorGenerator):
         CTCF_R = self.ctcf_reader.get_interval(intR).sigVal.sum()
         CTCF_mid = self.ctcf_reader.get_interval(intM).sigVal.sum()
         Left_top = self.ctcf_reader.get_nearest_peaks(Interval(contact.chr,
-                                                               contact.contact_st -self.window_size,
-                                                               contact.contact_st-self.window_size),
+                                                               contact.contact_st-(self.window_size // 2) ,
+                                                               contact.contact_st-(self.window_size // 2)),
                                                       N=self.N_closest,side="left")
 
         Left_top = Left_top["sigVal"].values.tolist() + \
-                   ((contact.contact_st-self.window_size)-Left_top["mids"]).values.tolist()
+                   (contact.contact_st-Left_top["mids"]).values.tolist()
 
         Right_top = self.ctcf_reader.get_nearest_peaks(Interval(contact.chr,
-                                                               contact.contact_en+self.window_size,
-                                                               contact.contact_en+self.window_size),
+                                                               contact.contact_en+(self.window_size // 2),
+                                                               contact.contact_en+(self.window_size // 2)),
                                                        N=self.N_closest,side="right")
         Right_top = Right_top["sigVal"].values.tolist() + \
-                    (Right_top["mids"]-(contact.contact_st+self.window_size)).values.tolist()
+                    (Right_top["mids"]-contact.contact_en).values.tolist()
 
         return [CTCF_L,CTCF_mid,CTCF_R]+Left_top+Right_top
 

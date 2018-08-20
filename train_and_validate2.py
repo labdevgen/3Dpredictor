@@ -42,6 +42,7 @@ def train(model,inp_file,drop):
     return model
 
 def validate(model,inp_file,drop):
+    prefix = ".".join(drop[1:])
     input_data = pd.read_csv(inp_file,delimiter="\t")
     if logFunc:
         results = input_data["contact_count"].apply(math.log)
@@ -58,7 +59,7 @@ def validate(model,inp_file,drop):
     plt.title("Test: Predicted vs real, r^2 score = "+str(r2)+"\nModel: "+str(model.__class__))
     plt.xlabel("Log(Predicted Contact)")
     plt.ylabel("Log(Real Contact)")
-    plt.savefig(inp_file+".scatter"+str(logFunc)+".png",dpi=300)
+    plt.savefig(inp_file+".scatter"+str(logFunc)+prefix+".png",dpi=300)
     #plt.show()
     plt.clf()
 
@@ -68,7 +69,7 @@ def validate(model,inp_file,drop):
     plt.xlabel("Feature")
     plt.ylabel("Importance")
     plt.title("Feature importances")
-    plt.savefig(validation_file+".featImportance."+str(logFunc)+".png",dpi=300)
+    plt.savefig(validation_file+".featImportance."+str(logFunc)+prefix+".png",dpi=300)
     plt.show()
     plt.clf()
 
@@ -87,7 +88,7 @@ def validate(model,inp_file,drop):
         matrix = np.log(matrix)
     plt.imshow(matrix,cmap="OrRd")
     plt.show()
-    plt.savefig(inp_file+".matrix"+str(logFunc)+".png")
+    plt.savefig(inp_file+".matrix"+str(logFunc)+prefix+".png")
 
 
 #lm = linear_model.LinearRegression()
@@ -99,25 +100,32 @@ def validate(model,inp_file,drop):
 #lm = ensemble.RandomForestRegressor()
 #training_file = "training.RandOnChr11000000.50001.1000000.5000.100000.txt"
 #training_file = "training.RandOnChr13000000.50001.3000000.10000.500000.txt"
-training_file = "trainingSmall.RandOnChr1.20000.contacts.3000000.50001.500000.25000.txt"
+training_file = "2018-08-20-trainingSmall.RandOnChr1.20000.contacts.3000000.50001.500000.25000.txt"
 #validation_file = "validating.38Mb_58MbOnChr21000000.50001.1000000.5000.100000.txt"
 #validation_file = "validating.38Mb_58MbOnChr23000000.50001.3000000.10000.500000.txt"
 #validation_file = "validatingSmall.38Mb_58MbOnChr2.20000.contacts.3000000.50001.500000.25000.txt"
 #validation_file = "Interval_chr10_59000000_62000000validatingSmall.20000.contacts.3000000.50001.500000.25000.txt"
-validation_file = "Interval_chr2_47900000_53900000validatingSmall.noChr2.20000.contacts.3000000.50001.500000.25000.txt"
+#validation_file = "Interval_chr2_47900000_53900000validatingSmall.noChr2.20000.contacts.3000000.50001.500000.25000.txt"
+#validation_file = "Interval_chr2_47900000_53900000validatingSmall.20000.contacts.3000000.50001.500000.25000.txt"
 
-drop = ["chr", "contact_count"]#,"E1_L","E1_R"]
-prefix = ""#"noE1"
+drop = ["chr", "contact_count"]
+for drops in [[],
+              ["contact_st","contact_en"],
+              ["E1_L","E1_R"],
+              ["CTCF_L","CTCF_R"],
+              ["CTCF_W"]]:
+    drop += drops
+    prefix = ".".join(drop[1:])
 
-model_file = training_file + ".model.log"+str(logFunc)+prefix+".dump"
-model = ensemble.GradientBoostingRegressor()
+    model_file = training_file + ".model.log"+str(logFunc)+prefix+".dump"
+    model = ensemble.GradientBoostingRegressor()
 
-#if 0:
-if os.path.exists(model_file):
-    model = pickle.load(open(model_file,"rb"))
-else:
-    model = train(model,training_file,drop=drop)
-    pickle.dump(model,open(model_file,"wb"))
+    #if 0:
+    if os.path.exists(model_file):
+        model = pickle.load(open(model_file,"rb"))
+    else:
+        model = train(model,training_file,drop=drop)
+        pickle.dump(model,open(model_file,"wb"))
 
-logging.info("Validating model")
-validate(model,validation_file,drop=drop)
+    logging.info("Validating model")
+    validate(model,validation_file,drop=drop)
