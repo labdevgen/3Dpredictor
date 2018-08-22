@@ -31,7 +31,7 @@ params.sample_size = 500000 #how many contacts write to file
 params.conttype = "contacts"
 
 training_file_name = "2018-08-20-trainingSmall.RandOnChr1."+str(params)+".txt"
-validation_file_name = "validatingSmall."+str(params)+".txt"
+validation_file_name = "validatingSmall.noCTCF."+str(params)+".txt"
 logging.debug("Using input folder "+input_folder)
 
 #Read contacts data
@@ -41,8 +41,8 @@ params.contacts_reader.read_files([input_folder + "chr1.5MB.Hepat."+params.contt
                             input_folder + "chr10.5MB.Hepat."+params.conttype])
 
 # Read CTCF data
-params.ctcf_reader = ChiPSeqReader(input_folder + "Hepat_WT_MboI_rep1-rep2.IDR0.05.filt.narrowPeak")
-#params.ctcf_reader = ChiPSeqReader(input_folder + "Hepat_WT_MboI_rep1-rep2.IDR0.05.filt.narrowPeak_no_chr2")
+#params.ctcf_reader = ChiPSeqReader(input_folder + "Hepat_WT_MboI_rep1-rep2.IDR0.05.filt.narrowPeak")
+params.ctcf_reader = ChiPSeqReader(input_folder + "Hepat_WT_MboI_rep1-rep2.IDR0.05.filt.narrowPeak_no_chr2")
 params.ctcf_reader.read_file()
 
 #Read E1 data
@@ -67,7 +67,7 @@ params.interval = Interval(trainChrName,
                       params.contacts_reader.get_min_contact_position(trainChrName),
                       params.contacts_reader.get_max_contact_position(trainChrName))
 params.out_file = training_file_name
-generate_data(params)
+#generate_data(params)
 
 #Generate test
 #params.interval = Interval("chr10", 59000000, 62000000)
