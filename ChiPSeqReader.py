@@ -145,10 +145,9 @@ class ChiPSeqReader(FileReader): #Class process files with ChipSeq peaks
         debug = len(self.get_interval(interval))
         data = self.chr_data[interval.chr]
         st,en = self.get_interval(interval,return_ids=True)
-        logging.debug(self.chr_data[interval.chr].iloc[data.columns.get_loc("start"),en:].head())
-        self.chr_data[interval.chr].iloc[data.columns.get_loc("start"),en:] -= interval.len
-        self.chr_data[interval.chr].iloc[data.columns.get_loc("end"),en:] -= interval.len
-        self.chr_data[interval.chr].iloc[data.columns.get_loc("mids"),en:] -= interval.len
+        self.chr_data[interval.chr].iloc[en:,data.columns.get_loc("start")] -= interval.len
+        self.chr_data[interval.chr].iloc[en:,data.columns.get_loc("end")] -= interval.len
+        self.chr_data[interval.chr].iloc[en:,data.columns.get_loc("mids")] -= interval.len
         old_length = len(self.chr_data[interval.chr])
         self.chr_data[interval.chr].drop(data.index[st:en],inplace=True)
         assert len(self.chr_data[interval.chr]) + debug == old_length

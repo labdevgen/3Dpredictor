@@ -57,12 +57,27 @@ class ContactsReader():
 
     def delete_region(self,interval):
         data = self.data[interval.chr]
-
         #Drop contacts withing interval
-        self.data[interval.chr] = data[ (data.contact_st<=interval.start) | (data.contact_st>=interval.end) ]
+        bad_ids = data.query("@interval.start < contact_st < @interval.end | "
+            + "@interval.start < contact_en < @interval.end").index #either start or end in region to be removed
+        #logging.info (bad_ids)
+        data.drop(bad_ids,inplace=True)
+        #logging.info(data.head())
 
+        self.data[interval.chr] = data
         #change coordinates
-        self.data[interval.chr].contact_st = self.data[interval.chr].contact_st.apply(lambda x: \
-                                                                    x - interval.len if x >= interval.start else x)
-        self.data[interval.chr].contact_en = self.data[interval.chr].contact_en.apply(lambda x: \
-                                                                    x - interval.len if x >= interval.start else x)
+        data["st_red"] = data.contact_st.apply(lambda x: x >= interval.start)
+        data["en_red"] = data.contact_en.apply(lambda x: x >= interval.start)
+
+        new_starts = data.contact_st.apply(lambda x: (x - interval.len) if (x >= interval.start) else x).values
+        new_ends = data.contact_en.apply(lambda x: (x - interval.len) if (x >= interval.start) else x).values
+        new_dist = new_ends - new_starts
+        #logging.debug(data.iloc[new_dist < 0,:].head())
+        #logging.debug(new_starts[new_dist < 0])
+        #logging.debug(new_ends[new_dist < 0])
+
+        assert np.all(new_dist >= 0)
+
+        self.data[interval.chr].loc[:,"contact_st"] = new_starts
+        self.data[interval.chr].loc[:,"contact_en"] = new_ends
+        self.data[interval.chr].loc[:,"dist"] = new_dist

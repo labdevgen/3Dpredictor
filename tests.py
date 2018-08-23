@@ -51,5 +51,46 @@ def test_E1reader():
     print("-----------------")
     #print(eig.get_E1inInterval(Interval("chr1",200000000,250000000)))
 
+def test_ChipSeqRemoval():
+    ctcf_reader = ChiPSeqReader("input/Hepat_WT_MboI_rep1-rep2.IDR0.05.filt.narrowPeak")
+    ctcf_reader.read_file()
+    logging.info("------------Before deleting:")
+
+    interval = Interval("chr1",3448235,3700000)
+    logging.info(interval)
+    d = ctcf_reader.get_interval(interval)
+    logging.info(d)
+
+    interval = Interval("chr1", 3448235, 3900000)
+    logging.info(interval)
+    d = ctcf_reader.get_interval(Interval("chr1",3448235,3900000))
+    logging.info(d)
+
+    logging.info("----after deleting----")
+    ctcf_reader.delete_region(Interval("chr1",3454000,3611129))
+
+    interval = Interval("chr1",3448235,3700000)
+    logging.info(interval)
+    d = ctcf_reader.get_interval(interval)
+    logging.info(d)
+
+    interval = Interval("chr1", 3448235, 3900000)
+    logging.info(interval)
+    d = ctcf_reader.get_interval(Interval("chr1",3448235,3900000))
+    logging.info(d)
+
+
+def test_ContactsRemoval():
+    contacts_reader = ContactsReader()
+    contacts_reader.read_files(["input/chr1.5MB.Hepat.contacts"])
+    c = contacts_reader.get_contacts(Interval("chr1",5000000,5150000))
+    logging.info(c)
+    contacts_reader.delete_region(Interval("chr1",5030000,5100000))
+    c = contacts_reader.get_contacts(Interval("chr1",5000000,5150000))
+    logging.info(c)
+
+
 #test_E1reader()
-test_ctcf()
+#test_ctcf()
+#test_ChipSeqRemoval()
+test_ContactsRemoval()
