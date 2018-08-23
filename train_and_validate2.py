@@ -98,12 +98,15 @@ def validate(model,inp_file,featuresSubset,prefix):
     plt.imsave(inp_file+".matrix."+prefix+".png",matrix,cmap="OrRd",dpi=600)
     plt.show()
 
+def get_avaliable_predictors(file):
+    predictors = open(file).readline().strip().split("\t")  # read avaliable features
+    return predictors
 
 def trainAndValidate(lm, training_file=None, validation_file=None, featuresSubset="all",order="keep",rewriteModel=False):
     if training_file != None:
-        features = open(training_file).readline().strip().split("\t") #read avaliable features
+        features = get_avaliable_predictors(training_file) #read avaliable features
     elif validation_file != None:
-        features = open(validation_file).readline().strip().split("\t")  # read avaliable features
+        features = get_avaliable_predictors(validation_file)  # read avaliable features
     else:
         raise Exception("Please provide either training or validation file")
 
@@ -112,7 +115,11 @@ def trainAndValidate(lm, training_file=None, validation_file=None, featuresSubse
         prefix += order+"."+featuresSubset+str(len(features))
         featuresSubset = features
     else:
-        assert all([f in features for f in featuresSubset])
+        found_features = [f in features for f in featuresSubset]
+        if not all(found_features):
+            logging.error("Some requested features not found in dataset")
+            logging.error("\t".join(np.array(featuresSubset)[np.logical_not(found_features)]))
+            raise Exception("Feature not found")
         prefix += order + "." + ".".join(featuresSubset)
         if order == "keep":
             pass
@@ -138,30 +145,32 @@ def trainAndValidate(lm, training_file=None, validation_file=None, featuresSubse
     logging.info("Validating model")
     validate(model,validation_file,featuresSubset=featuresSubset,prefix=prefix)
 
-lm = linear_model.LinearRegression()
+#lm = linear_model.LinearRegression()
 #lm = linear_model.Lasso(alpha=0.2)
 #lm = linear_model.SGDRegressor()
 #lm = linear_model.TheilSenRegressor()
 #lm = linear_model.HuberRegressor()
 #lm = ensemble.AdaBoostRegressor()
 #lm = ensemble.RandomForestRegressor()
-#lm=ensemble.GradientBoostingRegressor()
+lm=ensemble.GradientBoostingRegressor()
+
 #training_file = "training.RandOnChr11000000.50001.1000000.5000.100000.txt"
 #training_file = "training.RandOnChr13000000.50001.3000000.10000.500000.txt"
-training_file = "Data/2018-08-20-trainingSmall.RandOnChr1.20000.contacts.3000000.50001.500000.25000.txt"
-#validation_file = "validating.38Mb_58MbOnChr21000000.50001.1000000.5000.100000.txt"
-#validation_file = "validating.38Mb_58MbOnChr23000000.50001.3000000.10000.500000.txt"
-#validation_file = "validatingSmall.38Mb_58MbOnChr2.20000.contacts.3000000.50001.500000.25000.txt"
-#validation_file = "Interval_chr10_59000000_62000000validatingSmall.20000.contacts.3000000.50001.500000.25000.txt"
-#validation_file = "Interval_chr2_47900000_53900000validatingSmall.noChr2.20000.contacts.3000000.50001.500000.25000.txt"
-validation_file = "Data/Interval_chr2_47900000_53900000validatingSmall.20000.contacts.3000000.50001.500000.25000.txt"
-#validation_file = "Interval_chr2_47900000_53900000validatingSmall.noCTCF.20000.contacts.3000000.50001.500000.25000.txt"
+#training_file = "Data/2018-08-20-trainingSmall.RandOnChr1.20000.contacts.3000000.50001.500000.25000.txt"
+training_file = "Data/2018-08-23-trainingSmall.RandOnChr1.20000.contacts.3000000.50001.500000.25000.txt"
 
-#drop = ["chr", "contact_count","contact_st","contact_en"]
+validation_files = ["Data/Interval_chr2_85000000_92500000validatingSmall.20000.contacts.3000000.50001.500000.25000.txt",
+                    "Data/Interval_chr2_47900000_53900000validatingSmall.20000.contacts.3000000.50001.500000.25000.txt",
+                    "Data/Interval_chr10_59000000_62000000validatingSmall.20000.contacts.3000000.50001.500000.25000.txt"]
+
 keep = ["all",["CTCF_W","contact_dist"],
-        ["CTCF_W","contact_dist","CTCF_L","CTCF_R","CTCF_LDist_0","CTCF_LDist_4","CTCF_RDist_0","CTCF_RDist_4"]]
+        ["CTCF_W","contact_dist","CTCF_L","CTCF_R","CTCF_LDist_0","CTCF_LDist_2","CTCF_RDist_0","CTCF_RDist_2"]]
+predictors = get_avaliable_predictors(training_file)
+keep += ["contact_dist"] + [p for p in predictors if p.find("CTCF")==-1 and p.find("E1")==-1]
+
 for featuresSubset in keep:
-    trainAndValidate(lm=lm,
+    for validation_file in validation_files:
+        trainAndValidate(lm=lm,
                      training_file = training_file, validation_file = validation_file,
                      featuresSubset = featuresSubset, order= "keep")
 
