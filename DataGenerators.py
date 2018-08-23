@@ -66,6 +66,7 @@ class PredictorGenerator(object):
 
     def get_header(self,contact): #Returns predictor header line, i.e. name(s) of predictors
         pass
+
     def get_predictors(self,contact): #predictor value(s)
         pass
 
@@ -116,6 +117,9 @@ class ChipSeqPredictorGenerator(PredictorGenerator):
         interval = Interval(contact.chr, window_start, window_end)
         return [window_start,window_end,contacts_relative_start,contacts_relative_end] \
                +self.chipSeq_reader.get_binned_interval(interval, binsize=self.binsize)
+
+    def delete_region(self,interval):
+        self.chipSeq_reader.delete_region(interval)
 
 class SmallChipSeqPredictorGenerator(ChipSeqPredictorGenerator):
     # Less predictors:
@@ -180,6 +184,9 @@ class E1PredictorGenerator(PredictorGenerator):
 
     def print_warnings_occured_during_predGeneration(self):
         self.eig_reader.print_warnings()
+
+    def delete_region(self,interval):
+        self.eig_reader.delete_region(interval)
 
 class SmallE1PredictorGenerator(E1PredictorGenerator):
     # Less predictors:

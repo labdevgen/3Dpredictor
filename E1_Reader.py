@@ -21,6 +21,7 @@ class E1Reader():
         self.binsize = binsize
         self.data = {}
         self.warnings = {"Interval length < binsize":0,"End of the interval over the chromsome end":0}
+        self.deleted_leftover = 0
 
     def get_binsize(self):
         return self.binsize
@@ -50,10 +51,7 @@ class E1Reader():
             chrName = os.path.basename(file).split(".")[0]
             self.read_file(file,chrName)
 
-    def get_E1inInterval(self,interval,make_consistent_bins=True,verbose = logging.NOTSET):
-        #How it works:
-        #Find the beginning of the interval
-        #Add a number of bins equal to interval_size // binsize
+    def interval2ids(self,interval,verbose):
         start_id = (interval.start // self.binsize)
         data = self.data[interval.chr]
         if start_id >= len(data):
@@ -68,6 +66,15 @@ class E1Reader():
             logging.log(msg="Interval length < binsize",level = verbose)
             self.warnings["Interval length < binsize"] += 1
             end_id += 1
+        return start_id,end_id
+
+
+    def get_E1inInterval(self,interval,make_consistent_bins=True,verbose = logging.NOTSET):
+        #How it works:
+        #Find the beginning of the interval
+        #Add a number of bins equal to interval_size // binsize
+        start_id,end_id = self.interval2ids(interval,verbose)
+        data = self.data[interval.chr]
 
         if end_id > len(data):
             logging.log(msg="End of the interval over the chromsome end",
@@ -104,3 +111,13 @@ class E1Reader():
                         level=verbose)
             if reset:
                 self.warnings = {"Interval length < binsize": 0, "End of the interval over the chromsome end": 0}
+
+
+    def delete_region(self,interval,verbose = logging.NOTSET):
+        start_id,end_id = self.interval2ids(interval,verbose)
+        data = self.data[interval.chr]
+        self.deleted_leftover += interval.len - (end_id-start_id)*self.binsize
+        if self.deleted_leftover > self.binsize:
+            logging.error("Multuple deletion are not yet implemented")
+            raise Exception()
+        self.data[interval.chr].drop(self.data[interval.chr].index[start_id:end_id],inplace=True)

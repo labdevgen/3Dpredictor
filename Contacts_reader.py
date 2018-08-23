@@ -54,3 +54,15 @@ class ContactsReader():
 
     def get_all_chr_contacts(self,chr):
         return self.data[chr]
+
+    def delete_region(self,interval):
+        data = self.data[interval.chr]
+
+        #Drop contacts withing interval
+        self.data[interval.chr] = data[ (data.contact_st<=interval.start) | (data.contact_st>=interval.end) ]
+
+        #change coordinates
+        self.data[interval.chr].contact_st = self.data[interval.chr].contact_st.apply(lambda x: \
+                                                                    x - interval.len if x >= interval.start else x)
+        self.data[interval.chr].contact_en = self.data[interval.chr].contact_en.apply(lambda x: \
+                                                                    x - interval.len if x >= interval.start else x)

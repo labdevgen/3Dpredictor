@@ -89,7 +89,8 @@ class ChiPSeqReader(FileReader): #Class process files with ChipSeq peaks
         else:
             raise Exception()
 
-    def get_interval(self,interval): #return all peaks intersecting interval as pd.dataframen
+    def get_interval(self,interval,return_ids=False): #return all peaks intersecting interval as pd.dataframen
+                                                    #if return_ids=True returns int positions of first and last peak
         try:
             self.chr_data
         except:
@@ -103,7 +104,10 @@ class ChiPSeqReader(FileReader): #Class process files with ChipSeq peaks
         left = np.searchsorted(self.chr_data[interval.chr]["mids"].values,interval.start,"left")
         right = np.searchsorted(self.chr_data[interval.chr]["mids"].values,interval.end,"right")
         assert left <= right
-        return self.chr_data[interval.chr].iloc[min(len(self.chr_data[interval.chr])-1,left):max(0,right),:]
+        if not return_ids:
+            return self.chr_data[interval.chr].iloc[min(len(self.chr_data[interval.chr])-1,left):max(0,right),:]
+        else:
+            return min(len(self.chr_data[interval.chr]) - 1, left),max(0, right)
 
     def get_binned_interval(self,interval,binsize,extend=True): #return all peaks intersecting interval as list
                                                             #list len = interval len / bindsize
@@ -136,3 +140,15 @@ class ChiPSeqReader(FileReader): #Class process files with ChipSeq peaks
             if left != right:
                 result_strength[ind] = self.chr_data[interval.chr].sigVal.iloc[left:right].sum()
         return result_strength
+
+    def delete_region(self,interval):
+        debug = len(self.get_interval(interval))
+        data = self.chr_data[interval.chr]
+        st,en = self.get_interval(interval,return_ids=True)
+        logging.debug(self.chr_data[interval.chr].iloc[data.columns.get_loc("start"),en:].head())
+        self.chr_data[interval.chr].iloc[data.columns.get_loc("start"),en:] -= interval.len
+        self.chr_data[interval.chr].iloc[data.columns.get_loc("end"),en:] -= interval.len
+        self.chr_data[interval.chr].iloc[data.columns.get_loc("mids"),en:] -= interval.len
+        old_length = len(self.chr_data[interval.chr])
+        self.chr_data[interval.chr].drop(data.index[st:en],inplace=True)
+        assert len(self.chr_data[interval.chr]) + debug == old_length

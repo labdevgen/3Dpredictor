@@ -39,7 +39,8 @@ logging.debug("Using input folder "+input_folder)
 params.contacts_reader = ContactsReader()
 params.contacts_reader.read_files([input_folder + "chr1.5MB.Hepat."+params.conttype,
                             input_folder + "chr2.5MB.Hepat."+params.conttype,
-                            input_folder + "chr10.5MB.Hepat."+params.conttype])
+                            input_folder + "chr10.5MB.Hepat."+params.conttype,
+                            input_folder + "chr6.5MB.Hepat." + params.conttype])
 
 # Read CTCF data
 params.ctcf_reader = ChiPSeqReader(input_folder + "Hepat_WT_MboI_rep1-rep2.IDR0.05.filt.narrowPeak",name="CTCF")
@@ -56,7 +57,8 @@ params.chd2_reader.read_file()
 params.eig_reader = E1Reader()
 params.eig_reader.read_files([input_folder + "chr1.Hepat.E1.50k",
                        input_folder + "chr2.Hepat.E1.50k",
-                       input_folder + "chr10.Hepat.E1.50k"],
+                       input_folder + "chr10.Hepat.E1.50k",
+                       input_folder + "chr6.Hepat.E1.50k"],
                       binSizeFromName=fileName2binsize) #infer size of E1 bins from file name using this function
 
 #e1pg = E1PredictorGenerator(params.eig_reader,params.window_size)
@@ -76,7 +78,7 @@ params.interval = Interval(trainChrName,
                       params.contacts_reader.get_min_contact_position(trainChrName),
                       params.contacts_reader.get_max_contact_position(trainChrName))
 params.out_file = training_file_name
-generate_data(params)
+#generate_data(params)
 
 #Generate test
 for interval in [Interval("chr10", 59000000, 62000000),
@@ -86,3 +88,9 @@ for interval in [Interval("chr10", 59000000, 62000000),
     params.interval = interval
     params.out_file = params.interval.toFileName() + validation_file_name
     #generate_data(params)
+
+for object in [params.contacts_reader]+params.pgs:
+    lostInterval = Interval("chr6",1100000,1600000)
+    object.delete_region(lostInterval)
+    params.interval = Interval("chr6",0,3000000)
+    params.out_file = params.interval.toFileName() + "DEL." + lostInterval.toFileName()+validation_file_name

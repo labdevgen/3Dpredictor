@@ -98,6 +98,27 @@ def validate(model,inp_file,featuresSubset,prefix):
     plt.imsave(inp_file+".matrix."+prefix+".png",matrix,cmap="OrRd",dpi=600)
     plt.show()
 
+def predict(model,inp_file,featuresSubset,prefix):
+    input_data = pd.read_csv(inp_file,delimiter="\t")
+    input_data.drop(["contact_count", "chr"], axis=1, inplace=True)
+    input_data = input_data[[i for i in input_data.columns.get_values() if i in featuresSubset]] #preserve order of columns
+    predicted = model.predict(input_data)
+
+    input_data = pd.read_csv(inp_file, delimiter="\t")
+    input_data.contact_count = predicted
+    mp = MatrixPlotter()
+    mp.set_data(input_data)
+    matrix = mp.getMatrix4plot(Interval(input_data["chr"].iloc[0],
+                                        min(input_data["contact_st"].values),
+                                        max(input_data["contact_en"].values)))
+    if not logFunc:
+        matrix = np.log(matrix)
+    plt.imshow(matrix,cmap="OrRd")
+    plt.title(prefix)
+    plt.imsave(inp_file+".matrix."+prefix+".png",matrix,cmap="OrRd",dpi=600)
+    plt.show()
+
+
 def get_avaliable_predictors(file):
     predictors = open(file).readline().strip().split("\t")  # read avaliable features
     return predictors
