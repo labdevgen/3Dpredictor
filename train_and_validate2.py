@@ -51,24 +51,35 @@ def validate(model,inp_file,featuresSubset,prefix):
     predicted = model.predict(input_data)
     r2 = sklearn.metrics.r2_score(predicted, results)
 
-    #plt.scatter(predicted,results,c=(input_data["contact_en"]-input_data["contact_st"]).values)
-    plt.title("Test: Predicted vs real, r^2 score = "+str(r2)+"\nModel: "+str(model.__class__))
+    #Plot r2
+    subset = len(predicted) // 5000
+    if "contact_dist" in input_data.columns.get_values():
+        plt.scatter(predicted[::subset],results[::subset],
+                c=input_data["contact_dist"].values[::subset])
+    else:
+        plt.scatter(predicted[::subset],results[::subset])
+    plt.title("Test: Predicted vs real, r^2 score = "+str(r2)+"\n"+prefix)
     plt.xlabel("Log(Predicted Contact)")
     plt.ylabel("Log(Real Contact)")
+    if len(prefix) > 100:
+        prefix = prefix[:100]
+    print ("Saveing file " + inp_file+".scatter"+prefix+".png")
     plt.savefig(inp_file+".scatter"+prefix+".png",dpi=300)
-    #plt.show()
-    plt.clf()
-
-    plt.plot(range(len( model.feature_importances_)), model.feature_importances_, marker = "o")
-    print (input_data.columns.names)
-    plt.xticks(range(len( model.feature_importances_)), input_data.columns.get_values(), rotation='vertical')
-    plt.xlabel("Feature")
-    plt.ylabel("Importance")
-    plt.title("Feature importances")
-    plt.savefig(validation_file+".featImportance."+str(logFunc)+prefix+".png",dpi=300)
     plt.show()
     plt.clf()
 
+    try:
+        plt.plot(range(len( model.feature_importances_)), model.feature_importances_, marker = "o")
+        print (input_data.columns.names)
+        plt.xticks(range(len( model.feature_importances_)), input_data.columns.get_values(), rotation='vertical')
+        plt.xlabel("Feature")
+        plt.ylabel("Importance")
+        plt.title("Feature importances")
+        plt.savefig(validation_file+".featImportance."+str(logFunc)+prefix+".png",dpi=300)
+        plt.show()
+        plt.clf()
+    except:
+        logging.warning("Feature importances is not avaliable for the model "+str(model.__class__.__name__))
 
     mp = MatrixPlotter()
     input_data = pd.read_csv(inp_file,delimiter="\t") #read again to get chr and contacts count
@@ -83,8 +94,9 @@ def validate(model,inp_file,featuresSubset,prefix):
     if not logFunc:
         matrix = np.log(matrix)
     plt.imshow(matrix,cmap="OrRd")
+    plt.title(prefix)
+    plt.imsave(inp_file+".matrix."+prefix+".png",matrix,cmap="OrRd",dpi=600)
     plt.show()
-    plt.savefig(inp_file+".matrix."+prefix+".png",dpi=300)
 
 
 def trainAndValidate(lm, training_file=None, validation_file=None, featuresSubset="all",order="keep",rewriteModel=False):
@@ -126,29 +138,30 @@ def trainAndValidate(lm, training_file=None, validation_file=None, featuresSubse
     logging.info("Validating model")
     validate(model,validation_file,featuresSubset=featuresSubset,prefix=prefix)
 
-#lm = linear_model.LinearRegression()
+lm = linear_model.LinearRegression()
 #lm = linear_model.Lasso(alpha=0.2)
 #lm = linear_model.SGDRegressor()
 #lm = linear_model.TheilSenRegressor()
 #lm = linear_model.HuberRegressor()
 #lm = ensemble.AdaBoostRegressor()
 #lm = ensemble.RandomForestRegressor()
+#lm=ensemble.GradientBoostingRegressor()
 #training_file = "training.RandOnChr11000000.50001.1000000.5000.100000.txt"
 #training_file = "training.RandOnChr13000000.50001.3000000.10000.500000.txt"
-training_file = "data/2018-08-20-trainingSmall.RandOnChr1.20000.contacts.3000000.50001.500000.25000.txt"
+training_file = "Data/2018-08-20-trainingSmall.RandOnChr1.20000.contacts.3000000.50001.500000.25000.txt"
 #validation_file = "validating.38Mb_58MbOnChr21000000.50001.1000000.5000.100000.txt"
 #validation_file = "validating.38Mb_58MbOnChr23000000.50001.3000000.10000.500000.txt"
 #validation_file = "validatingSmall.38Mb_58MbOnChr2.20000.contacts.3000000.50001.500000.25000.txt"
 #validation_file = "Interval_chr10_59000000_62000000validatingSmall.20000.contacts.3000000.50001.500000.25000.txt"
 #validation_file = "Interval_chr2_47900000_53900000validatingSmall.noChr2.20000.contacts.3000000.50001.500000.25000.txt"
-validation_file = "data/Interval_chr2_47900000_53900000validatingSmall.20000.contacts.3000000.50001.500000.25000.txt"
+validation_file = "Data/Interval_chr2_47900000_53900000validatingSmall.20000.contacts.3000000.50001.500000.25000.txt"
 #validation_file = "Interval_chr2_47900000_53900000validatingSmall.noCTCF.20000.contacts.3000000.50001.500000.25000.txt"
 
 #drop = ["chr", "contact_count","contact_st","contact_en"]
-keep = ["all",["CTCF_W","contact_dist"]]
-keep = [["CTCF_W","contact_dist","CTCF_L","CTCF_R","CTCF_LDist_0","CTCF_LDist_4","CTCF_RDist_0","CTCF_RDist_4"]]
+keep = ["all",["CTCF_W","contact_dist"],
+        ["CTCF_W","contact_dist","CTCF_L","CTCF_R","CTCF_LDist_0","CTCF_LDist_4","CTCF_RDist_0","CTCF_RDist_4"]]
 for featuresSubset in keep:
-    trainAndValidate(lm=ensemble.GradientBoostingRegressor(),
+    trainAndValidate(lm=lm,
                      training_file = training_file, validation_file = validation_file,
                      featuresSubset = featuresSubset, order= "keep")
 

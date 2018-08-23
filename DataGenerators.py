@@ -35,6 +35,11 @@ class DataGenerator():
         self.out_file = open(out_file_name, "w")
         self.predictor_generators = predictor_generators
 
+        #Check that predictor names are unique
+        pg_names = [pg.name for pg in predictor_generators]
+        assert len(pg_names) == len(set(pg_names))
+
+        #Get header row and calculate number of fields
         header = ["chr", "contact_st", "contact_en", "contact_dist", "contact_count"]
         for pg in predictor_generators:
             header += pg.get_header(contacts.iloc[0,:])
@@ -48,6 +53,10 @@ class DataGenerator():
         self.out_file.close()
 
 class PredictorGenerator(object):
+    def __init__(self,**kwargs):
+        for key,val in kwargs:
+            self.__setattr__(key,val)
+
     def get_header(self,contact):
         pass
     def get_predictors(self,contact):
@@ -78,16 +87,18 @@ class PredictorGenerator(object):
         pass
 
 
-class CTCFPredictorGenerator(PredictorGenerator):
-    def __init__(self,ctcf_reader,binsize,window_size,**kwargs):
-        self.ctcf_reader = ctcf_reader
+class ChipSeqPredictorGenerator(PredictorGenerator):
+    def __init__(self, chipSeq_reader, binsize, window_size, **kwargs):
+        self.name =  chipSeq_reader.proteinName
+        self.chipSeq_reader = chipSeq_reader
         self.binsize = binsize
         self.window_size = window_size
-        super(CTCFPredictorGenerator, self).__init__(**kwargs)
+        super(ChipSeqPredictorGenerator, self).__init__(**kwargs)
 
     def get_header(self,contact):
-        self.header = ["CTCFwin_st","CTCFwin_en","CTCFwin_rel_st","CTCFwin_rel_en"] \
-                      + ["CTCF_bin" + str(i) for i in range(self.window_size // self.binsize)]
+        self.header = [self.name + "win_st", self.name + "win_en",
+                       self.name + "win_rel_st", self.name + "win_rel_en"] \
+                      + [self.name + "_bin" + str(i) for i in range(self.window_size // self.binsize)]
         return self.header
 
     def get_predictors(self,contact):
@@ -95,57 +106,59 @@ class CTCFPredictorGenerator(PredictorGenerator):
                                         self.symmetric_window_around_contact(contact)
         interval = Interval(contact.chr, window_start, window_end)
         return [window_start,window_end,contacts_relative_start,contacts_relative_end] \
-               +self.ctcf_reader.get_binned_interval(interval, binsize=self.binsize)
+               +self.chipSeq_reader.get_binned_interval(interval, binsize=self.binsize)
 
-class SmallCTCFPredictorGenerator(CTCFPredictorGenerator):
+class SmallChipSeqPredictorGenerator(ChipSeqPredictorGenerator):
     # Less predictors:
     # 1. Total CTCF in 3 regions: L_ancor + winsize/2 ... R_ancor - winsize/2
     #                      -winsize/2 Lancor +winsize/2
     #                      -winsize/2 Rancor +winsize/2
     # 2. Distances and sigVral for K nearest CTCF peaks from L_ancor and R_ancor
-    def __init__(self,ctcf_reader,binsize,window_size,N_closest,**kwargs):
+    def __init__(self, chipSeq_reader, window_size, N_closest, **kwargs):
+        self.name = chipSeq_reader.proteinName
         self.N_closest = N_closest
-        super(SmallCTCFPredictorGenerator, self).__init__(ctcf_reader,binsize,window_size,**kwargs)
+        super(SmallChipSeqPredictorGenerator, self).__init__(chipSeq_reader, 0, window_size, **kwargs)
 
     def get_header(self,contact):
-        self.header = ["CTCF_L","CTCF_W","CTCF_R"]
+        self.header = [self.name + "_L", self.name + "_W", self.name + "_R"]
         for side in ["L", "R"]:
             for metric in ["Sig", "Dist"]:
                 for i in range(self.N_closest):
-                    self.header += ["CTCF_"+side+metric+"_"+str(i)]
+                    self.header += [self.name + "_" + side + metric + "_" + str(i)]
         return self.header
 
     def get_predictors(self,contact):
         intL,intM,intR = self.intevals_around_ancor(contact)
-        CTCF_L = self.ctcf_reader.get_interval(intL).sigVal.sum()
-        CTCF_R = self.ctcf_reader.get_interval(intR).sigVal.sum()
-        CTCF_mid = self.ctcf_reader.get_interval(intM).sigVal.sum()
-        Left_top = self.ctcf_reader.get_nearest_peaks(Interval(contact.chr,
-                                                               contact.contact_st-(self.window_size // 2) ,
-                                                               contact.contact_st-(self.window_size // 2)),
-                                                      N=self.N_closest,side="left")
+        sig_L = self.chipSeq_reader.get_interval(intL).sigVal.sum()
+        sig_R = self.chipSeq_reader.get_interval(intR).sigVal.sum()
+        sig_mid = self.chipSeq_reader.get_interval(intM).sigVal.sum()
+        Left_top = self.chipSeq_reader.get_nearest_peaks(Interval(contact.chr,
+                                                                  contact.contact_st - (self.window_size // 2),
+                                                                  contact.contact_st - (self.window_size // 2)),
+                                                         N=self.N_closest, side="left")
 
         Left_top = Left_top["sigVal"].values.tolist() + \
                    (contact.contact_st-Left_top["mids"]).values.tolist()
 
-        Right_top = self.ctcf_reader.get_nearest_peaks(Interval(contact.chr,
-                                                               contact.contact_en+(self.window_size // 2),
-                                                               contact.contact_en+(self.window_size // 2)),
-                                                       N=self.N_closest,side="right")
+        Right_top = self.chipSeq_reader.get_nearest_peaks(Interval(contact.chr,
+                                                                   contact.contact_en + (self.window_size // 2),
+                                                                   contact.contact_en + (self.window_size // 2)),
+                                                          N=self.N_closest, side="right")
         Right_top = Right_top["sigVal"].values.tolist() + \
                     (Right_top["mids"]-contact.contact_en).values.tolist()
 
-        return [CTCF_L,CTCF_mid,CTCF_R]+Left_top+Right_top
+        return [sig_L,sig_mid,sig_R]+Left_top+Right_top
 
 
 class E1PredictorGenerator(PredictorGenerator):
-    def __init__(self,eig_reader,window_size):
+    def __init__(self,eig_reader,window_size,name="E1"):
         self.eig_reader = eig_reader
         self.window_size = window_size
+        self.name = name
 
     def get_header(self,contact):
-        self.header = ["E1win_st","E1win_en","E1win_rel_st","E1win_rel_en"]
-        self.header += ["E1_bin" + str(i) \
+        self.header = [self.name + "win_st",self.name + "win_en",self.name + "win_rel_st",self.name + "win_rel_en"]
+        self.header += [self.name + "_bin" + str(i) \
                          for i in range(self.window_size // self.eig_reader.get_binsize())]
         return self.header
 
@@ -163,7 +176,7 @@ class SmallE1PredictorGenerator(E1PredictorGenerator):
     # Less predictors:
     # 1. E1 in +/- winsize region around contact ancors
     def get_header(self,*args):
-        self.header = ["E1_L","E1_R"]
+        self.header = [self.name + "_L",self.name + "_R"]
         return self.header
 
     def get_predictors(self,contact):

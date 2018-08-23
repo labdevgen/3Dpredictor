@@ -101,12 +101,12 @@ def generate_test(sample_size):
 generate_test(sample_size)
 #generate_training(sample_size)
 
-from DataGenerators import DataGenerator,E1PredictorGenerator,CTCFPredictorGenerator, \
-                            SmallCTCFPredictorGenerator,SmallE1PredictorGenerator
+from DataGenerators import DataGenerator,E1PredictorGenerator,ChipSeqPredictorGenerator, \
+                            SmallChipSeqPredictorGenerator,SmallE1PredictorGenerator
 generator = DataGenerator()
 validation_file_name = validation_file_name + ".v1"
 e1pg = E1PredictorGenerator(eig_reader,window_size)
-ctcfpg = CTCFPredictorGenerator(ctcf_reader,binsize,window_size)
+ctcfpg = ChipSeqPredictorGenerator(ctcf_reader, binsize, window_size)
 region = Interval("chr2", 39800000, 40000000)
 contacts = contacts_reader.get_contacts(region, mindist=mindist, maxdist=maxdist)
 print("----------",len(contacts))
@@ -115,5 +115,5 @@ generator.contacts2file(contacts,[ctcfpg,e1pg],validation_file_name+".v2")
 window_size = 12500
 #print(contacts.head())
 e1pg_small = SmallE1PredictorGenerator(eig_reader,window_size)
-ctcfpg_small = SmallCTCFPredictorGenerator(ctcf_reader,binsize,window_size,N_closest=5)
+ctcfpg_small = SmallChipSeqPredictorGenerator(ctcf_reader, binsize, window_size, N_closest=5)
 generator.contacts2file(contacts,[ctcfpg_small,e1pg_small],validation_file_name+".v3")

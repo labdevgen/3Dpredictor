@@ -71,8 +71,6 @@ class MatrixPlotter(): #A class that plot fragments of heatmap
             control = self.control.query("@interval.start <= contact_st <= @interval.end &"
                                    "@interval.start <= contact_en <= @interval.end")
             control = self.convert2binned(control, interval, binsize)
-            logging.debug(control.head())
-            logging.debug(data.head())
             data.apply(appendSeries2matrix,matrix=matrix,triangle="upper",axis = "columns")
             control.apply(appendSeries2matrix,matrix=matrix,triangle="lower",axis = "columns")
         else:

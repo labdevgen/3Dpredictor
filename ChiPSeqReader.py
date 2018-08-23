@@ -1,12 +1,18 @@
+import logging,os
 from shared import Position,FileReader
 import pandas as pd
-import logging
 import numpy as np
 
 
-class ChiPSeqReader(FileReader): #Class proccess files with ChipSeq peaks
-    def __init__(self,fname):
+class ChiPSeqReader(FileReader): #Class process files with ChipSeq peaks
+    def __init__(self,fname,name=None):
         self.data = None
+        if name == None:
+            logging.warning("Using filename as a name for predictor")
+            self.proteinName = os.path.basename(fname)
+        else:
+            self.proteinName = name
+
         super(ChiPSeqReader,self).__init__(fname)
 
     def read_file(self): # store CTCF peaks as sorted pandas dataframe
