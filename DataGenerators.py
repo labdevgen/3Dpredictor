@@ -3,6 +3,13 @@ from shared import Interval
 import numpy as np
 import datetime
 
+#A general module purpose is generate prictors
+#Class DataGenerator does it by applying contact2file to a dataframe
+#which contains contacts information in a format contact_st -- contact_en -- contact_count
+#To generate predictors for each contact, it uses instances of PredictorGenerator
+#Each instance should be able to generate value(s) of specific predicor, e.g. ChiPSeq signal of 1st Eigenvecor
+#Function contact2file aggregates these predictors and writes data to file
+
 processed = 0
 
 def contact2file(contact,DataGeneratorObj,report = 5000):
@@ -57,11 +64,13 @@ class PredictorGenerator(object):
         for key,val in kwargs:
             self.__setattr__(key,val)
 
-    def get_header(self,contact):
+    def get_header(self,contact): #Returns predictor header line, i.e. name(s) of predictors
         pass
-    def get_predictors(self,contact):
+    def get_predictors(self,contact): #predictor value(s)
         pass
+
     def symmetric_window_around_contact(self,contact):
+        #Returns interval with a size self.window_size center around region spanning contact
         window_start = max(0, contact.contact_st - ((self.window_size - contact.dist) // 2))
         window_end = window_start + self.window_size
         contacts_relative_start = contact.contact_st - window_start
