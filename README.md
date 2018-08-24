@@ -1,6 +1,6 @@
 The project contains 2 major modules:
 
-**Generate Data**
+**1. Data Generation module**
 
 The module _GenerateData_new.py_ loads some external files 
 (i.e. file with contacts frequencies, ChipSeq, E1 and etc.) 
@@ -32,7 +32,7 @@ http://genedev.bionet.nsc.ru/hic_out/3DPredircor
 
 Note that predictors generation takes ~3h for 500 000 contacts.
 
-**Training and validation**
+**2. Training and validation module**
 
 Run module train_and_validate2.py to train model.
 Set up following variables before running:
@@ -45,16 +45,16 @@ validation_files - a list of files with data for validation
 
 keep - a list with predictors to use. Each entery should 
 contain a list of predictors, or a single string _"all"_
-(for using predictors avaliable). 
+(for using all avaliable predictors). 
 E.g. with
  
     '''python
     keep = ["CTCF_W","contact_dist"] 
     '''
- only CTCF sites inbetween contating loci and distance between them will be used.
+ only CTCF sites inbetween contacting loci and distance between them will be used.
  Please note that fitting model is time-consuming so fitted model is saved to the file with the name 
  representing model parameters (predictors and algorithm). 
  It is automatically determined wheather such file exists and
  model can be simply loaded without fitting again 
- (to change this behaviour pass rewriteModel=True to 
- trainAndValidate)
+ (to change this behaviour pass _rewriteModel=True_ when calling 
+ _trainAndValidate_ function)

@@ -76,4 +76,29 @@ class MatrixPlotter(): #A class that plot fragments of heatmap
         else:
             data.apply(appendSeries2matrix,matrix=matrix,triangle="both",axis = "columns")
 
+        #remember values for future operations
+        self.matrix = matrix
+        self.binsize = binsize
+        self.interval_size_bins = Interval_size_bins
+        self.interval = interval
+
         return matrix
+
+    def get_bins_strart_labels(self, maxTicksNumber = 1000000):
+        try:
+            self.matrix
+        except:
+            logging.error("Please compute matrix first")
+            return None
+
+        pos = []
+        labels = []
+        curr_pos = 0
+        increment =  self.interval_size_bins // maxTicksNumber
+        logging.debug(str(increment))
+        logging.debug(str(self.interval_size_bins))
+        while curr_pos <= self.interval_size_bins:
+            labels.append(str(self.interval.chr) + ":" + str((self.interval.start + curr_pos*self.binsize) // 1000) + "K")
+            pos.append(curr_pos)
+            curr_pos += increment
+        return pos,labels

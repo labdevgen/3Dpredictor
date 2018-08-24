@@ -93,4 +93,4 @@ def test_ContactsRemoval():
 #test_E1reader()
 #test_ctcf()
 #test_ChipSeqRemoval()
-test_ContactsRemoval()
+test_ContactsRemoval() #TODO it doesn't throw errors, however the behaviour was not thoroughly tested

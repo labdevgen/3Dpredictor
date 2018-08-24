@@ -1,6 +1,7 @@
 import  os,sys
 import logging
 import inspect
+from hashlib import sha224
 
 class Interval:
     def __init__(self,chr,start,end=None,strand=0):
@@ -61,3 +62,12 @@ class Parameters (object):
                    (isinstance(a[1],int) or isinstance(a[1],str))]
         return ".".join(map(str,members))
 
+def str2hash(s,maxlen=100): # Used to hash long file names into shorter ones.
+                            # Long fnames (> ~150 characters) are not supported by Windows
+                            # This converts long part of the filename "s" which is >100 chars to short hash <= 9 chars
+    if len(s) < maxlen:
+        return s
+    else:
+        h = str(int(sha224(s.encode()).hexdigest(), 16) % (10 ** 10))
+        logging.warning("Hashing string \n"+s+"\n to string "+h)
+        return h

@@ -8,7 +8,7 @@ import pickle
 import os
 from numpy import int64,float32
 import numpy as np
-from shared import Interval
+from shared import Interval, str2hash
 import logging
 
 logging.basicConfig(format='%(asctime)s %(message)s', datefmt='%I:%M:%S', level=logging.DEBUG)
@@ -52,7 +52,7 @@ def validate(model,inp_file,featuresSubset,prefix):
     r2 = sklearn.metrics.r2_score(predicted, results)
 
     #Plot r2
-    subset = len(predicted) // 5000
+    subset = max(len(predicted) // 5000, 1)
     if "contact_dist" in input_data.columns.get_values():
         plt.scatter(predicted[::subset],results[::subset],
                 c=input_data["contact_dist"].values[::subset])
@@ -61,10 +61,8 @@ def validate(model,inp_file,featuresSubset,prefix):
     plt.title("Test: Predicted vs real, r^2 score = "+str(r2)+"\n"+prefix)
     plt.xlabel("Log(Predicted Contact)")
     plt.ylabel("Log(Real Contact)")
-    if len(prefix) > 100:
-        prefix = prefix[:100]
-    print ("Saveing file " + inp_file+".scatter"+prefix+".png")
-    plt.savefig(inp_file+".scatter"+prefix+".png",dpi=300)
+    print ("Saveing file " + inp_file+".scatter"+str2hash(prefix)+".png")
+    plt.savefig(inp_file+".scatter"+str2hash(prefix)+".png",dpi=300)
     plt.show()
     plt.clf()
 
@@ -75,7 +73,7 @@ def validate(model,inp_file,featuresSubset,prefix):
         plt.xlabel("Feature")
         plt.ylabel("Importance")
         plt.title("Feature importances")
-        plt.savefig(validation_file+".featImportance."+str(logFunc)+prefix+".png",dpi=300)
+        plt.savefig(validation_file+".featImportance."+str(logFunc)+str2hash(prefix)+".png",dpi=300)
         plt.show()
         plt.clf()
     except:
@@ -93,31 +91,13 @@ def validate(model,inp_file,featuresSubset,prefix):
                                         max(input_data["contact_en"].values)))
     if not logFunc:
         matrix = np.log(matrix)
+
+    tick_pos, tick_labels = mp.get_bins_strart_labels(maxTicksNumber=15)
+    plt.xticks(tick_pos,tick_labels,rotation=45)
     plt.imshow(matrix,cmap="OrRd")
     plt.title(prefix)
-    plt.imsave(inp_file+".matrix."+prefix+".png",matrix,cmap="OrRd",dpi=600)
+    plt.imsave(inp_file+".matrix."+str2hash(prefix)+".png",matrix,cmap="OrRd",dpi=600)
     plt.show()
-
-def predict(model,inp_file,featuresSubset,prefix):
-    input_data = pd.read_csv(inp_file,delimiter="\t")
-    input_data.drop(["contact_count", "chr"], axis=1, inplace=True)
-    input_data = input_data[[i for i in input_data.columns.get_values() if i in featuresSubset]] #preserve order of columns
-    predicted = model.predict(input_data)
-
-    input_data = pd.read_csv(inp_file, delimiter="\t")
-    input_data.contact_count = predicted
-    mp = MatrixPlotter()
-    mp.set_data(input_data)
-    matrix = mp.getMatrix4plot(Interval(input_data["chr"].iloc[0],
-                                        min(input_data["contact_st"].values),
-                                        max(input_data["contact_en"].values)))
-    if not logFunc:
-        matrix = np.log(matrix)
-    plt.imshow(matrix,cmap="OrRd")
-    plt.title(prefix)
-    plt.imsave(inp_file+".matrix."+prefix+".png",matrix,cmap="OrRd",dpi=600)
-    plt.show()
-
 
 def get_avaliable_predictors(file):
     predictors = open(file).readline().strip().split("\t")  # read avaliable features
@@ -153,7 +133,8 @@ def trainAndValidate(lm, training_file=None, validation_file=None, featuresSubse
         del features[features.index("chr")]
 
     prefix += ".log"+str(logFunc)
-    model_file = training_file + ".model"+prefix+".dump"
+
+    model_file = training_file + ".model"+str2hash(prefix)+".dump"
 
     logging.info("Using following features: "+" ".join(featuresSubset))
 
@@ -182,12 +163,22 @@ training_file = "Data/2018-08-23-trainingSmall.RandOnChr1.20000.contacts.3000000
 
 validation_files = ["Data/Interval_chr2_85000000_92500000validatingSmall.20000.contacts.3000000.50001.500000.25000.txt",
                     "Data/Interval_chr2_47900000_53900000validatingSmall.20000.contacts.3000000.50001.500000.25000.txt",
+                    "Data/Interval_chr10_59000000_62000000validatingSmall.20000.contacts.3000000.50001.500000.25000.txt",
                     "Data/Interval_chr10_59000000_62000000validatingSmall.20000.contacts.3000000.50001.500000.25000.txt"]
-
+validation_files = ["Data/Interval_chr6_100000000_109000000DEL.Interval_chr6_103842568_104979840validatingSmall.20000.contacts.3000000.50001.500000.25000.txt",
+                    "Data/Interval_chr6_100000000_110000000validatingSmall.20000.contacts.3000000.50001.500000.25000.txt"]
 keep = ["all",["CTCF_W","contact_dist"],
         ["CTCF_W","contact_dist","CTCF_L","CTCF_R","CTCF_LDist_0","CTCF_LDist_2","CTCF_RDist_0","CTCF_RDist_2"]]
 predictors = get_avaliable_predictors(training_file)
+
+#Contact distance + all non-CTCF chipSeqs
 keep += ["contact_dist"] + [p for p in predictors if p.find("CTCF")==-1 and p.find("E1")==-1]
+
+#All except non-CTCF chipSeq
+keep = [["contact_dist"] + [p for p in predictors if p.find("CTCF")!=-1 or p.find("E1")!=-1]]
+
+#Contacts_dist + CTCF
+keep += [["contact_dist"] + [p for p in predictors if p.find("CTCF")!=-1]]
 
 for featuresSubset in keep:
     for validation_file in validation_files:

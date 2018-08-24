@@ -81,16 +81,19 @@ params.out_file = training_file_name
 #generate_data(params)
 
 #Generate test
-for interval in [Interval("chr10", 59000000, 62000000),
-                 Interval("chr2", 47900000, 53900000),
-                 Interval("chr2", 85000000, 92500000)]:
+for interval in [#Interval("chr10", 59000000, 62000000),
+                 #Interval("chr2", 47900000, 53900000),
+                 #Interval("chr2", 85000000, 92500000),
+                 Interval("chr6", 100000000, 110000000)]:
     logging.info("Generating validation dataset for interval "+str(interval))
     params.interval = interval
     params.out_file = params.interval.toFileName() + validation_file_name
-    #generate_data(params)
+    generate_data(params)
 
 for object in [params.contacts_reader]+params.pgs:
-    lostInterval = Interval("chr6",1100000,1600000)
+    lostInterval = Interval("chr6",103842568,104979840)
     object.delete_region(lostInterval)
-    params.interval = Interval("chr6",0,3000000)
-    params.out_file = params.interval.toFileName() + "DEL." + lostInterval.toFileName()+validation_file_name
+    params.interval = Interval("chr6",100000000,109000000)
+    #logging.info("Saving data to file "+params.interval.toFileName() + "DEL." + lostInterval.toFileName()+validation_file_name)
+params.out_file = params.interval.toFileName() + "DEL." + lostInterval.toFileName()+validation_file_name
+#generate_data(params)
