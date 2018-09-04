@@ -11,27 +11,28 @@ import numpy as np
 logging.basicConfig(level=logging.DEBUG)
 
 def test_ctcf(): #comment
-    ctcf_reader = ChiPSeqReader("D:/Lab Archive/ForChrRearrModel/input/Hepat_WT_MboI_rep1-rep2.IDR0.05.filt.narrowPeak")
+    ctcf_reader = ChiPSeqReader("D:/Users/Polina/3Dpredictor/input/Hepat_WT_MboI_rep1-rep2.IDR0.05.filt.narrowPeak")
     ctcf_reader.read_file()
     d = ctcf_reader.get_interval(Interval("chr1",3448235,3456306))
-    #logging.info(d)
+    logging.info(d)
     d1 = ctcf_reader.get_binned_interval(Interval("chr1",3448200,3457000),binsize=500)
     logging.info(d1)
-    #d1 = ctcf_reader.get_nearest_peaks(Interval("chr1",3025000,3025000),N=5,side="left")
+    d1 = ctcf_reader.get_nearest_peaks(Interval("chr1",3025000,3025000),N=5,side="left")
     logging.info(d1)
 
 def test_contacts():
     contacts_reader = ContactsReader()
-    contacts_reader.read_files(["C:/Users/FishmanVS/Desktop/RNF3D_beds/chr1.Hepat.contacts"])
+    contacts_reader.read_files(["D:/Users/Polina/3Dpredictor/input/chr1.5MB.Hepat.contacts"])
     c = contacts_reader.get_contacts(Interval("chr1",5000000,6000000))
     logging.info(c)
 
 def test_matrix_plot():
     contacts_reader = ContactsReader()
-    contacts_reader.read_files(["C:/Users/FishmanVS/Desktop/RNF3D_beds/chr1.5MB.Hepat.contacts"])
-    #c = contacts_reader.get_contacts(Interval("chr1",5000000,10000000))
+    contacts_reader.read_files(["input/chr1.5MB.Hepat.contacts"])
+    c = contacts_reader.get_contacts(Interval("chr1",5000000,10000000))
     mp = MatrixPlotter()
     chr1contacts = contacts_reader.get_all_chr_contacts("chr1")
+    logging.debug(chr1contacts.head)
     mp.set_data(chr1contacts)
     m = mp.getMatrix4plot(Interval("chr1",5000000,10000000))
     m = np.log(m)
@@ -89,8 +90,9 @@ def test_ContactsRemoval():
     c = contacts_reader.get_contacts(Interval("chr1",5000000,5150000))
     logging.info(c)
 
-
+#test_matrix_plot()
+#test_contacts()
 #test_E1reader()
 #test_ctcf()
 #test_ChipSeqRemoval()
-test_ContactsRemoval() #TODO it doesn't throw errors, however the behaviour was not thoroughly tested
+#test_ContactsRemoval() #TODO it doesn't throw errors, however the behaviour was not thoroughly tested

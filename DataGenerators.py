@@ -35,6 +35,8 @@ class DataGenerator():
             self.__setattr__(self,k,v)
 
     def contacts2file(self,contacts,predictor_generators,out_file_name):
+        #contacts - dataframe with contact counts
+        #predictor_generators - list, each item is an instance of PredictorGenerator
         if len(contacts) == 0:
             logging.error("Empty contacts dataset")
             raise
@@ -50,6 +52,7 @@ class DataGenerator():
         header = ["chr", "contact_st", "contact_en", "contact_dist", "contact_count"]
         for pg in predictor_generators:
             header += pg.get_header(contacts.iloc[0,:])
+        assert len(header) == len(set(header))
         self.N_fields = len(header)
         self.out_file.write("\t".join(header) + "\n")
 
