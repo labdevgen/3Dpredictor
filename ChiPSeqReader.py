@@ -6,7 +6,6 @@ import numpy as np
 
 class ChiPSeqReader(FileReader): #Class process files with ChipSeq peaks
     def __init__(self,fname,name=None):
-        self.data = None
         if name == None:
             logging.warning("Using filename as a name for predictor")
             self.proteinName = os.path.basename(fname)
@@ -58,6 +57,7 @@ class ChiPSeqReader(FileReader): #Class process files with ChipSeq peaks
             data = pd.DataFrame(columns=self.chr_data[point.chr].columns)
             data["mids"] = [midpos]*N
             data["sigVal"] = [0]*N
+            data["chr"] = [point.chr]*N
             return data
 
         #Some checks removed to speed up proccess
@@ -140,6 +140,47 @@ class ChiPSeqReader(FileReader): #Class process files with ChipSeq peaks
             if left != right:
                 result_strength[ind] = self.chr_data[interval.chr].sigVal.iloc[left:right].sum()
         return result_strength
+
+    def read_orient_file(self):  # store peaks with orientation from gimmeMotifs as sorted pandas dataframe
+        logging.log(msg="Reading CTCF_orientation file " + self.fname, level=logging.INFO)
+
+        # set random temporary labels
+        Nfields = len(open(self.fname).readline().strip().split())
+        names = list(map(str, list(range(Nfields))))
+        data = pd.read_csv(self.fname, sep="\t", header=None, names=names)  #TODO check: CTCF fname == CTCF orient fname.split('-')[0]
+        # print(data)
+
+        # subset and rename
+        data = data.iloc[:, [0, 1, 2, 4, 5]]
+        data.rename(columns={"0": "chr", "1": "start", "2": "end", "4": "score", "5": "orientation"},
+                    inplace=True)
+
+        # check duplicats
+        duplicated = data.duplicated(subset=["chr", "start", "end"])
+        if sum(duplicated) > 0:
+            logging.warning(
+                "Duplicates by genomic positions found in file " + self.fname)  # TODO check why this happens
+        data.drop_duplicates(
+            inplace=True)  # Keep peaks with same coordinate and different sigVal, if such peask exist
+        del duplicated
+
+        # convert to chr-dict
+        chr_data = dict([(chr, data[data["chr"] == chr]) \
+                         for chr in pd.unique(data["chr"])])
+        del data
+
+        for data in chr_data.values():
+            data.sort_values(by=["chr", "start"], inplace=True)
+
+        # save
+        self.chr_data = chr_data
+
+    def get_orientation(self, fname):
+        try:
+            self.chr_data
+        except:
+            logging.error("Please read data first")
+            return None
 
     def delete_region(self,interval):
         debug = len(self.get_interval(interval))

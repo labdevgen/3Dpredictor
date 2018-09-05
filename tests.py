@@ -19,6 +19,11 @@ def test_ctcf(): #comment
     logging.info(d1)
     d1 = ctcf_reader.get_nearest_peaks(Interval("chr1",3025000,3025000),N=5,side="left")
     logging.info(d1)
+    print(ctcf_reader.chr_data['chr1'])
+def test_ctcf_orient():
+    orient_reader = ChiPSeqReader("D:/Users/Polina/insulatory_index/CTCF_orientation/Hepat_WT_MboI_rep1-rep2_IDR0_05_filt_narrowPeak-orient_N10.bed")
+    orient_reader.read_orient_file()
+    print(orient_reader.chr_data['chr1']['start'].values)
 
 def test_contacts():
     contacts_reader = ContactsReader()
@@ -96,3 +101,4 @@ def test_ContactsRemoval():
 #test_ctcf()
 #test_ChipSeqRemoval()
 #test_ContactsRemoval() #TODO it doesn't throw errors, however the behaviour was not thoroughly tested
+test_ctcf_orient()
