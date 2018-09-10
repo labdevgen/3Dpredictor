@@ -71,3 +71,25 @@ def str2hash(s,maxlen=100): # Used to hash long file names into shorter ones.
         h = str(int(sha224(s.encode()).hexdigest(), 16) % (10 ** 10))
         logging.warning("Hashing string \n"+s+"\n to string "+h)
         return h
+
+def intersect_intervals(chr_int_data1, chr_int_data2): #input: chr_int_datas are 2 dictionaries of pd.dataframes where 1,2,3 columns == chr, start, end,
+                                                       #key of dict: chr output:
+    if len(chr_int_data1.keys()) != len(chr_int_data2):
+        logging.warning("Data have different number of chromosomes", chr_int_data1, '=', len(chr_int_data1.keys()), 'chrs', \
+                      chr_int_data2, '=', len(chr_int_data2), 'chrs')
+    for chr in chr_int_data2.keys():
+        if not chr in chr_int_data1:
+            result[chr] = pd.DataFrame([])
+            logging.warning("Not intervals on chr", chr)
+            continue
+        st_end_i = np.searchsorted(chr_int_data2[chr]['end'], chr_int_data1[chr]['start'])
+        end_st_i = np.searchsorted(chr_int_data2[chr]['start'], chr_int_data1[chr]['end'])
+
+        assert np.all(end_st_i - st_end_i) <= 2  # check that end_st_i always larger than st_end_i
+        assert len(st_end_i) == len(end_st_i) == len(chr_int_data1[chr]['end'])
+        for ind,val in enumerate(st_end_i):
+            chr_result += [chr_intervals[chr].iloc[ind]]*(end_st_i[ind] - st_end_i[ind])
+            chr_result_loops += list([loops_dict[chr].iloc[i]["index"] for i in range(st_end_i[ind],end_st_i[ind])])
+            assert end_st_i[ind] - st_end_i[ind] >= 0
+        assert len(chr_result) == len(chr_result_loops)
+

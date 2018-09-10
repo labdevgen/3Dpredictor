@@ -2,6 +2,7 @@ import logging,os
 from shared import Position,FileReader
 import pandas as pd
 import numpy as np
+from my_module_intersection import intersect_intervals
 
 
 class ChiPSeqReader(FileReader): #Class process files with ChipSeq peaks
@@ -175,12 +176,17 @@ class ChiPSeqReader(FileReader): #Class process files with ChipSeq peaks
         # save
         self.chr_data = chr_data
 
-    def get_orientation(self, fname):
+    def set_sites_orientation(self, fname_orient):
         try:
             self.chr_data
         except:
             logging.error("Please read data first")
             return None
+        orient_reader = ChiPSeqReader(fname_orient)
+        orient_reader.read_orient_file()
+
+
+
 
     def delete_region(self,interval):
         debug = len(self.get_interval(interval))
