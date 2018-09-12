@@ -1,7 +1,7 @@
 import logging
 from ChiPSeqReader import ChiPSeqReader
 from Contacts_reader import ContactsReader
-from shared import Interval
+from shared import Interval,intersect_intervals
 from matrix_plotter import MatrixPlotter
 from E1_Reader import E1Reader, fileName2binsize
 import matplotlib.pyplot as plt
@@ -11,7 +11,7 @@ import numpy as np
 logging.basicConfig(level=logging.DEBUG)
 
 def test_ctcf(): #comment
-    ctcf_reader = ChiPSeqReader("D:/Users/Polina/3Dpredictor/input/Hepat_WT_MboI_rep1-rep2.IDR0.05.filt.narrowPeak")
+    ctcf_reader = ChiPSeqReader("C:/Users/POLINA/Desktop/lab.ICG/insulatory index/Hepat_WT_MboI_rep1-rep2.IDR0.05.filt.narrowPeak")
     ctcf_reader.read_file()
     d = ctcf_reader.get_interval(Interval("chr1",3448235,3456306))
     logging.info(d)
@@ -20,10 +20,11 @@ def test_ctcf(): #comment
     d1 = ctcf_reader.get_nearest_peaks(Interval("chr1",3025000,3025000),N=5,side="left")
     logging.info(d1)
     print(ctcf_reader.chr_data['chr1'])
+
 def test_ctcf_orient():
-    orient_reader = ChiPSeqReader("D:/Users/Polina/insulatory_index/CTCF_orientation/Hepat_WT_MboI_rep1-rep2_IDR0_05_filt_narrowPeak-orient_N10.bed")
+    orient_reader = ChiPSeqReader("C:/Users/POLINA/Desktop/lab.ICG/insulatory index/Hepat_WT_MboI_rep1-rep2_IDR0_05_filt_narrowPeak-orient_N10.bed")
     orient_reader.read_orient_file()
-    print(orient_reader.chr_data['chr1']['start'].values)
+    print(orient_reader.chr_data['chr1'])
 
 def test_contacts():
     contacts_reader = ContactsReader()
@@ -95,10 +96,24 @@ def test_ContactsRemoval():
     c = contacts_reader.get_contacts(Interval("chr1",5000000,5150000))
     logging.info(c)
 
+def test_intersect_intervals():
+    orient_reader = ChiPSeqReader("C:/Users/POLINA/Desktop/lab.ICG/insulatory index/Hepat_WT_MboI_rep1-rep2_IDR0_05_filt_narrowPeak-orient_N10.bed")
+    orient_reader.read_orient_file()
+    ctcf_reader = ChiPSeqReader("C:/Users/POLINA/Desktop/lab.ICG/insulatory index/Hepat_WT_MboI_rep1-rep2.IDR0.05.filt.narrowPeak")
+    ctcf_reader.read_file()
+    print(ctcf_reader.chr_data['chr1'])
+    print(orient_reader.chr_data['chr1'])
+    result = intersect_intervals(ctcf_reader.chr_data, orient_reader.chr_data)
+    print(result['chr1'])
+    print(ctcf_reader.chr_data['chr1'].iloc[75])
+    print(ctcf_reader.chr_data['chr1'].iloc[76])
+
+
+test_intersect_intervals()
 #test_matrix_plot()
 #test_contacts()
 #test_E1reader()
 #test_ctcf()
 #test_ChipSeqRemoval()
 #test_ContactsRemoval() #TODO it doesn't throw errors, however the behaviour was not thoroughly tested
-test_ctcf_orient()
+#test_ctcf_orient()

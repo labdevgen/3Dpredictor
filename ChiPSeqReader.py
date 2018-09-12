@@ -2,7 +2,7 @@ import logging,os
 from shared import Position,FileReader
 import pandas as pd
 import numpy as np
-from my_module_intersection import intersect_intervals
+
 
 
 class ChiPSeqReader(FileReader): #Class process files with ChipSeq peaks
@@ -29,12 +29,13 @@ class ChiPSeqReader(FileReader): #Class process files with ChipSeq peaks
                     inplace=True)
 
         #check duplicats
-        duplicated = data.duplicated(subset = ["chr","start","end"])
+        duplicated = data.duplicated(subset=["chr", "start", "end"])
         if sum(duplicated) > 0:
-            logging.warning("Duplicates by genomic positions found in file "+self.fname) #TODO check why this happens
-        data.drop_duplicates(inplace=True) #Keep peaks with same coordinate and different sigVal, if such peask exist
+            logging.warning(
+                "Duplicates by genomic positions found in file " + self.fname)  # TODO check why this happens
+        data.drop_duplicates(
+            inplace=True)
         del duplicated
-
         #get peak mids
         data["mids"] = (data["start"] + data["end"]) // 2
 
@@ -162,7 +163,7 @@ class ChiPSeqReader(FileReader): #Class process files with ChipSeq peaks
             logging.warning(
                 "Duplicates by genomic positions found in file " + self.fname)  # TODO check why this happens
         data.drop_duplicates(
-            inplace=True)  # Keep peaks with same coordinate and different sigVal, if such peask exist
+            inplace=True)
         del duplicated
 
         # convert to chr-dict

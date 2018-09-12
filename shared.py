@@ -1,7 +1,9 @@
-import  os,sys
+import os,sys
 import logging
 import inspect
 from hashlib import sha224
+import numpy as np
+import pandas as pd
 
 class Interval:
     def __init__(self,chr,start,end=None,strand=0):
@@ -74,22 +76,36 @@ def str2hash(s,maxlen=100): # Used to hash long file names into shorter ones.
 
 def intersect_intervals(chr_int_data1, chr_int_data2): #input: chr_int_datas are 2 dictionaries of pd.dataframes where 1,2,3 columns == chr, start, end,
                                                        #key of dict: chr output:
+                                                       #return chr_int_data2 with additional column 'intersection'. It is column with row indices
+                                                       #of chr_int_data1 which intersect intervals in chr_data_2
     if len(chr_int_data1.keys()) != len(chr_int_data2):
         logging.warning("Data have different number of chromosomes", chr_int_data1, '=', len(chr_int_data1.keys()), 'chrs', \
                       chr_int_data2, '=', len(chr_int_data2), 'chrs')
     for chr in chr_int_data2.keys():
+        if chr != 'chr1':
+            continue
+        print(chr)
         if not chr in chr_int_data1:
-            result[chr] = pd.DataFrame([])
             logging.warning("Not intervals on chr", chr)
             continue
-        st_end_i = np.searchsorted(chr_int_data2[chr]['end'], chr_int_data1[chr]['start'])
-        end_st_i = np.searchsorted(chr_int_data2[chr]['start'], chr_int_data1[chr]['end'])
-
+        st_end_i = np.searchsorted(chr_int_data1[chr]['end'], chr_int_data2[chr]['start'])
+        end_st_i = np.searchsorted(chr_int_data1[chr]['start'], chr_int_data2[chr]['end'])
         assert np.all(end_st_i - st_end_i) <= 2  # check that end_st_i always larger than st_end_i
-        assert len(st_end_i) == len(end_st_i) == len(chr_int_data1[chr]['end'])
+        assert len(st_end_i) == len(end_st_i) == len(chr_int_data2[chr]['end'])
+        intersection_result = []
         for ind,val in enumerate(st_end_i):
-            chr_result += [chr_intervals[chr].iloc[ind]]*(end_st_i[ind] - st_end_i[ind])
-            chr_result_loops += list([loops_dict[chr].iloc[i]["index"] for i in range(st_end_i[ind],end_st_i[ind])])
-            assert end_st_i[ind] - st_end_i[ind] >= 0
-        assert len(chr_result) == len(chr_result_loops)
+            if end_st_i[ind] == st_end_i[ind]:
+                logging.warning(chr_int_data2[chr].iloc[ind] + 'do not intersect other data')
+                intersection_result.append(None)
+            elif end_st_i[ind] > st_end_i[ind]:
+                indices = []
+                [indices.append(i) for i in range(st_end_i[ind], end_st_i[ind])]
+                intersection_result.append(indices)
+            else:
+                logging.error('st_end_i larger then end_st_i')
+       # print(len(intersection_result), len(chr_int_data2[chr]['end']))
+        assert len(intersection_result) == len(chr_int_data2[chr]['end'])
+        chr_int_data2[chr]['intersection'] = intersection_result
+        #break
+    return chr_int_data2
 
