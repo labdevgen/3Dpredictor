@@ -202,3 +202,37 @@ class SmallE1PredictorGenerator(E1PredictorGenerator):
         intL,intM,intR = self.intevals_around_ancor(contact)
         return list(map(np.average,[self.eig_reader.get_E1inInterval(intL)["E1"].tolist(),
                self.eig_reader.get_E1inInterval(intR)["E1"].tolist()]))
+
+class SitesOrientPredictorGenerator(PredictorGenerator):
+    def __init__(self, chipSeq_reader, N_closest, **kwargs):
+        self.name = chipSeq_reader.proteinName
+        self.N_closest = N_closest
+        super(SitesOrientPredictorGenerator, self).__init__(chipSeq_reader, 0, window_size, **kwargs)
+
+    def get_header(self,contact):
+        self.header = [self.name + "_L", self.name + "_W", self.name + "_R"]
+        for side in ["st", "en"]:
+            for metric in ["L", "R"]:
+                for orient in ["+", "-"]:
+                    for i in range(self.N_closest):
+                        self.header += [self.name + "_" + side + metric + "_" + orient + "_" + str(i)]
+        return self.header
+
+    def get_predictors(self,contact):
+        Left_top = self.chipSeq_reader.get_nearest_peaks(Interval(contact.chr, contact.contact_st, contact.contact_st ), \
+                                                         N=self.N_closest, side="left")
+
+        Left_top = Left_top["plus_orientation"].values.tolist() + \
+                   Left_top["minus_orientation"].values.tolist()
+
+        medium_peaks = self.chipSeq_reader.get_interval(Interval())
+
+
+        Right_top = self.chipSeq_reader.get_nearest_peaks(Interval(contact.chr,
+                                                                   contact.contact_en ,
+                                                                   contact.contact_en ),
+                                                          N=self.N_closest, side="right")
+        Right_top = Right_top["plus_orientation"].values.tolist() + \
+                   Right_top["minus_orientation"].values.tolist()
+
+        return Left_top+Right_top

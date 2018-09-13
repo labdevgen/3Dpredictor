@@ -144,13 +144,13 @@ class ChiPSeqReader(FileReader): #Class process files with ChipSeq peaks
                 result_strength[ind] = self.chr_data[interval.chr].sigVal.iloc[left:right].sum()
         return result_strength
 
-    def read_orient_file(self):  # store peaks with orientation from gimmeMotifs as sorted pandas dataframe
-        logging.log(msg="Reading CTCF_orientation file " + self.fname, level=logging.INFO)
+    def read_orient_file(orient_reader):  # store peaks with orientation from gimmeMotifs as sorted pandas dataframe
+        logging.log(msg="Reading CTCF_orientation file " + orient_reader.fname, level=logging.INFO)
 
         # set random temporary labels
-        Nfields = len(open(self.fname).readline().strip().split())
+        Nfields = len(open(orient_reader.fname).readline().strip().split())
         names = list(map(str, list(range(Nfields))))
-        data = pd.read_csv(self.fname, sep="\t", header=None, names=names)  #TODO check: CTCF fname == CTCF orient fname.split('-')[0]
+        data = pd.read_csv(orient_reader.fname, sep="\t", header=None, names=names)  #TODO check: CTCF fname == CTCF orient fname.split('-')[0]
         # print(data)
 
         # subset and rename
@@ -162,7 +162,7 @@ class ChiPSeqReader(FileReader): #Class process files with ChipSeq peaks
         duplicated = data.duplicated(subset=["chr", "start", "end"])
         if sum(duplicated) > 0:
             logging.warning(
-                "Duplicates by genomic positions found in file " + self.fname)  # TODO check why this happens
+                "Duplicates by genomic positions found in file " + orient_reader.fname)  # TODO check why this happens
         data.drop_duplicates(
             inplace=True)
         del duplicated
@@ -176,21 +176,21 @@ class ChiPSeqReader(FileReader): #Class process files with ChipSeq peaks
             data.sort_values(by=["chr", "start"], inplace=True)
 
         # save
-        self.chr_data = chr_data
+        orient_reader.chr_data = chr_data
 
-    def set_sites_orientation(self, fname_orient):
+
+    def set_sites_orientation(self, orient_chr_data):
         try:
             self.chr_data
         except:
             logging.error("Please read data first")
             return None
-        orient_reader = ChiPSeqReader(fname_orient)
-        orient_reader.read_orient_file()
-        result_intersection_data = intersect_intervals(self.chr_data, orient_reader.chr_data)
+
+        result_intersection_data = intersect_intervals(self.chr_data, orient_chr_data)
         #print(result_intersection_data['chr1'])
         for chr in result_intersection_data.keys():
-            if chr != 'chr1':
-                continue
+            #if chr != 'chr4':
+             #   continue
             result_intersection_data[chr].sort_values(by=["orientation", "intersection", "score"], inplace=True)
             #print(result_intersection_data['chr1'])
             #duplicated = result_intersection_data[chr].duplicated(subset=["intersection", "orientation"])
@@ -198,16 +198,20 @@ class ChiPSeqReader(FileReader): #Class process files with ChipSeq peaks
             result_intersection_data[chr].drop_duplicates(subset=["intersection", "orientation"], keep="first", inplace=True)
             #print(result_intersection_data['chr1'])
             plus_orient_data = result_intersection_data[chr].query("orientation =='+'")
+            plus_col_ind = self.chr_data[chr].columns.get_loc("plus_orientation")
+            plus_row_list = list(plus_orient_data["intersection"])
+            self.chr_data[chr].iloc[plus_row_list, plus_col_ind] = list(plus_orient_data["score"])
+
             minus_orient_data = result_intersection_data[chr].query("orientation =='-'")
             minus_col_ind = self.chr_data[chr].columns.get_loc("minus_orientation")
-            print(minus_col_ind)
-            intersection_list = list(minus_orient_data["intersection"])
-            print(len(intersection_list), intersection_list)
-            print(self.chr_data[chr].iloc[intersection_list, :]['minus_orientation'])
-            self.chr_data[chr].iloc[intersection_list, :]['minus_orientation'] = list(minus_orient_data["score"])
-            print(self.chr_data[chr].iloc[intersection_list, :])
+            minus_row_list = list(minus_orient_data["intersection"])
+            self.chr_data[chr].iloc[minus_row_list, minus_col_ind] = list(minus_orient_data["score"])
 
 
+    def add_orient_to_chr_data(self, orient_fname):
+        orient_reader = ChiPSeqReader(orient_fname)
+        orient_reader.read_orient_file()
+        self.set_sites_orientation(orient_reader)
 
 
     def delete_region(self,interval):

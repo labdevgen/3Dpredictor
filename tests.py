@@ -22,7 +22,7 @@ def test_ctcf(): #comment
     print(ctcf_reader.chr_data['chr1'])
 
 def test_ctcf_orient():
-    orient_reader = ChiPSeqReader("C:/Users/POLINA/Desktop/lab.ICG/insulatory index/Hepat_WT_MboI_rep1-rep2_IDR0_05_filt_narrowPeak-orient_N10.bed")
+    orient_reader = ChiPSeqReader("D:/Users/Polina/3Dpredictor/input/Hepat_WT_MboI_rep1-rep2_IDR0_05_filt_narrowPeak-orient_N10.bed")
     orient_reader.read_orient_file()
     print(orient_reader.chr_data['chr1'])
 
@@ -97,26 +97,36 @@ def test_ContactsRemoval():
     logging.info(c)
 
 def test_intersect_intervals():
-    orient_reader = ChiPSeqReader("C:/Users/POLINA/Desktop/lab.ICG/insulatory index/Hepat_WT_MboI_rep1-rep2_IDR0_05_filt_narrowPeak-orient_N10.bed")
+    orient_reader = ChiPSeqReader("D:/Users/Polina/3Dpredictor/input/Hepat_WT_MboI_rep1-rep2_IDR0_05_filt_narrowPeak-orient_N10.bed")
     orient_reader.read_orient_file()
-    ctcf_reader = ChiPSeqReader("C:/Users/POLINA/Desktop/lab.ICG/insulatory index/Hepat_WT_MboI_rep1-rep2.IDR0.05.filt.narrowPeak")
+    ctcf_reader = ChiPSeqReader("D:/Users/Polina/3Dpredictor/input/Hepat_WT_MboI_rep1-rep2.IDR0.05.filt.narrowPeak")
     ctcf_reader.read_file()
     print(ctcf_reader.chr_data['chr4'])
     print(orient_reader.chr_data['chr4'])
     result = intersect_intervals(ctcf_reader.chr_data, orient_reader.chr_data)
-    print(result['chr4'])
+    print(result['chr4'].iloc[831])
     #print(ctcf_reader.chr_data['chr1'].iloc[75])
     #print(ctcf_reader.chr_data['chr1'].iloc[76])
 def test_sites_orientation():
     ctcf_reader = ChiPSeqReader(
-        "C:/Users/POLINA/Desktop/lab.ICG/insulatory index/Hepat_WT_MboI_rep1-rep2.IDR0.05.filt.narrowPeak")
+        "D:/Users/Polina/3Dpredictor/input/Hepat_WT_MboI_rep1-rep2.IDR0.05.filt.narrowPeak")
     ctcf_reader.read_file()
-    orient_fname = "C:/Users/POLINA/Desktop/lab.ICG/insulatory index/Hepat_WT_MboI_rep1-rep2_IDR0_05_filt_narrowPeak-orient_N10.bed"
+    orient_fname = "D:/Users/Polina/3Dpredictor/input/Hepat_WT_MboI_rep1-rep2_IDR0_05_filt_narrowPeak-orient_N10.bed"
     result = ChiPSeqReader.set_sites_orientation(ctcf_reader, orient_fname)
+    print(result.chr_data['chr1'])
+    print(result.chr_data['chr1'].iloc[0])
+
+def test_add_orientation():
+    ctcf_reader = ChiPSeqReader(
+        "D:/Users/Polina/3Dpredictor/input/Hepat_WT_MboI_rep1-rep2.IDR0.05.filt.narrowPeak")
+    ctcf_reader.read_file()
+    orient_fname = "D:/Users/Polina/3Dpredictor/input/Hepat_WT_MboI_rep1-rep2_IDR0_05_filt_narrowPeak-orient_N10.bed"
+    ctcf_reader.add_orient_to_chr_data(orient_fname)
 
 
 
-test_sites_orientation()
+#test_add_orientation()
+#test_sites_orientation()
 #test_intersect_intervals()
 #test_matrix_plot()
 #test_contacts()
@@ -124,4 +134,4 @@ test_sites_orientation()
 #test_ctcf()
 #test_ChipSeqRemoval()
 #test_ContactsRemoval() #TODO it doesn't throw errors, however the behaviour was not thoroughly tested
-#test_ctcf_orient()
+test_ctcf_orient()

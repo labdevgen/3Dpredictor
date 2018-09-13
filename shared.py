@@ -98,9 +98,7 @@ def intersect_intervals(chr_int_data1, chr_int_data2): #input: chr_int_datas are
         chr_intervals_result = []
         for ind,val in enumerate(st_end_i):
             if end_st_i[ind] == st_end_i[ind]:
-                logging.warning("do not intersect other data") #TODO norm warning message and find this place
-                chr_intervals_result += [chr_int_data2[chr].iloc[ind]]
-                intersection_result.append(-1)
+                logging.warning("do not intersect other data " + str(chr_int_data2[chr].iloc[ind]) + '      ' +  str(ind))
             elif end_st_i[ind] > st_end_i[ind]:
                 chr_intervals_result += [chr_int_data2[chr].iloc[ind]] * (end_st_i[ind] - st_end_i[ind])
                 [intersection_result.append(index)for index in range(st_end_i[ind], end_st_i[ind])]
