@@ -101,15 +101,23 @@ def test_intersect_intervals():
     orient_reader.read_orient_file()
     ctcf_reader = ChiPSeqReader("C:/Users/POLINA/Desktop/lab.ICG/insulatory index/Hepat_WT_MboI_rep1-rep2.IDR0.05.filt.narrowPeak")
     ctcf_reader.read_file()
-    print(ctcf_reader.chr_data['chr1'])
-    print(orient_reader.chr_data['chr1'])
+    print(ctcf_reader.chr_data['chr4'])
+    print(orient_reader.chr_data['chr4'])
     result = intersect_intervals(ctcf_reader.chr_data, orient_reader.chr_data)
-    print(result['chr1'])
-    print(ctcf_reader.chr_data['chr1'].iloc[75])
-    print(ctcf_reader.chr_data['chr1'].iloc[76])
+    print(result['chr4'])
+    #print(ctcf_reader.chr_data['chr1'].iloc[75])
+    #print(ctcf_reader.chr_data['chr1'].iloc[76])
+def test_sites_orientation():
+    ctcf_reader = ChiPSeqReader(
+        "C:/Users/POLINA/Desktop/lab.ICG/insulatory index/Hepat_WT_MboI_rep1-rep2.IDR0.05.filt.narrowPeak")
+    ctcf_reader.read_file()
+    orient_fname = "C:/Users/POLINA/Desktop/lab.ICG/insulatory index/Hepat_WT_MboI_rep1-rep2_IDR0_05_filt_narrowPeak-orient_N10.bed"
+    result = ChiPSeqReader.set_sites_orientation(ctcf_reader, orient_fname)
 
 
-test_intersect_intervals()
+
+test_sites_orientation()
+#test_intersect_intervals()
 #test_matrix_plot()
 #test_contacts()
 #test_E1reader()

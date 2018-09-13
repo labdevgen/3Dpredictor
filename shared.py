@@ -81,10 +81,12 @@ def intersect_intervals(chr_int_data1, chr_int_data2): #input: chr_int_datas are
     if len(chr_int_data1.keys()) != len(chr_int_data2):
         logging.warning("Data have different number of chromosomes", chr_int_data1, '=', len(chr_int_data1.keys()), 'chrs', \
                       chr_int_data2, '=', len(chr_int_data2), 'chrs')
+    result = {}
     for chr in chr_int_data2.keys():
-        if chr != 'chr1':
-            continue
-        print(chr)
+        #if chr != 'chr4':
+         #   continue
+        #print(chr)
+        result[chr] = pd.DataFrame([])
         if not chr in chr_int_data1:
             logging.warning("Not intervals on chr", chr)
             continue
@@ -93,19 +95,21 @@ def intersect_intervals(chr_int_data1, chr_int_data2): #input: chr_int_datas are
         assert np.all(end_st_i - st_end_i) <= 2  # check that end_st_i always larger than st_end_i
         assert len(st_end_i) == len(end_st_i) == len(chr_int_data2[chr]['end'])
         intersection_result = []
+        chr_intervals_result = []
         for ind,val in enumerate(st_end_i):
             if end_st_i[ind] == st_end_i[ind]:
-                logging.warning(chr_int_data2[chr].iloc[ind] + 'do not intersect other data')
-                intersection_result.append(None)
+                logging.warning("do not intersect other data") #TODO norm warning message and find this place
+                chr_intervals_result += [chr_int_data2[chr].iloc[ind]]
+                intersection_result.append(-1)
             elif end_st_i[ind] > st_end_i[ind]:
-                indices = []
-                [indices.append(i) for i in range(st_end_i[ind], end_st_i[ind])]
-                intersection_result.append(indices)
+                chr_intervals_result += [chr_int_data2[chr].iloc[ind]] * (end_st_i[ind] - st_end_i[ind])
+                [intersection_result.append(index)for index in range(st_end_i[ind], end_st_i[ind])]
             else:
                 logging.error('st_end_i larger then end_st_i')
-       # print(len(intersection_result), len(chr_int_data2[chr]['end']))
-        assert len(intersection_result) == len(chr_int_data2[chr]['end'])
-        chr_int_data2[chr]['intersection'] = intersection_result
-        #break
-    return chr_int_data2
+        #print(len(intersection_result), len(chr_intervals_result))
+        assert len(intersection_result) == len(chr_intervals_result)
+        chr_intervals_result = pd.DataFrame(chr_intervals_result)
+        chr_intervals_result["intersection"] = intersection_result
+        result[chr] = chr_intervals_result
+    return result
 

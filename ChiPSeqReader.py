@@ -1,5 +1,5 @@
 import logging,os
-from shared import Position,FileReader
+from shared import Position,FileReader,intersect_intervals
 import pandas as pd
 import numpy as np
 
@@ -49,7 +49,8 @@ class ChiPSeqReader(FileReader): #Class process files with ChipSeq peaks
 
         for data in chr_data.values():
             data.sort_values(by=["chr","start"],inplace=True)
-            data["orientation"] = [1]*len(data)
+            data["plus_orientation"] = [0]*len(data)
+            data["minus_orientation"] = [0]*len(data)
 
         #save
         self.chr_data = chr_data
@@ -185,6 +186,26 @@ class ChiPSeqReader(FileReader): #Class process files with ChipSeq peaks
             return None
         orient_reader = ChiPSeqReader(fname_orient)
         orient_reader.read_orient_file()
+        result_intersection_data = intersect_intervals(self.chr_data, orient_reader.chr_data)
+        #print(result_intersection_data['chr1'])
+        for chr in result_intersection_data.keys():
+            if chr != 'chr1':
+                continue
+            result_intersection_data[chr].sort_values(by=["orientation", "intersection", "score"], inplace=True)
+            #print(result_intersection_data['chr1'])
+            #duplicated = result_intersection_data[chr].duplicated(subset=["intersection", "orientation"])
+            #print(duplicated)
+            result_intersection_data[chr].drop_duplicates(subset=["intersection", "orientation"], keep="first", inplace=True)
+            #print(result_intersection_data['chr1'])
+            plus_orient_data = result_intersection_data[chr].query("orientation =='+'")
+            minus_orient_data = result_intersection_data[chr].query("orientation =='-'")
+            minus_col_ind = self.chr_data[chr].columns.get_loc("minus_orientation")
+            print(minus_col_ind)
+            intersection_list = list(minus_orient_data["intersection"])
+            print(len(intersection_list), intersection_list)
+            print(self.chr_data[chr].iloc[intersection_list, :]['minus_orientation'])
+            self.chr_data[chr].iloc[intersection_list, :]['minus_orientation'] = list(minus_orient_data["score"])
+            print(self.chr_data[chr].iloc[intersection_list, :])
 
 
 
