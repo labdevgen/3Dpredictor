@@ -75,7 +75,7 @@ class ChiPSeqReader(FileReader): #Class process files with ChipSeq peaks
         search_id = np.searchsorted(self.chr_data[point.chr]["mids"].values,point.start,side)
         if side == "left":
             result = self.chr_data[point.chr].iloc[max(search_id-N,0):search_id,:]
-            if len(result) == 0:
+            if len(result) == 0: #TODO is it possible?
                 return get_mock_data(N,midpos=0)
             if len(result) < N and N_is_strict:
                 return result.append(get_mock_data(N - len(result),midpos=0))
@@ -112,6 +112,15 @@ class ChiPSeqReader(FileReader): #Class process files with ChipSeq peaks
         else:
             return min(len(self.chr_data[interval.chr]) - 1, left),max(0, right)
 
+    def get_N_nearest_peaks_in_interval(self,point,N,N_is_strict=True ):
+        def get_mock_data(N,midpos):
+            data = pd.DataFrame(columns=self.chr_data[point.chr].columns)
+            data["mids"] = [midpos]*N
+            data["sigVal"] = [0]*N
+            data["chr"] = [point.chr]*N
+            return data
+
+
     def get_binned_interval(self,interval,binsize,extend=True): #return all peaks intersecting interval as list
                                                             #list len = interval len / bindsize
                                                             #if extend = True last bin is extended over interval's end
@@ -144,13 +153,13 @@ class ChiPSeqReader(FileReader): #Class process files with ChipSeq peaks
                 result_strength[ind] = self.chr_data[interval.chr].sigVal.iloc[left:right].sum()
         return result_strength
 
-    def read_orient_file(orient_reader):  # store peaks with orientation from gimmeMotifs as sorted pandas dataframe
-        logging.log(msg="Reading CTCF_orientation file " + orient_reader.fname, level=logging.INFO)
+    def read_orient_file(self):  # store peaks with orientation from gimmeMotifs as sorted pandas dataframe
+        logging.log(msg="Reading CTCF_orientation file " + self.fname, level=logging.INFO)
 
         # set random temporary labels
-        Nfields = len(open(orient_reader.fname).readline().strip().split())
+        Nfields = len(open(self.fname).readline().strip().split())
         names = list(map(str, list(range(Nfields))))
-        data = pd.read_csv(orient_reader.fname, sep="\t", header=None, names=names)  #TODO check: CTCF fname == CTCF orient fname.split('-')[0]
+        data = pd.read_csv(self.fname, sep="\t", header=None, names=names)  #TODO check: CTCF fname == CTCF orient fname.split('-')[0]
         # print(data)
 
         # subset and rename
@@ -179,13 +188,13 @@ class ChiPSeqReader(FileReader): #Class process files with ChipSeq peaks
         orient_reader.chr_data = chr_data
 
 
-    def set_sites_orientation(self, orient_chr_data):
+    def set_sites_orientation(self, orient_fname):
         try:
             self.chr_data
         except:
             logging.error("Please read data first")
             return None
-
+        orient_chr_data = self.read_orient_file(orient_fname)
         result_intersection_data = intersect_intervals(self.chr_data, orient_chr_data)
         #print(result_intersection_data['chr1'])
         for chr in result_intersection_data.keys():
@@ -206,13 +215,6 @@ class ChiPSeqReader(FileReader): #Class process files with ChipSeq peaks
             minus_col_ind = self.chr_data[chr].columns.get_loc("minus_orientation")
             minus_row_list = list(minus_orient_data["intersection"])
             self.chr_data[chr].iloc[minus_row_list, minus_col_ind] = list(minus_orient_data["score"])
-
-
-    def add_orient_to_chr_data(self, orient_fname):
-        orient_reader = ChiPSeqReader(orient_fname)
-        orient_reader.read_orient_file()
-        self.set_sites_orientation(orient_reader)
-
 
     def delete_region(self,interval):
         debug = len(self.get_interval(interval))
