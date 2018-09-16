@@ -112,14 +112,29 @@ class ChiPSeqReader(FileReader): #Class process files with ChipSeq peaks
         else:
             return min(len(self.chr_data[interval.chr]) - 1, left),max(0, right)
 
-    def get_N_nearest_peaks_in_interval(self,point,N,N_is_strict=True ):
+    def get_N_nearest_peaks_in_interval(self,interval,N,N_is_strict=True ):
         def get_mock_data(N,midpos):
-            data = pd.DataFrame(columns=self.chr_data[point.chr].columns)
+            data = pd.DataFrame(columns=self.chr_data[interval.chr].columns)
             data["mids"] = [midpos]*N
             data["sigVal"] = [0]*N
-            data["chr"] = [point.chr]*N
+            data["chr"] = [interval.chr]*N
+            data["plus_orientation"]= [0]*N
+            data["minus_orientation"] = [0] * N
             return data
-
+        all_peaks_in_interval = self.get_interval(interval, return_ids=False)
+        if len(all_peaks_in_interval[interval.chr]) >= N*2:
+            result_right = self.get_nearest_peaks(interval.start, side='right', N=N, N_is_strict=True)
+            result_left = self.get_nearest_peaks(interval.end, side='left', N=N, N_is_strict=True)
+            return [result_right, result_left]
+        elif len(all_peaks_in_interval[interval.chr]) < N*2:
+                result_right = all_peaks_in_interval.iloc[0:(len(all_peaks_in_interval)//2 - 1), :]
+                result_left = all_peaks_in_interval.iloc[(len(all_peaks_in_interval)//2):-1, :]
+                result_right.append(get_mock_data(N=(N - len(result_right)),
+                                            midpos=self.chr_data[interval.chr]["mids"].iat[-1])) #mids???
+                result_left.append(get_mock_data(N=(N - len(result_right)),
+                                            midpos=self.chr_data[interval.chr]["mids"].iat[-1])) #always peak will append to result_left
+                assert len(result_right) == len(result_right)
+                return[[result_right, result_left]]
 
     def get_binned_interval(self,interval,binsize,extend=True): #return all peaks intersecting interval as list
                                                             #list len = interval len / bindsize
@@ -185,7 +200,7 @@ class ChiPSeqReader(FileReader): #Class process files with ChipSeq peaks
             data.sort_values(by=["chr", "start"], inplace=True)
 
         # save
-        orient_reader.chr_data = chr_data
+        return chr_data
 
 
     def set_sites_orientation(self, orient_fname):

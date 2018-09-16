@@ -207,7 +207,6 @@ class SitesOrientPredictorGenerator(PredictorGenerator):
     def __init__(self, chipSeq_reader, N_closest, **kwargs):
         self.name = chipSeq_reader.proteinName
         self.N_closest = N_closest
-        super(SitesOrientPredictorGenerator, self).__init__(chipSeq_reader, 0, window_size, **kwargs)
 
     def get_header(self,contact):
         self.header = [self.name + "_L", self.name + "_W", self.name + "_R"]
@@ -219,7 +218,7 @@ class SitesOrientPredictorGenerator(PredictorGenerator):
         return self.header
 
     def get_predictors(self,contact):
-        Left_top = self.chipSeq_reader.get_nearest_peaks(Interval(contact.chr, contact.contact_st, contact.contact_st ), \
+        Left_top = self.get_nearest_peaks(Interval(contact.chr, contact.contact_st, contact.contact_st ), \
                                                          N=self.N_closest, side="left")
 
         Left_top = Left_top["plus_orientation"].values.tolist() + \
