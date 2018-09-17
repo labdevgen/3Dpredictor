@@ -207,31 +207,41 @@ class SitesOrientPredictorGenerator(PredictorGenerator):
     def __init__(self, chipSeq_reader, N_closest, **kwargs):
         self.name = chipSeq_reader.proteinName
         self.N_closest = N_closest
+        self.chipSeq_reader = chipSeq_reader
+        if not self.chipSeq_reader.orient_data_real:
+            logging.error('please set orientation first')
 
     def get_header(self,contact):
-        self.header = [self.name + "_L", self.name + "_W", self.name + "_R"]
-        for side in ["st", "en"]:
-            for metric in ["L", "R"]:
-                for orient in ["+", "-"]:
-                    for i in range(self.N_closest):
-                        self.header += [self.name + "_" + side + metric + "_" + orient + "_" + str(i)]
+        self.header = []
+        for side in "L", "W_L", "W_R", "R":
+            for metric in ["plus_orientation", "minus_orientation","sigVal", "dist"]:
+                for i in range(self.N_closest):
+                    self.header += [self.name + "_" + side + "_" + metric + "_" + str(i)]
+        self.header += [self.name + "_W_sumSigVal"]
         return self.header
 
     def get_predictors(self,contact):
-        Left_top = self.get_nearest_peaks(Interval(contact.chr, contact.contact_st, contact.contact_st ), \
+        Left_peaks = self.chipSeq_reader.get_nearest_peaks(Interval(contact.chr, contact.contact_st, contact.contact_st ),
                                                          N=self.N_closest, side="left")
 
-        Left_top = Left_top["plus_orientation"].values.tolist() + \
-                   Left_top["minus_orientation"].values.tolist()
+        Left_peaks = Left_peaks["plus_orientation"].values.tolist() + \
+                   Left_peaks["minus_orientation"].values.tolist() + Left_peaks["sigVal"].values.tolist() + \
+                     (contact.contact_st - Left_peaks["mids"]).values.tolist()
 
-        medium_peaks = self.chipSeq_reader.get_interval(Interval())
+        Right_peaks = self.chipSeq_reader.get_nearest_peaks(Interval(contact.chr, contact.contact_en, contact.contact_en),side="right", N=self.N_closest)
 
+        Right_peaks = Right_peaks["plus_orientation"].values.tolist() + \
+                     Right_peaks["minus_orientation"].values.tolist() + Right_peaks["sigVal"].values.tolist() + \
+                     (Right_peaks["mids"] - contact.contact_en).values.tolist()
 
-        Right_top = self.chipSeq_reader.get_nearest_peaks(Interval(contact.chr,
-                                                                   contact.contact_en ,
-                                                                   contact.contact_en ),
-                                                          N=self.N_closest, side="right")
-        Right_top = Right_top["plus_orientation"].values.tolist() + \
-                   Right_top["minus_orientation"].values.tolist()
+        Window_peaks = self.chipSeq_reader.get_N_nearest_peaks_in_interval(Interval(contact.chr, contact.contact_st, contact.contact_en),
+                                                                           N=self.N_closest)
+        Window_peaks_left = [Window_peaks[0]["plus_orientation"].values.tolist() +Window_peaks[0]["minus_orientation"].values.tolist() + \
+                             Window_peaks[0]["sigVal"].values.tolist() + (Window_peaks[0]["mids"] -contact.contact_st).values.tolist()]
 
-        return Left_top+Right_top
+        Window_peaks_right = [
+            Window_peaks[1]["plus_orientation"].values.tolist() + Window_peaks[1]["minus_orientation"].values.tolist() + \
+            Window_peaks[1]["sigVal"].values.tolist() + (contact.contact_en - Window_peaks[1]["mids"]).values.tolist()]
+        Window_sigVal = self.chipSeq_reader.get_interval(Interval(contact.chr, contact.contact_st, contact.contact_en)).sigVal.sum()
+
+        return Left_peaks + Window_peaks_left + Window_peaks_right + Right_peaks + Window_sigVal

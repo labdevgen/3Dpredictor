@@ -23,6 +23,7 @@ class ChiPSeqReader(FileReader): #Class process files with ChipSeq peaks
         names = list(map(str,list(range(Nfields))))
         data = pd.read_csv(self.fname,sep="\t",header=None,names=names)
 
+
         # subset and rename
         data = data.iloc[:,[0,1,2,6]]
         data.rename(columns={"0":"chr","1":"start","2":"end","6":"sigVal"},
@@ -54,16 +55,20 @@ class ChiPSeqReader(FileReader): #Class process files with ChipSeq peaks
 
         #save
         self.chr_data = chr_data
+        self.orient_data_real = False
+
+    def get_mock_data(self, N,interval, midpos):
+        data = pd.DataFrame(columns=self.chr_data[interval.chr].columns)
+        data["mids"] = [midpos] * N
+        data["sigVal"] = [0] * N
+        data["chr"] = [interval.chr] * N
+        if self.orient_data_real:
+            data["plus_orientation"] = [0] * N
+            data["minus_orientation"] = [0] * N
+        return data
 
     def get_nearest_peaks(self,point,side,N,N_is_strict=True):
-        def get_mock_data(N,midpos):
-            data = pd.DataFrame(columns=self.chr_data[point.chr].columns)
-            data["mids"] = [midpos]*N
-            data["sigVal"] = [0]*N
-            data["chr"] = [point.chr]*N
-            return data
-
-        #Some checks removed to speed up proccess
+                #Some checks removed to speed up proccess
         #assert point.start == point.end
         #assert point.chr in self.chr_data.keys()
         #try:
@@ -75,18 +80,18 @@ class ChiPSeqReader(FileReader): #Class process files with ChipSeq peaks
         search_id = np.searchsorted(self.chr_data[point.chr]["mids"].values,point.start,side)
         if side == "left":
             result = self.chr_data[point.chr].iloc[max(search_id-N,0):search_id,:]
-            if len(result) == 0: #TODO is it possible?
-                return get_mock_data(N,midpos=0)
+            if len(result) == 0:
+                return self.get_mock_data(N=N - len(result),interval=point, midpos=0)
             if len(result) < N and N_is_strict:
-                return result.append(get_mock_data(N - len(result),midpos=0))
+                return result.append(self.get_mock_data(N=N - len(result),interval=point, midpos=0))
             return result
         elif side == "right":
             if search_id == len(self.chr_data[point.chr]):
-                return get_mock_data(N=N,midpos=(point.start + 1))
+                return self.get_mock_data(N=N,interval=point, midpos=(point.start + 1))
             result = self.chr_data[point.chr].iloc[search_id:min(search_id+N,
                                                                  len(self.chr_data[point.chr])),:]
             if len(result) < N and N_is_strict:
-                return result.append(get_mock_data(N=(N - len(result)),
+                return result.append(self.get_mock_data(N=(N - len(result)),interval=point,
                                      midpos=self.chr_data[point.chr]["mids"].iat[-1]))
             return result
         else:
@@ -113,28 +118,26 @@ class ChiPSeqReader(FileReader): #Class process files with ChipSeq peaks
             return min(len(self.chr_data[interval.chr]) - 1, left),max(0, right)
 
     def get_N_nearest_peaks_in_interval(self,interval,N,N_is_strict=True ):
-        def get_mock_data(N,midpos):
-            data = pd.DataFrame(columns=self.chr_data[interval.chr].columns)
-            data["mids"] = [midpos]*N
-            data["sigVal"] = [0]*N
-            data["chr"] = [interval.chr]*N
-            data["plus_orientation"]= [0]*N
-            data["minus_orientation"] = [0] * N
-            return data
-        all_peaks_in_interval = self.get_interval(interval, return_ids=False)
-        if len(all_peaks_in_interval[interval.chr]) >= N*2:
-            result_right = self.get_nearest_peaks(interval.start, side='right', N=N, N_is_strict=True)
-            result_left = self.get_nearest_peaks(interval.end, side='left', N=N, N_is_strict=True)
+        all_peaks_in_interval = self.get_interval(interval)
+        if not self.orient_data_real:
+               logging.error("please set_orientation first")
+        if len(all_peaks_in_interval) >= N*2:
+            result_right = all_peaks_in_interval.head(N)
+            result_left = all_peaks_in_interval.tail(N)
             return [result_right, result_left]
-        elif len(all_peaks_in_interval[interval.chr]) < N*2:
-                result_right = all_peaks_in_interval.iloc[0:(len(all_peaks_in_interval)//2 - 1), :]
-                result_left = all_peaks_in_interval.iloc[(len(all_peaks_in_interval)//2):-1, :]
-                result_right.append(get_mock_data(N=(N - len(result_right)),
-                                            midpos=self.chr_data[interval.chr]["mids"].iat[-1])) #mids???
-                result_left.append(get_mock_data(N=(N - len(result_right)),
-                                            midpos=self.chr_data[interval.chr]["mids"].iat[-1])) #always peak will append to result_left
-                assert len(result_right) == len(result_right)
-                return[[result_right, result_left]]
+        elif len(all_peaks_in_interval) < N*2:
+                result_right = all_peaks_in_interval.iloc[0:(len(all_peaks_in_interval)//2), :]
+                print(result_right)
+                result_left = all_peaks_in_interval.iloc[(len(all_peaks_in_interval)//2):, :] # if len(all_peaks_in_interval)%2==1, peak always append to result_left
+                if N_is_strict:
+                    result_right = result_right.append(self.get_mock_data(N=(N - len(result_right)), interval= interval,
+                                            midpos=result_right["mids"].iat[-1])) #mids is the coordinates of the last peak in result_right
+                    result_left = result_left.append(self.get_mock_data(N=(N - len(result_left)), interval= interval,
+                                         midpos=result_left["mids"].iat[0]))
+                    result_left.sort_values(['mids', 'sigVal'], inplace= True)
+                    assert len(result_right) == len(result_right)
+                    return[[result_right, result_left]]
+
 
     def get_binned_interval(self,interval,binsize,extend=True): #return all peaks intersecting interval as list
                                                             #list len = interval len / bindsize
@@ -168,13 +171,13 @@ class ChiPSeqReader(FileReader): #Class process files with ChipSeq peaks
                 result_strength[ind] = self.chr_data[interval.chr].sigVal.iloc[left:right].sum()
         return result_strength
 
-    def read_orient_file(self):  # store peaks with orientation from gimmeMotifs as sorted pandas dataframe
-        logging.log(msg="Reading CTCF_orientation file " + self.fname, level=logging.INFO)
+    def read_orient_file(self, orient_fname):  # store peaks with orientation from gimmeMotifs as sorted pandas dataframe
+        logging.log(msg="Reading CTCF_orientation file " + orient_fname, level=logging.INFO)
 
         # set random temporary labels
-        Nfields = len(open(self.fname).readline().strip().split())
+        Nfields = len(open(orient_fname).readline().strip().split())
         names = list(map(str, list(range(Nfields))))
-        data = pd.read_csv(self.fname, sep="\t", header=None, names=names)  #TODO check: CTCF fname == CTCF orient fname.split('-')[0]
+        data = pd.read_csv(orient_fname, sep="\t", header=None, names=names)  #TODO check: CTCF fname == CTCF orient fname.split('-')[0]
         # print(data)
 
         # subset and rename
@@ -186,7 +189,7 @@ class ChiPSeqReader(FileReader): #Class process files with ChipSeq peaks
         duplicated = data.duplicated(subset=["chr", "start", "end"])
         if sum(duplicated) > 0:
             logging.warning(
-                "Duplicates by genomic positions found in file " + orient_reader.fname)  # TODO check why this happens
+                "Duplicates by genomic positions found in file " + orient_fname)  # TODO check why this happens
         data.drop_duplicates(
             inplace=True)
         del duplicated
@@ -211,16 +214,14 @@ class ChiPSeqReader(FileReader): #Class process files with ChipSeq peaks
             return None
         orient_chr_data = self.read_orient_file(orient_fname)
         result_intersection_data = intersect_intervals(self.chr_data, orient_chr_data)
-        #print(result_intersection_data['chr1'])
         for chr in result_intersection_data.keys():
             #if chr != 'chr4':
              #   continue
             result_intersection_data[chr].sort_values(by=["orientation", "intersection", "score"], inplace=True)
-            #print(result_intersection_data['chr1'])
             #duplicated = result_intersection_data[chr].duplicated(subset=["intersection", "orientation"])
             #print(duplicated)
             result_intersection_data[chr].drop_duplicates(subset=["intersection", "orientation"], keep="first", inplace=True)
-            #print(result_intersection_data['chr1'])
+            #print(result_intersection_data['chr4'])
             plus_orient_data = result_intersection_data[chr].query("orientation =='+'")
             plus_col_ind = self.chr_data[chr].columns.get_loc("plus_orientation")
             plus_row_list = list(plus_orient_data["intersection"])
@@ -230,6 +231,8 @@ class ChiPSeqReader(FileReader): #Class process files with ChipSeq peaks
             minus_col_ind = self.chr_data[chr].columns.get_loc("minus_orientation")
             minus_row_list = list(minus_orient_data["intersection"])
             self.chr_data[chr].iloc[minus_row_list, minus_col_ind] = list(minus_orient_data["score"])
+        self.orient_data_real = True
+
 
     def delete_region(self,interval):
         debug = len(self.get_interval(interval))
