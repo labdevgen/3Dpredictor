@@ -218,6 +218,8 @@ class SitesOrientPredictorGenerator(PredictorGenerator):
                 for i in range(self.N_closest):
                     self.header += [self.name + "_" + side + "_" + metric + "_" + str(i)]
         self.header += [self.name + "_W_sumSigVal"]
+        #print('=================================')
+        #print(len(self.header))
         return self.header
 
     def get_predictors(self,contact):
@@ -236,12 +238,16 @@ class SitesOrientPredictorGenerator(PredictorGenerator):
 
         Window_peaks = self.chipSeq_reader.get_N_nearest_peaks_in_interval(Interval(contact.chr, contact.contact_st, contact.contact_en),
                                                                            N=self.N_closest)
-        Window_peaks_left = [Window_peaks[0]["plus_orientation"].values.tolist() +Window_peaks[0]["minus_orientation"].values.tolist() + \
-                             Window_peaks[0]["sigVal"].values.tolist() + (Window_peaks[0]["mids"] -contact.contact_st).values.tolist()]
 
-        Window_peaks_right = [
-            Window_peaks[1]["plus_orientation"].values.tolist() + Window_peaks[1]["minus_orientation"].values.tolist() + \
-            Window_peaks[1]["sigVal"].values.tolist() + (contact.contact_en - Window_peaks[1]["mids"]).values.tolist()]
-        Window_sigVal = self.chipSeq_reader.get_interval(Interval(contact.chr, contact.contact_st, contact.contact_en)).sigVal.sum()
+        Window_peaks_left = Window_peaks[0]["plus_orientation"].values.tolist() +Window_peaks[0]["minus_orientation"].values.tolist() + \
+                             Window_peaks[0]["sigVal"].values.tolist() + (Window_peaks[0]["mids"] - contact.contact_st).values.tolist()
 
-        return Left_peaks + Window_peaks_left + Window_peaks_right + Right_peaks + Window_sigVal
+
+        Window_peaks_right = Window_peaks[1]["plus_orientation"].values.tolist() + Window_peaks[1]["minus_orientation"].values.tolist() + \
+            Window_peaks[1]["sigVal"].values.tolist() + (contact.contact_en - Window_peaks[1]["mids"]).values.tolist()
+        if len(self.chipSeq_reader.get_interval(Interval(contact.chr, contact.contact_st, contact.contact_en))) == 0:
+            Window_sigVal = 0
+        else:
+            Window_sigVal = self.chipSeq_reader.get_interval(Interval(contact.chr, contact.contact_st, contact.contact_en)).sigVal.sum()
+        predictors = Left_peaks + Window_peaks_left + Window_peaks_right + Right_peaks + [Window_sigVal]
+        return predictors

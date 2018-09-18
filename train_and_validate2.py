@@ -159,26 +159,29 @@ lm=ensemble.GradientBoostingRegressor()
 #training_file = "training.RandOnChr11000000.50001.1000000.5000.100000.txt"
 #training_file = "training.RandOnChr13000000.50001.3000000.10000.500000.txt"
 #training_file = "Data/2018-08-20-trainingSmall.RandOnChr1.20000.contacts.3000000.50001.500000.25000.txt"
-training_file = "Data/2018-08-23-trainingSmall.RandOnChr1.20000.contacts.3000000.50001.500000.25000.txt"
+training_file = "2018-09-17-trainingOrient.RandOnChr1.20000.contacts.3000000.50001.50000.25000.txt"
 
-validation_files = ["Data/Interval_chr2_85000000_92500000validatingSmall.20000.contacts.3000000.50001.500000.25000.txt",
-                    "Data/Interval_chr2_47900000_53900000validatingSmall.20000.contacts.3000000.50001.500000.25000.txt",
-                    "Data/Interval_chr10_59000000_62000000validatingSmall.20000.contacts.3000000.50001.500000.25000.txt",
-                    "Data/Interval_chr10_59000000_62000000validatingSmall.20000.contacts.3000000.50001.500000.25000.txt"]
-validation_files = ["Data/Interval_chr6_100000000_109000000DEL.Interval_chr6_103842568_104979840validatingSmall.20000.contacts.3000000.50001.500000.25000.txt",
-                    "Data/Interval_chr6_100000000_110000000validatingSmall.20000.contacts.3000000.50001.500000.25000.txt"]
-keep = ["all",["CTCF_W","contact_dist"],
-        ["CTCF_W","contact_dist","CTCF_L","CTCF_R","CTCF_LDist_0","CTCF_LDist_2","CTCF_RDist_0","CTCF_RDist_2"]]
+# validation_files = ["Data/Interval_chr2_85000000_92500000validatingSmall.20000.contacts.3000000.50001.500000.25000.txt",
+#                     "Data/Interval_chr2_47900000_53900000validatingSmall.20000.contacts.3000000.50001.500000.25000.txt",
+#                     "Data/Interval_chr10_59000000_62000000validatingSmall.20000.contacts.3000000.50001.500000.25000.txt",
+#                     "Data/Interval_chr10_59000000_62000000validatingSmall.20000.contacts.3000000.50001.500000.25000.txt"]
+validation_files = ["Interval_chr2_85000000_92500000validatingOrient.20000.contacts.3000000.50001.50000.25000.txt",]
+# keep = ["all",["CTCF_W","contact_dist"],
+#         ["CTCF_W","contact_dist","CTCF_L","CTCF_R","CTCF_LDist_0","CTCF_LDist_2","CTCF_RDist_0","CTCF_RDist_2"]]
 predictors = get_avaliable_predictors(training_file)
+keep = ["all"]
 
-#Contact distance + all non-CTCF chipSeqs
-keep += ["contact_dist"] + [p for p in predictors if p.find("CTCF")==-1 and p.find("E1")==-1]
+#all except E1
+keep.append(["contact_dist"] + [p for p in predictors if p.find("E1")==-1])
 
-#All except non-CTCF chipSeq
-keep = [["contact_dist"] + [p for p in predictors if p.find("CTCF")!=-1 or p.find("E1")!=-1]]
-
-#Contacts_dist + CTCF
-keep += [["contact_dist"] + [p for p in predictors if p.find("CTCF")!=-1]]
+# #Contact distance + all non-CTCF chipSeqs
+# keep += ["contact_dist"] + [p for p in predictors if p.find("CTCF")==-1 and p.find("E1")==-1]
+#
+# #All except non-CTCF chipSeq
+# keep = [["contact_dist"] + [p for p in predictors if p.find("CTCF")!=-1 or p.find("E1")!=-1]]
+#
+# #Contacts_dist + CTCF
+# keep += [["contact_dist"] + [p for p in predictors if p.find("CTCF")!=-1]]
 
 for featuresSubset in keep:
     for validation_file in validation_files:

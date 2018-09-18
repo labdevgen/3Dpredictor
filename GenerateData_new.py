@@ -18,7 +18,8 @@ def generate_data(params):
     generator.contacts2file(contacts_sample, params.pgs, params.out_file)
 
 logging.basicConfig(level=logging.DEBUG)
-input_folder = "D:/Users/Polina/3Dpredictor/input/"
+input_folder ="D:/Users/Polina/3Dpredictor/input/"
+output_folder = "D:/Users/Polina/3Dpredictor/output/"
 #input_folder =  "input"
 
 params = Parameters()
@@ -28,7 +29,7 @@ params.mindist = 50001 #minimum distance between contacting regions
 #params.maxdist = params.window_size #max distance between contacting regions
 params.maxdist = 3000000
 params.binsize = 20000 #when binning regions with predictors, use this binsize
-params.sample_size = 5 #how many contacts write to file
+params.sample_size = 50000 #how many contacts write to file
 params.conttype = "contacts"
 
 training_file_name = "2018-09-17-trainingOrient.RandOnChr1."+str(params)+".txt"
@@ -37,8 +38,8 @@ logging.debug("Using input folder "+input_folder)
 
 #Read contacts data
 params.contacts_reader = ContactsReader()
-params.contacts_reader.read_files(input_folder + "chr1.5MB.Hepat."+params.conttype)
-                            #input_folder + "chr2.5MB.Hepat."+params.conttype,
+params.contacts_reader.read_files([input_folder + "chr1.5MB.Hepat."+params.conttype,
+                            input_folder + "chr2.5MB.Hepat."+params.conttype])
                             #input_folder + "chr10.5MB.Hepat."+params.conttype,
                             #input_folder + "chr6.5MB.Hepat." + params.conttype])
 
@@ -57,12 +58,12 @@ params.ctcf_reader.set_sites_orientation(input_folder + "Hepat_WT_MboI_rep1-rep2
 #params.chd2_reader.read_file()
 
 #Read E1 data
-# params.eig_reader = E1Reader()
-# params.eig_reader.read_files([input_folder + "chr1.Hepat.E1.50k",
-#                        input_folder + "chr2.Hepat.E1.50k",
-#                        input_folder + "chr10.Hepat.E1.50k",
-#                        input_folder + "chr6.Hepat.E1.50k"],
-#                       binSizeFromName=fileName2binsize) #infer size of E1 bins from file name using this function
+params.eig_reader = E1Reader()
+params.eig_reader.read_files([input_folder + "chr1.Hepat.E1.50k",
+                       input_folder + "chr2.Hepat.E1.50k"],
+                       #input_folder + "chr10.Hepat.E1.50k",
+                       #input_folder + "chr6.Hepat.E1.50k"],
+                      binSizeFromName=fileName2binsize) #infer size of E1 bins from file name using this function
 
 #e1pg = E1PredictorGenerator(params.eig_reader,params.window_size)
 #ctcfpg = CTCFPredictorGenerator(params.ctcf_reader,params.binsize,params.window_size)
@@ -70,12 +71,12 @@ params.ctcf_reader.set_sites_orientation(input_folder + "Hepat_WT_MboI_rep1-rep2
 #params.pgs = [e1pg,ctcfpg]
 
 ctcfpg_orient = SitesOrientPredictorGenerator(params.ctcf_reader, N_closest=6)
-#e1pg_small = SmallE1PredictorGenerator(params.eig_reader,params.window_size,name="E1")
+e1pg_small = SmallE1PredictorGenerator(params.eig_reader,params.window_size,name="E1")
 #ctcfpg_small = SmallChipSeqPredictorGenerator(params.ctcf_reader, params.window_size, N_closest=3)
 #chd2pg_small = SmallChipSeqPredictorGenerator(params.chd2_reader, params.window_size, N_closest=3)
 #ep3000pg_small = SmallChipSeqPredictorGenerator(params.ep3000_reader, params.window_size, N_closest=3)
 #params.pgs = [e1pg_small,ctcfpg_small,chd2pg_small,ep3000pg_small]
-params.pgs = [ctcfpg_orient]
+params.pgs = [e1pg_small, ctcfpg_orient]
 
 #Generate train
 trainChrName = "chr1"
@@ -83,22 +84,22 @@ params.interval = Interval(trainChrName,
                       params.contacts_reader.get_min_contact_position(trainChrName),
                       params.contacts_reader.get_max_contact_position(trainChrName))
 params.out_file = training_file_name
-#generate_data(params)
+generate_data(params)
 
 #Generate test
 for interval in [#Interval("chr10", 59000000, 62000000),
                  #Interval("chr2", 47900000, 53900000),
-                 #Interval("chr2", 85000000, 92500000),
-                 Interval("chr6", 100000000, 110000000)]:
+                 Interval("chr2", 85000000, 92500000)]:
+                 #Interval("chr1", 100000000, 110000000)]:
     logging.info("Generating validation dataset for interval "+str(interval))
     params.interval = interval
     params.out_file = params.interval.toFileName() + validation_file_name
     generate_data(params)
 
-for object in [params.contacts_reader]+params.pgs:
-    lostInterval = Interval("chr6",103842568,104979840)
-    object.delete_region(lostInterval)
-    params.interval = Interval("chr6",100000000,109000000)
+# for object in [params.contacts_reader]+params.pgs:
+#     lostInterval = Interval("chr1",103842568,104979840)
+#     object.delete_region(lostInterval)
+#     params.interval = Interval("chr1",100000000,109000000)
     #logging.info("Saving data to file "+params.interval.toFileName() + "DEL." + lostInterval.toFileName()+validation_file_name)
-params.out_file = params.interval.toFileName() + "DEL." + lostInterval.toFileName()+validation_file_name
+# params.out_file = params.interval.toFileName() + "DEL." + lostInterval.toFileName()+validation_file_name
 #generate_data(params)

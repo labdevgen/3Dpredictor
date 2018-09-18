@@ -123,10 +123,12 @@ def test_N_nearest_peaks_in_interval():
     ctcf_reader.read_file()
     ctcf_reader.set_sites_orientation(
         "D:/Users/Polina/3Dpredictor/input/Hepat_WT_MboI_rep1-rep2_IDR0_05_filt_narrowPeak-orient_N10.bed")
-    print(ctcf_reader.chr_data['chr1'])
-    result = ctcf_reader.get_N_nearest_peaks_in_interval(interval = Interval("chr1", 3012442, 4142932 ), N=6)
+    #print(ctcf_reader.chr_data['chr1'])
+    result = ctcf_reader.get_N_nearest_peaks_in_interval(interval = Interval("chr1", 100800000, 101125000 ), N=6)
     print('-----------------------------------------')
-    print(result)
+    #print(result)
+    print('sumr', result[0].sigVal.sum())
+    print(result[1])
 def test_get_nearest_peaks():
     ctcf_reader = ChiPSeqReader(
         "D:/Users/Polina/3Dpredictor/input/Hepat_WT_MboI_rep1-rep2.IDR0.05.filt.narrowPeak")
@@ -148,7 +150,16 @@ def test_ori_predictor_generator():
     print(ctcfpg_orient.header)
     predictors = ctcfpg_orient.get_predictors(contact= Interval("chr1", 3611433, 4785546))
     print(predictors)
-test_ori_predictor_generator()
+def test_get_interval():
+    ctcf_reader = ChiPSeqReader(
+        "D:/Users/Polina/3Dpredictor/input/Hepat_WT_MboI_rep1-rep2.IDR0.05.filt.narrowPeak")
+    ctcf_reader.read_file()
+    ctcf_reader.set_sites_orientation(
+        "D:/Users/Polina/3Dpredictor/input/Hepat_WT_MboI_rep1-rep2_IDR0_05_filt_narrowPeak-orient_N10.bed")
+    interval = ctcf_reader.get_interval(interval = Interval("chr1", 100800000, 101125000))
+    print(interval)
+test_get_interval()
+#test_ori_predictor_generator()
 #test_get_nearest_peaks()
 #test_N_nearest_peaks_in_interval()
 #test_add_orientation()

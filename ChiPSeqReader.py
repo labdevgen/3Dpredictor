@@ -81,7 +81,7 @@ class ChiPSeqReader(FileReader): #Class process files with ChipSeq peaks
         if side == "left":
             result = self.chr_data[point.chr].iloc[max(search_id-N,0):search_id,:]
             if len(result) == 0:
-                return self.get_mock_data(N=N - len(result),interval=point, midpos=0)
+                return self.get_mock_data(N=N - len(result),interval=point, midpos=0) #TODO why midpos is 0?
             if len(result) < N and N_is_strict:
                 return result.append(self.get_mock_data(N=N - len(result),interval=point, midpos=0))
             return result
@@ -110,6 +110,7 @@ class ChiPSeqReader(FileReader): #Class process files with ChipSeq peaks
             return pd.DataFrame()
 
         left = np.searchsorted(self.chr_data[interval.chr]["mids"].values,interval.start,"left")
+
         right = np.searchsorted(self.chr_data[interval.chr]["mids"].values,interval.end,"right")
         assert left <= right
         if not return_ids:
@@ -125,18 +126,29 @@ class ChiPSeqReader(FileReader): #Class process files with ChipSeq peaks
             result_right = all_peaks_in_interval.head(N)
             result_left = all_peaks_in_interval.tail(N)
             return [result_right, result_left]
-        elif len(all_peaks_in_interval) < N*2:
-                result_right = all_peaks_in_interval.iloc[0:(len(all_peaks_in_interval)//2), :]
-                print(result_right)
-                result_left = all_peaks_in_interval.iloc[(len(all_peaks_in_interval)//2):, :] # if len(all_peaks_in_interval)%2==1, peak always append to result_left
-                if N_is_strict:
-                    result_right = result_right.append(self.get_mock_data(N=(N - len(result_right)), interval= interval,
+        elif 0 < len(all_peaks_in_interval) < N*2:
+            if len(all_peaks_in_interval) == 1 and N_is_strict:
+                result_right = self.get_mock_data(N=N, interval=interval,midpos=interval.start)
+                result_left = all_peaks_in_interval.iloc[(len(all_peaks_in_interval)//2):, :]
+                result_left = result_left.append(self.get_mock_data(N=(N - len(result_left)), interval=interval,
+                                                                    midpos=result_left["mids"].iat[0]))
+                assert len(result_right) == len(result_right)
+                return [result_right, result_left]
+            result_right = all_peaks_in_interval.iloc[0:(len(all_peaks_in_interval)//2), :]
+            result_left = all_peaks_in_interval.iloc[(len(all_peaks_in_interval)//2):, :] # if len(all_peaks_in_interval)%2==1, peak always append to result_left
+            if N_is_strict:
+                result_right = result_right.append(self.get_mock_data(N=(N - len(result_right)), interval= interval,
                                             midpos=result_right["mids"].iat[-1])) #mids is the coordinates of the last peak in result_right
-                    result_left = result_left.append(self.get_mock_data(N=(N - len(result_left)), interval= interval,
+                result_left = result_left.append(self.get_mock_data(N=(N - len(result_left)), interval= interval,
                                          midpos=result_left["mids"].iat[0]))
-                    result_left.sort_values(['mids', 'sigVal'], inplace= True)
-                    assert len(result_right) == len(result_right)
-                    return[[result_right, result_left]]
+                result_left.sort_values(['mids', 'sigVal'], inplace= True)
+                assert len(result_right) == len(result_right)
+                return[result_right, result_left]
+        elif len(all_peaks_in_interval) == 0:
+            if N_is_strict:
+                result_right = self.get_mock_data(N=N, interval=interval,midpos=interval.start)
+                result_left = self.get_mock_data(N=N, interval=interval, midpos=interval.end)
+                return [result_right, result_left]
 
 
     def get_binned_interval(self,interval,binsize,extend=True): #return all peaks intersecting interval as list
