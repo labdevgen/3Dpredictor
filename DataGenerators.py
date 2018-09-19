@@ -46,6 +46,7 @@ class DataGenerator():
 
         #Check that predictor names are unique
         pg_names = [pg.name for pg in predictor_generators]
+        print(pg_names)
         assert len(pg_names) == len(set(pg_names))
 
         #Get header row and calculate number of fields
@@ -205,7 +206,7 @@ class SmallE1PredictorGenerator(E1PredictorGenerator):
 
 class SitesOrientPredictorGenerator(PredictorGenerator):
     def __init__(self, chipSeq_reader, N_closest, **kwargs):
-        self.name = chipSeq_reader.proteinName
+        self.name = chipSeq_reader.proteinName + 'orient'
         self.N_closest = N_closest
         self.chipSeq_reader = chipSeq_reader
         if not self.chipSeq_reader.orient_data_real:

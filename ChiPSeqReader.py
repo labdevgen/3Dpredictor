@@ -245,6 +245,17 @@ class ChiPSeqReader(FileReader): #Class process files with ChipSeq peaks
             self.chr_data[chr].iloc[minus_row_list, minus_col_ind] = list(minus_orient_data["score"])
         self.orient_data_real = True
 
+    def get_bed_files_with_orientation(self, out_folder):
+        if not self.orient_data_real:
+            logging.error('please set orientation first')
+        orient_plus_chr_data = pd.DataFrame()
+        orient_minus_chr_data = pd.DataFrame()
+        for chr in self.chr_data:
+            orient_plus_chr_data = orient_plus_chr_data.append(self.chr_data[chr][['chr', 'start', 'end', 'plus_orientation']])
+            orient_minus_chr_data = orient_minus_chr_data.append(self.chr_data[chr][['chr', 'start', 'end', 'minus_orientation']])
+        orient_plus_chr_data.to_csv(out_folder + "orient_plus", sep='\t', header=False)
+        orient_minus_chr_data.to_csv(out_folder + "orient_minus", sep='\t', header=False)
+
 
     def delete_region(self,interval):
         debug = len(self.get_interval(interval))

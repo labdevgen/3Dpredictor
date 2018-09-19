@@ -39,8 +39,8 @@ logging.debug("Using input folder "+input_folder)
 #Read contacts data
 params.contacts_reader = ContactsReader()
 params.contacts_reader.read_files([input_folder + "chr1.5MB.Hepat."+params.conttype,
-                            input_folder + "chr2.5MB.Hepat."+params.conttype])
-                            #input_folder + "chr10.5MB.Hepat."+params.conttype,
+                            input_folder + "chr2.5MB.Hepat."+params.conttype,
+                            input_folder + "chr10.5MB.Hepat."+params.conttype])
                             #input_folder + "chr6.5MB.Hepat." + params.conttype])
 
 # Read CTCF data
@@ -51,17 +51,17 @@ params.ctcf_reader.read_file()
 #read orient_data and set orientation
 params.ctcf_reader.set_sites_orientation(input_folder + "Hepat_WT_MboI_rep1-rep2_IDR0_05_filt_narrowPeak-orient_N10.bed")
 
-#Read other ChipSeq
-#params.ep3000_reader = ChiPSeqReader(input_folder + "ENCFF787DRX.bed",name="EP3000")
-#params.ep3000_reader.read_file()
-#params.chd2_reader = ChiPSeqReader(input_folder + "ENCFF373CDN.bed",name="CHD2")
-#params.chd2_reader.read_file()
+# #Read other ChipSeq
+# params.ep3000_reader = ChiPSeqReader(input_folder + "ENCFF787DRX.bed",name="EP3000")
+# params.ep3000_reader.read_file()
+# params.chd2_reader = ChiPSeqReader(input_folder + "ENCFF373CDN.bed",name="CHD2")
+# params.chd2_reader.read_file()
 
 #Read E1 data
 params.eig_reader = E1Reader()
 params.eig_reader.read_files([input_folder + "chr1.Hepat.E1.50k",
-                       input_folder + "chr2.Hepat.E1.50k"],
-                       #input_folder + "chr10.Hepat.E1.50k",
+                       input_folder + "chr2.Hepat.E1.50k",
+                       input_folder + "chr10.Hepat.E1.50k"],
                        #input_folder + "chr6.Hepat.E1.50k"],
                       binSizeFromName=fileName2binsize) #infer size of E1 bins from file name using this function
 
@@ -70,13 +70,13 @@ params.eig_reader.read_files([input_folder + "chr1.Hepat.E1.50k",
 #assert params.maxdist <= params.window_size #shouldn't be > window_size
 #params.pgs = [e1pg,ctcfpg]
 
-ctcfpg_orient = SitesOrientPredictorGenerator(params.ctcf_reader, N_closest=6)
+OrientCtcfpg = SitesOrientPredictorGenerator(params.ctcf_reader, N_closest=6)
 e1pg_small = SmallE1PredictorGenerator(params.eig_reader,params.window_size,name="E1")
 ctcfpg_small = SmallChipSeqPredictorGenerator(params.ctcf_reader, params.window_size, N_closest=3)
-chd2pg_small = SmallChipSeqPredictorGenerator(params.chd2_reader, params.window_size, N_closest=3)
-#ep3000pg_small = SmallChipSeqPredictorGenerator(params.ep3000_reader, params.window_size, N_closest=3)
+# chd2pg_small = SmallChipSeqPredictorGenerator(params.chd2_reader, params.window_size, N_closest=3)
+# ep3000pg_small = SmallChipSeqPredictorGenerator(params.ep3000_reader, params.window_size, N_closest=3)
 #params.pgs = [e1pg_small,ctcfpg_small,chd2pg_small,ep3000pg_small]
-params.pgs = [e1pg_small, ctcfpg_orient]
+params.pgs = [e1pg_small, OrientCtcfpg, ctcfpg_small]
 
 #Generate train
 trainChrName = "chr1"
@@ -87,10 +87,10 @@ params.out_file = output_folder + training_file_name
 generate_data(params)
 
 #Generate test
-for interval in [#Interval("chr10", 59000000, 62000000),
-                 #Interval("chr2", 47900000, 53900000),
-                 Interval("chr2", 85000000, 92500000)]:
-                 #Interval("chr1", 100000000, 110000000)]:
+for interval in [Interval("chr10", 59000000, 62000000),
+                 Interval("chr2", 47900000, 53900000),
+                 Interval("chr2", 85000000, 92500000),
+                 Interval("chr1", 100000000, 110000000)]:
     logging.info("Generating validation dataset for interval "+str(interval))
     params.interval = interval
     params.out_file = params.interval.toFileName() + validation_file_name

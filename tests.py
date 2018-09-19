@@ -115,8 +115,10 @@ def test_sites_orientation():
         "D:/Users/Polina/3Dpredictor/input/Hepat_WT_MboI_rep1-rep2.IDR0.05.filt.narrowPeak")
     ctcf_reader.read_file()
     ctcf_reader.set_sites_orientation("D:/Users/Polina/3Dpredictor/input/Hepat_WT_MboI_rep1-rep2_IDR0_05_filt_narrowPeak-orient_N10.bed")
-    print(ctcf_reader.chr_data['chr4'].iloc[23])
-    print(ctcf_reader.chr_data['chr4'])
+    #print(ctcf_reader.chr_data['chr4'].iloc[23])
+    #print(ctcf_reader.chr_data['chr4'])
+    ctcf_reader.get_bed_files_with_orientation("D:/Users/Polina/3Dpredictor/data/")
+    #print(result)
 def test_N_nearest_peaks_in_interval():
     ctcf_reader = ChiPSeqReader(
         "D:/Users/Polina/3Dpredictor/input/Hepat_WT_MboI_rep1-rep2.IDR0.05.filt.narrowPeak")
@@ -138,18 +140,6 @@ def test_get_nearest_peaks():
     print(ctcf_reader.chr_data['chr1'])
     result = ctcf_reader.get_nearest_peaks(Interval("chr1", 3611433, 3611433), N=6, side='left')
     print(result)
-def test_ori_predictor_generator():
-    ctcf_reader = ChiPSeqReader(
-        "D:/Users/Polina/3Dpredictor/input/Hepat_WT_MboI_rep1-rep2.IDR0.05.filt.narrowPeak")
-    ctcf_reader.read_file()
-    ctcf_reader.set_sites_orientation(
-        "D:/Users/Polina/3Dpredictor/input/Hepat_WT_MboI_rep1-rep2_IDR0_05_filt_narrowPeak-orient_N10.bed")
-    print(ctcf_reader.chr_data['chr1'])
-    ctcfpg_orient = SitesOrientPredictorGenerator(ctcf_reader, N_closest=6)
-    ctcfpg_orient.get_header(contact= Interval("chr1", 3611433, 4785546))
-    print(ctcfpg_orient.header)
-    predictors = ctcfpg_orient.get_predictors(contact= Interval("chr1", 3611433, 4785546))
-    print(predictors)
 def test_get_interval():
     ctcf_reader = ChiPSeqReader(
         "D:/Users/Polina/3Dpredictor/input/Hepat_WT_MboI_rep1-rep2.IDR0.05.filt.narrowPeak")
@@ -158,12 +148,12 @@ def test_get_interval():
         "D:/Users/Polina/3Dpredictor/input/Hepat_WT_MboI_rep1-rep2_IDR0_05_filt_narrowPeak-orient_N10.bed")
     interval = ctcf_reader.get_interval(interval = Interval("chr1", 100800000, 101125000))
     print(interval)
-test_get_interval()
+#test_get_interval()
 #test_ori_predictor_generator()
 #test_get_nearest_peaks()
 #test_N_nearest_peaks_in_interval()
 #test_add_orientation()
-#test_sites_orientation()
+test_sites_orientation()
 #test_intersect_intervals()
 #test_matrix_plot()
 #test_contacts()
