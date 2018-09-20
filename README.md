@@ -1,12 +1,17 @@
-How to migrate to gitLab
+**How to migrate to gitLab**
 
-1. (optional, for PyCharm users):
+1.(optional, for PyCharm users):
 
-Install GitLab Project Plugin (https://plugins.jetbrains.com/plugin/7975-gitlab-projects)
+--Commit and push current version to GitHub.
+--Install GitLab Project Plugin (https://plugins.jetbrains.com/plugin/7975-gitlab-projects)
+--Add GitLab repo in remotes (VCS->Git->Remotes)
+--Fetch, Pull, Push (all under VCS control)
 
-2. To migrage with your local copy of GitHub repo, see https://stackoverflow.com/questions/20359936/import-an-existing-git-project-into-gitlab
+2.To migrate with your local copy of GitHub repo, see 
+https://stackoverflow.com/questions/20359936/import-an-existing-git-project-into-gitlab
 
 
+**How to use the code**
 
 The project contains 2 major modules:
 
