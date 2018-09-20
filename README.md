@@ -1,3 +1,13 @@
+How to migrate to gitLab
+
+1. (optional, for PyCharm users):
+
+Install GitLab Project Plugin (https://plugins.jetbrains.com/plugin/7975-gitlab-projects)
+
+2. To migrage with your local copy of GitHub repo, see https://stackoverflow.com/questions/20359936/import-an-existing-git-project-into-gitlab
+
+
+
 The project contains 2 major modules:
 
 **1. Data Generation module**
