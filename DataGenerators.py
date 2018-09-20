@@ -145,6 +145,7 @@ class SmallChipSeqPredictorGenerator(ChipSeqPredictorGenerator):
         return self.header
 
     def get_predictors(self,contact):
+        assert contact.contact_st < contact.contact_en
         intL,intM,intR = self.intevals_around_ancor(contact)
         sig_L = self.chipSeq_reader.get_interval(intL).sigVal.sum()
         sig_R = self.chipSeq_reader.get_interval(intR).sigVal.sum()
@@ -180,6 +181,7 @@ class E1PredictorGenerator(PredictorGenerator):
         return self.header
 
     def get_predictors(self,contact):
+        assert contact.contact_st < contact.contact_en
         window_start, window_end, contacts_relative_start, contacts_relative_end = \
                                         self.symmetric_window_around_contact(contact)
         interval = Interval(contact.chr, window_start, window_end)
@@ -219,11 +221,17 @@ class SitesOrientPredictorGenerator(PredictorGenerator):
                 for i in range(self.N_closest):
                     self.header += [self.name + "_" + side + "_" + metric + "_" + str(i)]
         self.header += [self.name + "_W_sumSigVal"]
+        self.header += [self.name + "", self.name + ""]
+
         #print('=================================')
         #print(len(self.header))
         return self.header
 
-    def get_predictors(self,contact):
+    def get_predictors(self,contact,only_orient_peaks):
+        assert contact.contact_st < contact.contact_en
+        if only_orient_peaks:
+            self.chipSeq_reader.func
+
         Left_peaks = self.chipSeq_reader.get_nearest_peaks(Interval(contact.chr, contact.contact_st, contact.contact_st ),
                                                          N=self.N_closest, side="left")
 
@@ -250,5 +258,9 @@ class SitesOrientPredictorGenerator(PredictorGenerator):
             Window_sigVal = 0
         else:
             Window_sigVal = self.chipSeq_reader.get_interval(Interval(contact.chr, contact.contact_st, contact.contact_en)).sigVal.sum()
-        predictors = Left_peaks + Window_peaks_left + Window_peaks_right + Right_peaks + [Window_sigVal]
+        plus_orient_data = self.chipSeq_reader.get_interval(Interval(contact.chr, contact.contact_st, contact.contact_en)).query("plus_orientation!='0'")
+        N_plus_orient_W = len(plus_orient_data)
+        minus_orient_data = self.chipSeq_reader.get_interval(Interval(contact.chr, contact.contact_st, contact.contact_en)).query("minus_orientation!='0'")
+        N_minus_orient_W = len(minus_orient_data)
+        predictors = Left_peaks + Window_peaks_left + Window_peaks_right + Right_peaks + [Window_sigVal] + [N_plus_orient_W, N_minus_orient_W]
         return predictors

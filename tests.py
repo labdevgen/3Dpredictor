@@ -7,6 +7,9 @@ from E1_Reader import E1Reader, fileName2binsize
 import matplotlib.pyplot as plt
 import numpy as np
 from DataGenerators import PredictorGenerator, SitesOrientPredictorGenerator
+import pandas as pd
+import scipy.stats
+
 
 
 logging.basicConfig(level=logging.DEBUG)
@@ -148,12 +151,21 @@ def test_get_interval():
         "D:/Users/Polina/3Dpredictor/input/Hepat_WT_MboI_rep1-rep2_IDR0_05_filt_narrowPeak-orient_N10.bed")
     interval = ctcf_reader.get_interval(interval = Interval("chr1", 100800000, 101125000))
     print(interval)
+def correlation():
+    training_data = pd.read_csv("2018-09-17-trainingOrient.RandOnChr1.20000.contacts.3000000.50001.500000.25000.txt",delimiter="\t")
+    training_data.fillna(value=0, inplace=True)
+    print(training_data['CTCForient_W_sumSigVal'])
+    print(training_data['CTCF_W'])
+    res = scipy.stats.spearmanr(training_data['CTCForient_W_sumSigVal'], training_data['CTCF_W'])
+    print(res)
+
+correlation()
 #test_get_interval()
 #test_ori_predictor_generator()
 #test_get_nearest_peaks()
 #test_N_nearest_peaks_in_interval()
 #test_add_orientation()
-test_sites_orientation()
+#test_sites_orientation()
 #test_intersect_intervals()
 #test_matrix_plot()
 #test_contacts()

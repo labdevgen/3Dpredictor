@@ -25,13 +25,14 @@ def train(model,inp_file,featuresSubset):
 
     logging.info("Reading data")
     input_data = pd.read_csv(inp_file,delimiter="\t",dtype=dtypes,header=1,names=header)
+    input_data.fillna(value=0, inplace=True)
 
     if logFunc:
         results = input_data["contact_count"].apply(math.log)
     else:
         results = input_data["contact_count"]
 
-    input_data.drop(["contact_count","chr"],axis = 1,inplace=True)
+    input_data.drop(["contact_count","chr", "contact_st", "contact_en"],axis = 1,inplace=True)
     input_data = input_data[[i for i in input_data.columns.get_values() if i in featuresSubset]] #preserve order of columns
 
     logging.info("Fitting model")
@@ -40,12 +41,13 @@ def train(model,inp_file,featuresSubset):
 
 def validate(model,inp_file,featuresSubset,prefix):
     input_data = pd.read_csv(inp_file,delimiter="\t")
+    input_data.fillna(value=0, inplace=True)
     if logFunc:
         results = input_data["contact_count"].apply(math.log)
     else:
         results = input_data["contact_count"]
 
-    input_data.drop(["contact_count","chr"],axis = 1,inplace=True)
+    input_data.drop(["contact_count","chr", "contact_st", "contact_en"],axis = 1,inplace=True)
     input_data = input_data[[i for i in input_data.columns.get_values() if i in featuresSubset]] #preserve order of columns
 
     predicted = model.predict(input_data)
@@ -86,6 +88,7 @@ def validate(model,inp_file,featuresSubset,prefix):
     predicted_data["contact_count"] = predicted
     mp.set_data(input_data)
     mp.set_control(predicted_data)
+    pickle.dump(mp, open(inp_file + '.mpobject.dump', 'wb') )
     matrix = mp.getMatrix4plot(Interval(input_data["chr"].iloc[0],
                                         min(input_data["contact_st"].values),
                                         max(input_data["contact_en"].values)))
@@ -131,6 +134,10 @@ def trainAndValidate(lm, training_file=None, validation_file=None, featuresSubse
         del features[features.index("contact_count")]
     if "chr" in features: #chr is always dropped
         del features[features.index("chr")]
+    if "contact_st" in features:
+        del features[features.index("contact_st")]
+    if "contact_en" in features:
+        del features[features.index("contact_en")]
 
     prefix += ".log"+str(logFunc)
 
@@ -159,20 +166,18 @@ lm=ensemble.GradientBoostingRegressor()
 #training_file = "training.RandOnChr11000000.50001.1000000.5000.100000.txt"
 #training_file = "training.RandOnChr13000000.50001.3000000.10000.500000.txt"
 #training_file = "Data/2018-08-20-trainingSmall.RandOnChr1.20000.contacts.3000000.50001.500000.25000.txt"
-training_file = "data/2018-09-17-trainingOrient.RandOnChr1.20000.contacts.3000000.50001.50000.25000.txt"
+training_file = "2018-09-17-trainingOrient.RandOnChr1.20000.contacts.3000000.50001.500000.25000.txt"
 
-# validation_files = ["Data/Interval_chr2_85000000_92500000validatingSmall.20000.contacts.3000000.50001.500000.25000.txt",
-#                     "Data/Interval_chr2_47900000_53900000validatingSmall.20000.contacts.3000000.50001.500000.25000.txt",
-#                     "Data/Interval_chr10_59000000_62000000validatingSmall.20000.contacts.3000000.50001.500000.25000.txt",
-#                     "Data/Interval_chr10_59000000_62000000validatingSmall.20000.contacts.3000000.50001.500000.25000.txt"]
-validation_files = ["data/Interval_chr2_85000000_92500000validatingOrient.20000.contacts.3000000.50001.50000.25000.txt",]
+validation_files = ["Interval_chr1_100000000_110000000validatingOrient.20000.contacts.3000000.50001.500000.25000.txt",
+                    "Interval_chr2_47900000_53900000validatingOrient.20000.contacts.3000000.50001.500000.25000.txt",
+                    "Interval_chr2_85000000_92500000validatingOrient.20000.contacts.3000000.50001.500000.25000.txt",
+                    "Interval_chr10_59000000_62000000validatingOrient.20000.contacts.3000000.50001.500000.25000.txt"]
 # keep = ["all",["CTCF_W","contact_dist"],
 #         ["CTCF_W","contact_dist","CTCF_L","CTCF_R","CTCF_LDist_0","CTCF_LDist_2","CTCF_RDist_0","CTCF_RDist_2"]]
 predictors = get_avaliable_predictors(training_file)
-keep = ["all"]
-
+keep = []
 #all except E1
-keep.append(["contact_dist"] + [p for p in predictors if p.find("E1")==-1])
+keep+=[[p for p in predictors if p.find("E1")==-1 and p.find("contact")==-1]]
 
 # #Contact distance + all non-CTCF chipSeqs
 # keep += ["contact_dist"] + [p for p in predictors if p.find("CTCF")==-1 and p.find("E1")==-1]

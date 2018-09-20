@@ -253,8 +253,8 @@ class ChiPSeqReader(FileReader): #Class process files with ChipSeq peaks
         for chr in self.chr_data:
             orient_plus_chr_data = orient_plus_chr_data.append(self.chr_data[chr][['chr', 'start', 'end', 'plus_orientation']])
             orient_minus_chr_data = orient_minus_chr_data.append(self.chr_data[chr][['chr', 'start', 'end', 'minus_orientation']])
-        orient_plus_chr_data.to_csv(out_folder + "orient_plus", sep='\t', header=False)
-        orient_minus_chr_data.to_csv(out_folder + "orient_minus", sep='\t', header=False)
+        orient_plus_chr_data.to_csv(out_folder + "orient_plus.bedGraph", sep='\t', header=False, index=False)
+        orient_minus_chr_data.to_csv(out_folder + "orient_minus.bedGraph", sep='\t', header=False, index=False)
 
 
     def delete_region(self,interval):

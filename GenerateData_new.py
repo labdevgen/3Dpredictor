@@ -19,7 +19,7 @@ def generate_data(params):
 
 logging.basicConfig(level=logging.DEBUG)
 input_folder ="D:/Users/Polina/3Dpredictor/input/"
-output_folder = "D:/Users/Polina/3Dpredictor/data/"
+output_folder = "D:/Users/Polina/3Dpredictor/"
 #input_folder =  "input"
 
 params = Parameters()
@@ -29,7 +29,7 @@ params.mindist = 50001 #minimum distance between contacting regions
 #params.maxdist = params.window_size #max distance between contacting regions
 params.maxdist = 3000000
 params.binsize = 20000 #when binning regions with predictors, use this binsize
-params.sample_size = 500000 #how many contacts write to file
+params.sample_size = 500 #how many contacts write to file
 params.conttype = "contacts"
 
 training_file_name = "2018-09-17-trainingOrient.RandOnChr1."+str(params)+".txt"
