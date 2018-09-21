@@ -56,6 +56,7 @@ class ChiPSeqReader(FileReader): #Class process files with ChipSeq peaks
         #save
         self.chr_data = chr_data
         self.orient_data_real = False
+        self.only_orient_peaks = False
 
     def get_mock_data(self, N,interval, midpos):
         data = pd.DataFrame(columns=self.chr_data[interval.chr].columns)
@@ -255,6 +256,13 @@ class ChiPSeqReader(FileReader): #Class process files with ChipSeq peaks
             orient_minus_chr_data = orient_minus_chr_data.append(self.chr_data[chr][['chr', 'start', 'end', 'minus_orientation']])
         orient_plus_chr_data.to_csv(out_folder + "orient_plus.bedGraph", sep='\t', header=False, index=False)
         orient_minus_chr_data.to_csv(out_folder + "orient_minus.bedGraph", sep='\t', header=False, index=False)
+    def keep_only_with_orient_data(self):
+        if not self.orient_data_real:
+               logging.error("please set_orientation first")
+        for chr in self.chr_data:
+            self.chr_data[chr].query("plus_orientation!='0'|"
+                                     "minus_orientation!='0'",inplace=True)
+            self.only_orient_peaks = True
 
 
     def delete_region(self,interval):
