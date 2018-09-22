@@ -1,7 +1,9 @@
-import  os,sys
+import os,sys
 import logging
 import inspect
 from hashlib import sha224
+import numpy as np
+import pandas as pd
 
 class Interval:
     def __init__(self,chr,start,end=None,strand=0):
@@ -71,3 +73,41 @@ def str2hash(s,maxlen=100): # Used to hash long file names into shorter ones.
         h = str(int(sha224(s.encode()).hexdigest(), 16) % (10 ** 10))
         logging.getLogger(__name__).warning("Hashing string \n"+s+"\n to string "+h)
         return h
+
+def intersect_intervals(chr_int_data1, chr_int_data2): #input: chr_int_datas are 2 dictionaries of pd.dataframes where 1,2,3 columns == chr, start, end,
+                                                       #key of dict: chr output:
+                                                       #return chr_int_data2 with additional column 'intersection'. It is column with row indices
+                                                       #of chr_int_data1 which intersect intervals in chr_data_2
+    if len(chr_int_data1.keys()) != len(chr_int_data2):
+        logging.warning("Data have different number of chromosomes", chr_int_data1, '=', len(chr_int_data1.keys()), 'chrs', \
+                      chr_int_data2, '=', len(chr_int_data2), 'chrs')
+    result = {}
+    for chr in chr_int_data2.keys():
+        #if chr != 'chr4':
+         #   continue
+        #print(chr)
+        result[chr] = pd.DataFrame([])
+        if not chr in chr_int_data1:
+            logging.warning("Not intervals on chr", chr)
+            continue
+        st_end_i = np.searchsorted(chr_int_data1[chr]['end'], chr_int_data2[chr]['start'])
+        end_st_i = np.searchsorted(chr_int_data1[chr]['start'], chr_int_data2[chr]['end'])
+        assert np.all(end_st_i - st_end_i) <= 2  # check that end_st_i always larger than st_end_i
+        assert len(st_end_i) == len(end_st_i) == len(chr_int_data2[chr]['end'])
+        intersection_result = []
+        chr_intervals_result = []
+        for ind,val in enumerate(st_end_i):
+            if end_st_i[ind] == st_end_i[ind]:
+                logging.warning("do not intersect other data " + str(chr_int_data2[chr].iloc[ind]) + '      ' +  str(ind))
+            elif end_st_i[ind] > st_end_i[ind]:
+                chr_intervals_result += [chr_int_data2[chr].iloc[ind]] * (end_st_i[ind] - st_end_i[ind])
+                [intersection_result.append(index)for index in range(st_end_i[ind], end_st_i[ind])]
+            else:
+                logging.error('st_end_i larger then end_st_i')
+        #print(len(intersection_result), len(chr_intervals_result))
+        assert len(intersection_result) == len(chr_intervals_result)
+        chr_intervals_result = pd.DataFrame(chr_intervals_result)
+        chr_intervals_result["intersection"] = intersection_result
+        result[chr] = chr_intervals_result
+    return result
+
