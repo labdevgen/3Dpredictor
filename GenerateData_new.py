@@ -3,7 +3,8 @@ from ChiPSeqReader import ChiPSeqReader
 from Contacts_reader import ContactsReader
 from E1_Reader import E1Reader,fileName2binsize
 from shared import Interval, Parameters
-from DataGenerators import DataGenerator,E1PredictorGenerator,ChipSeqPredictorGenerator, \
+from DataGenerator import DataGenerator
+from PredictorGenerators import E1PredictorGenerator,ChipSeqPredictorGenerator, \
                             SmallChipSeqPredictorGenerator,SmallE1PredictorGenerator, SitesOrientPredictorGenerator, OrientBlocksPredictorGenerator
 
 logging.basicConfig(format='%(asctime)s %(name)s: %(message)s', datefmt='%I:%M:%S', level=logging.DEBUG)

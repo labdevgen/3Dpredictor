@@ -7,7 +7,7 @@ from matrix_plotter import MatrixPlotter
 from E1_Reader import E1Reader, fileName2binsize
 import matplotlib.pyplot as plt
 import numpy as np
-from DataGenerators import PredictorGenerator, SitesOrientPredictorGenerator
+from PredictorGenerators import PredictorGenerator, SitesOrientPredictorGenerator
 import pandas as pd
 import scipy.stats
 

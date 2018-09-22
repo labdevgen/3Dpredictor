@@ -101,7 +101,7 @@ def generate_test(sample_size):
 generate_test(sample_size)
 #generate_training(sample_size)
 
-from DataGenerators import DataGenerator,E1PredictorGenerator,ChipSeqPredictorGenerator, \
+from PredictorGenerators import DataGenerator,E1PredictorGenerator,ChipSeqPredictorGenerator, \
                             SmallChipSeqPredictorGenerator,SmallE1PredictorGenerator
 generator = DataGenerator()
 validation_file_name = validation_file_name + ".v1"
