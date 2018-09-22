@@ -1,9 +1,12 @@
-import os,sys
+import os,sys,numbers
 import logging
 import inspect
 from hashlib import sha224
 import numpy as np
 import pandas as pd
+import dicttoxml
+from xml.dom.minidom import parseString
+from collections import OrderedDict
 
 class Interval:
     def __init__(self,chr,start,end=None,strand=0):
@@ -66,8 +69,8 @@ class Parameters (object):
 
     def toXMLDict(self):
         members = inspect.getmembers(self, lambda a: not (inspect.isroutine(a)))
-        members = dict(a for a in members if not (a[0].startswith('__') and a[0].endswith('__')) and \
-                   (isinstance(a[1],int) or isinstance(a[1],str)))
+        members = OrderedDict(a for a in members if not (a[0].startswith('__') and a[0].endswith('__')) and \
+                   (isinstance(a[1], numbers.Number) or isinstance(a[1],str)))
         return members
 
 
@@ -123,5 +126,18 @@ def intersect_intervals(chr_int_data1, chr_int_data2, suppreseChrNumberCheck=Fal
 
 # File descriptions are saved in XML form
 # Description should be dict-like
-def write_file_description(description,fname="files_description"):
-    pass
+def write_XML(XML_report, header,fname="files_description.xml"):
+    dicttoxml.LOG.setLevel(logging.WARNING) #Get rid of tonnes of INFO/DEBUG logs from dicttoxml
+
+    #Add top level object representing file name
+    XML_report = {header:XML_report}
+    #get xml line without data-types
+    xml_line = dicttoxml.dicttoxml(XML_report,attr_type=False)
+    #convert to pretty string
+    to_write = parseString(xml_line).toprettyxml()
+
+    #write to file
+    f = open(fname,"a")
+    f.write(to_write)
+    f.close()
+

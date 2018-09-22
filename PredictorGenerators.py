@@ -8,9 +8,10 @@
 # Function contact2file aggregates these predictors and writes data to file
 
 import logging
-from shared import Interval
+import numbers
 import numpy as np
-import datetime
+from shared import Interval
+from collections import  OrderedDict
 
 class PredictorGenerator(object):
     def __init__(self,**kwargs):
@@ -50,17 +51,21 @@ class PredictorGenerator(object):
         pass
 
     def toXMLDict(self,contact):
-        res = {}
+        res = OrderedDict()
         res["name"] = self.name
-        res["predictors"] = self.get_header(contact)
+        res["predictors"] = ",".join(self.get_header(contact))
 
         # Here we want to run toXMLDict(contact) from each reader
         # but we don't know the reader variable name
-        for k,v in self.__dict__:
+        # To find reader we iter over all class fields
+        # Untill we get a member with .toXMLDict function avaliable
+        for k,v in self.__dict__.items():
             try:
-                res[k] = self.__dict__[v].toXMLDict()
+                res[k] = self.__dict__[v].toXMLDict
             except:
                 pass
+            if (isinstance(v, numbers.Number)): #Also save all numeric parameters
+                res[k] = v
         return res
 
 

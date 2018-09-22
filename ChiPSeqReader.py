@@ -1,7 +1,8 @@
 import logging,os
-from shared import Position,FileReader,intersect_intervals
 import pandas as pd
 import numpy as np
+from collections import OrderedDict
+from shared import Position,FileReader,intersect_intervals
 
 
 class ChiPSeqReader(FileReader): #Class process files with ChipSeq peaks
@@ -114,7 +115,7 @@ class ChiPSeqReader(FileReader): #Class process files with ChipSeq peaks
         try:
             self.chr_data
         except:
-            logging.error("Please read data first")
+            logging.getLogger(__name__).error("Please read data first")
             return None
 
         if not interval.chr in self.chr_data:
@@ -199,7 +200,14 @@ class ChiPSeqReader(FileReader): #Class process files with ChipSeq peaks
         logging.log(msg="Reading CTCF_orientation file " + orient_fname, level=logging.INFO)
 
         # set random temporary labels
-        Nfields = len(open(orient_fname).readline().strip().split())
+        if orient_fname.endswith(".gz"): #check gzipped files
+            import gzip
+            temp_file = gzip.open(orient_fname)
+        else:
+            temp_file = open(orient_fname)
+        Nfields = len(temp_file.readline().strip().split())
+        temp_file.close()
+
         names = list(map(str, list(range(Nfields))))
         data = pd.read_csv(orient_fname, sep="\t", header=None, names=names)  #TODO check: CTCF fname == CTCF orient fname.split('-')[0]
         # print(data)
@@ -314,8 +322,10 @@ class ChiPSeqReader(FileReader): #Class process files with ChipSeq peaks
         assert len(self.chr_data[interval.chr]) + debug == old_length
 
     def toXMLDict(self):
-        res = {"ProteinName":self.proteinName,"fname":self.fname,
-               "orintation_set":self.orient_data_real,
-                "only_orient_peaks_kept":self.only_orient_peaks}
+        res = OrderedDict([("ProteinName",self.proteinName),
+                           ("fname",self.fname),
+                           ("orintation_set",self.orient_data_real),
+                           ("only_orient_peaks_kept",self.only_orient_peaks)
+                            ])
         return res
 
