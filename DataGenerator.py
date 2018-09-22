@@ -41,8 +41,13 @@ class DataGenerator():
             logging.error("Empty contacts dataset")
             raise Exception("Empty contacs dataset")
         logging.getLogger(__name__).info("Writing data to file " + out_file_name)
-        self.out_file = open(out_file_name, "w")
+
+        #Save some variables if we would like to have stats later on
+        self.out_file_name = out_file_name
         self.predictor_generators = predictor_generators
+        self.contacts = contacts
+
+        self.out_file = open(out_file_name, "w")
 
         #Check that predictor names are unique
         pg_names = [pg.name for pg in predictor_generators]
@@ -64,3 +69,16 @@ class DataGenerator():
         for pg in predictor_generators:
             pg.print_warnings_occured_during_predGeneration()
         self.out_file.close()
+
+    def toXMLDict(self):
+        if len(self.contacts) == 0:
+            raise Exception("Trying to get stats on empty data")
+
+        res = {}
+        res["date"] = str(datetime.datetime.now())
+        res["class"] = self.__class__.__name__
+        res["output_file_name"] = self.out_file_name
+        for pg in self.predictor_generators:
+            res["Predictor generator " + pg.name] = pg.toDict(self.contacts.iloc[0,:])
+        res["N_contacts"] = len(self.contacts)
+        return res

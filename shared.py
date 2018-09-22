@@ -64,6 +64,13 @@ class Parameters (object):
                    (isinstance(a[1],int) or isinstance(a[1],str))]
         return ".".join(map(str,members))
 
+    def toXMLDict(self):
+        members = inspect.getmembers(self, lambda a: not (inspect.isroutine(a)))
+        members = dict(a for a in members if not (a[0].startswith('__') and a[0].endswith('__')) and \
+                   (isinstance(a[1],int) or isinstance(a[1],str)))
+        return members
+
+
 def str2hash(s,maxlen=100): # Used to hash long file names into shorter ones.
                             # Long fnames (> ~150 characters) are not supported by Windows
                             # This converts long part of the filename "s" which is >100 chars to short hash <= 9 chars
@@ -114,3 +121,7 @@ def intersect_intervals(chr_int_data1, chr_int_data2, suppreseChrNumberCheck=Fal
         result[chr] = chr_intervals_result
     return result
 
+# File descriptions are saved in XML form
+# Description should be dict-like
+def write_file_description(description,fname="files_description"):
+    pass

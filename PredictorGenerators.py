@@ -49,6 +49,20 @@ class PredictorGenerator(object):
     def print_warnings_occured_during_predGeneration(self):
         pass
 
+    def toXMLDict(self,contact):
+        res = {}
+        res["name"] = self.name
+        res["predictors"] = self.get_header(contact)
+
+        # Here we want to run toXMLDict(contact) from each reader
+        # but we don't know the reader variable name
+        for k,v in self.__dict__:
+            try:
+                res[k] = self.__dict__[v].toXMLDict()
+            except:
+                pass
+        return res
+
 
 class ChipSeqPredictorGenerator(PredictorGenerator):
     def __init__(self, chipSeq_reader, binsize, window_size, **kwargs):

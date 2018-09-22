@@ -288,3 +288,10 @@ class ChiPSeqReader(FileReader): #Class process files with ChipSeq peaks
         old_length = len(self.chr_data[interval.chr])
         self.chr_data[interval.chr].drop(data.index[st:en],inplace=True)
         assert len(self.chr_data[interval.chr]) + debug == old_length
+
+    def toXMLDict(self):
+        res = {"ProteinName":self.proteinName,"fname":self.fname,
+               "orintation_set":self.orient_data_real,
+                "only_orient_peaks_kept":self.only_orient_peaks}
+        return res
+
