@@ -75,8 +75,9 @@ def str2hash(s,maxlen=100): # Used to hash long file names into shorter ones.
         return h
 
 def intersect_intervals(chr_int_data1, chr_int_data2): #input: chr_int_datas are 2 dictionaries of pd.dataframes where 1,2,3 columns == chr, start, end,
-                                                       #key of dict: chr output:
-                                                       #return chr_int_data2 with additional column 'intersection'. It is column with row indices
+                                                       #key of dict: chr
+                                                       #output:
+                                                       #returns chr_int_data2 with additional column 'intersection'. It is column with row indices
                                                        #of chr_int_data1 which intersect intervals in chr_data_2
     if len(chr_int_data1.keys()) != len(chr_int_data2):
         logging.warning("Data have different number of chromosomes", chr_int_data1, '=', len(chr_int_data1.keys()), 'chrs', \

@@ -1,5 +1,6 @@
 import logging
 from ChiPSeqReader import ChiPSeqReader
+from RNASeqReader import RNAseqReader
 from Contacts_reader import ContactsReader
 from shared import Interval,intersect_intervals
 from matrix_plotter import MatrixPlotter
@@ -9,8 +10,6 @@ import numpy as np
 from DataGenerators import PredictorGenerator, SitesOrientPredictorGenerator
 import pandas as pd
 import scipy.stats
-
-
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -125,7 +124,7 @@ def test_sites_orientation():
     print(ctcf_reader.chr_data['chr1'])
     #print(ctcf_reader.chr_data['chr4'].iloc[23])
     #print(ctcf_reader.chr_data['chr4'])
-    #ctcf_reader.get_bed_files_with_orientation("D:/Users/Polina/3Dpredictor/data/")
+    #ctcf_reader.export2bed_files_with_orientation("D:/Users/Polina/3Dpredictor/data/")
     result = ctcf_reader.get_only_with_orient_data()
     print(result.chr_data['chr1'])
     print(result.chr_data['chr1'].query("start=='4516413'"))
@@ -166,6 +165,14 @@ def correlation():
     print(training_data['CTCF_W'])
     res = scipy.stats.spearmanr(training_data['CTCForient_W_sumSigVal'], training_data['CTCF_W'])
     print(res)
+
+def test_RNAseqReader():
+    RNA = RNAseqReader("input/GSE95111_genes.fpkm_table.txt.pre.txt")
+    RNA.read_file(rename={"Gene name":"gene",
+                          "Gene start (bp)":"stat",
+                          "Gene end (bp)":"end",
+                          ""})
+
 
 #correlation()
 #test_get_interval()

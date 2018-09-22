@@ -12,7 +12,8 @@ class ChiPSeqReader(FileReader): #Class process files with ChipSeq peaks
             self.proteinName = os.path.basename(fname)
         else:
             self.proteinName = name
-
+        self.orient_data_real = False
+        self.only_orient_peaks = False
         super(ChiPSeqReader,self).__init__(fname)
 
     #check duplicates, set mids, and split by chromosomes
@@ -67,9 +68,8 @@ class ChiPSeqReader(FileReader): #Class process files with ChipSeq peaks
         data["mids"] = [midpos] * N
         data["sigVal"] = [0] * N
         data["chr"] = [interval.chr] * N
-        if self.orient_data_real:
-            data["plus_orientation"] = [0] * N
-            data["minus_orientation"] = [0] * N
+        data["plus_orientation"] = [0] * N
+        data["minus_orientation"] = [0] * N
         return data
 
     def get_nearest_peaks(self,point,side,N,N_is_strict=True):
@@ -223,7 +223,9 @@ class ChiPSeqReader(FileReader): #Class process files with ChipSeq peaks
         return chr_data
 
 
-    def set_sites_orientation(self, orient_fname):
+    def set_sites_orientation(self, orient_fname): #Set orientation of sites based on gimmeMotifsData
+                                    #It will fill plus_orient_data and minus_orient_data cols
+                                    #And set orient_data_real to True
         try:
             self.chr_data
         except:
@@ -250,7 +252,7 @@ class ChiPSeqReader(FileReader): #Class process files with ChipSeq peaks
             self.chr_data[chr].iloc[minus_row_list, minus_col_ind] = list(minus_orient_data["score"])
         self.orient_data_real = True
 
-    def get_bed_files_with_orientation(self, out_folder):
+    def export2bed_files_with_orientation(self, out_folder): #Export data in bed-graph format
         if not self.orient_data_real:
             logging.error('please set orientation first')
         orient_plus_chr_data = pd.DataFrame()
