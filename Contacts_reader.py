@@ -11,9 +11,9 @@ class ContactsReader():
         self.binsize = -1
 
     def read_file(self,chr,fname):
-        logging.info("Reading file "+fname)
+        logging.getLogger(__name__).info("Reading file "+fname)
         if chr in self.data:
-            logging.warning("Chromosome "+chr+" will be rewritten")
+            logging.getLogger(__name__).warning("Chromosome "+chr+" will be rewritten")
 
         data = pd.read_csv(fname, delimiter="\t", names=["contact_st", "contact_en", "contact_count"])
         data.dropna(inplace=True)
@@ -27,7 +27,7 @@ class ContactsReader():
                           +str(self.binsize))
         elif self.binsize == -1:
             self.binsize = binsize
-            logging.info("Bin Size set to "+str(binsize))
+            logging.getLogger(__name__).info("Bin Size set to "+str(binsize))
 
         #data.sort_values(by=["st","en"],inplace=True)
         self.data[chr] = data
@@ -60,9 +60,9 @@ class ContactsReader():
         #Drop contacts withing interval
         bad_ids = data.query("@interval.start < contact_st < @interval.end | "
             + "@interval.start < contact_en < @interval.end").index #either start or end in region to be removed
-        #logging.info (bad_ids)
+        #logging.getLogger(__name__).info (bad_ids)
         data.drop(bad_ids,inplace=True)
-        #logging.info(data.head())
+        #logging.getLogger(__name__).info(data.head())
 
         self.data[interval.chr] = data
         #change coordinates
@@ -72,9 +72,9 @@ class ContactsReader():
         new_starts = data.contact_st.apply(lambda x: (x - interval.len) if (x >= interval.start) else x).values
         new_ends = data.contact_en.apply(lambda x: (x - interval.len) if (x >= interval.start) else x).values
         new_dist = new_ends - new_starts
-        #logging.debug(data.iloc[new_dist < 0,:].head())
-        #logging.debug(new_starts[new_dist < 0])
-        #logging.debug(new_ends[new_dist < 0])
+        #logging.getLogger(__name__).debug(data.iloc[new_dist < 0,:].head())
+        #logging.getLogger(__name__).debug(new_starts[new_dist < 0])
+        #logging.getLogger(__name__).debug(new_ends[new_dist < 0])
 
         assert np.all(new_dist >= 0)
 

@@ -52,7 +52,7 @@ class MatrixPlotter(): #A class that plot fragments of heatmap
             dist = dist[np.nonzero(dist)]
             assert len(dist) > 0
             binsize = min(dist)
-            logging.info("Using binsize "+str(binsize))
+            logging.getLogger(__name__).info("Using binsize "+str(binsize))
 
         Interval_size_bins = (interval.end - interval.start) // binsize + 1
         matrix = np.zeros(shape = (Interval_size_bins , Interval_size_bins ))
@@ -67,7 +67,7 @@ class MatrixPlotter(): #A class that plot fragments of heatmap
             with_control = False
 
         if with_control:
-            logging.debug("Running with control")
+            logging.getLogger(__name__).debug("Running with control")
             control = self.control.query("@interval.start <= contact_st <= @interval.end &"
                                    "@interval.start <= contact_en <= @interval.end")
             control = self.convert2binned(control, interval, binsize)
@@ -95,8 +95,8 @@ class MatrixPlotter(): #A class that plot fragments of heatmap
         labels = []
         curr_pos = 0
         increment =  self.interval_size_bins // maxTicksNumber
-        logging.debug(str(increment))
-        logging.debug(str(self.interval_size_bins))
+        logging.getLogger(__name__).debug(str(increment))
+        logging.getLogger(__name__).debug(str(self.interval_size_bins))
         while curr_pos <= self.interval_size_bins:
             labels.append(str(self.interval.chr) + ":" + str((self.interval.start + curr_pos*self.binsize) // 1000) + "K")
             pos.append(curr_pos)

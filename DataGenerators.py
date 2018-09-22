@@ -38,7 +38,7 @@ class DataGenerator():
         if len(contacts) == 0:
             logging.error("Empty contacts dataset")
             raise
-        logging.info("Writing data to file " + out_file_name)
+        logging.getLogger(__name__).info("Writing data to file " + out_file_name)
         self.out_file = open(out_file_name, "w")
         self.predictor_generators = predictor_generators
 
@@ -53,7 +53,7 @@ class DataGenerator():
         self.N_fields = len(header)
         self.out_file.write("\t".join(header) + "\n")
 
-        logging.debug("Going to generate predictors for "+str(len(contacts))+" contacts")
+        logging.getLogger(__name__).debug("Going to generate predictors for "+str(len(contacts))+" contacts")
         contacts.apply(contact2file, DataGeneratorObj=self, axis="columns")
         for pg in predictor_generators:
             pg.print_warnings_occured_during_predGeneration()

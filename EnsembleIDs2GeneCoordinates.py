@@ -21,6 +21,6 @@ FinalData = pd.merge(left=inp_data,right=query,how="inner",
                      validate="1:1")
 
 if len(FinalData) != len(inp_data):
-    logging.warning("Some data missing in Ensemble, "+str(len(inp_data)-len(FinalData)) + " out of "+str(len(inp_data)))
+    logging.getLogger(__name__).warning("Some data missing in Ensemble, "+str(len(inp_data)-len(FinalData)) + " out of "+str(len(inp_data)))
 
 FinalData.to_csv(input_file+"pre.txt",sep="\t",index=False)

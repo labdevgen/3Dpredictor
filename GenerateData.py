@@ -27,7 +27,7 @@ def contacts_to_file(contacts_sample,ctcf_reader,eig_reader,out_file_name,window
         file.write("\t".join(map(str, line)) + "\n")
 
     #loop over contacts, calculate predictors, write to file
-    logging.info("Writing data to file "+out_file_name)
+    logging.getLogger(__name__).info("Writing data to file "+out_file_name)
     file = open(out_file_name,"w")
     header = ["chr","contact_st","contact_en","window_start","window_end",
                 "contacts_relative_start","contacts_relative_end","contact_count"]
@@ -55,7 +55,7 @@ training_file_name = "training.RandOnChr1"+".".join(map(str,[window_size,mindist
 validation_file_name = "validating.38Mb_58MbOnChr2"+".".join(map(str,[window_size,mindist,maxdist,binsize,sample_size]))+".txt"
 input_folder = "D:/Lab Archive/ForChrRearrModel/input/"
 #input_folder =  "input"
-logging.debug("Using input folder "+input_folder)
+logging.getLogger(__name__).debug("Using input folder "+input_folder)
 
 #Read contacts data
 contacts_reader = ContactsReader()
@@ -81,7 +81,7 @@ def generate_training(sample_size):
                       contacts_reader.get_max_contact_position(chrName))
     contacts = contacts_reader.get_contacts(region,mindist=mindist,maxdist=maxdist)
     sample_size = min(sample_size,len(contacts))
-    logging.info("Using sample size "+str(sample_size))
+    logging.getLogger(__name__).info("Using sample size "+str(sample_size))
     contacts_sample = contacts.sample(n=sample_size)
     contacts_to_file(contacts_sample,ctcf_reader,eig_reader,
                      training_file_name,window_size,binsize)
@@ -92,7 +92,7 @@ def generate_test(sample_size):
     region = Interval("chr2",39800000,40000000)
     contacts = contacts_reader.get_contacts(region,mindist=mindist,maxdist=maxdist)
     sample_size = min(sample_size,len(contacts))
-    logging.info("Using sample size "+str(sample_size))
+    logging.getLogger(__name__).info("Using sample size "+str(sample_size))
     contacts_sample = contacts#.sample(n=sample_size)
     contacts_to_file(contacts_sample,ctcf_reader,eig_reader,
                      validation_file_name,window_size,binsize)

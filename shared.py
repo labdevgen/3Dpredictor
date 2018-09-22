@@ -69,5 +69,5 @@ def str2hash(s,maxlen=100): # Used to hash long file names into shorter ones.
         return s
     else:
         h = str(int(sha224(s.encode()).hexdigest(), 16) % (10 ** 10))
-        logging.warning("Hashing string \n"+s+"\n to string "+h)
+        logging.getLogger(__name__).warning("Hashing string \n"+s+"\n to string "+h)
         return h

@@ -23,7 +23,7 @@ def train(model,inp_file,featuresSubset):
 #        if i.startswith("CTCF") or i.startswith("E1"):
             dtypes[i] = float32
 
-    logging.info("Reading data")
+    logging.getLogger(__name__).info("Reading data")
     input_data = pd.read_csv(inp_file,delimiter="\t",dtype=dtypes,header=1,names=header)
 
     if logFunc:
@@ -34,7 +34,7 @@ def train(model,inp_file,featuresSubset):
     input_data.drop(["contact_count","chr"],axis = 1,inplace=True)
     input_data = input_data[[i for i in input_data.columns.get_values() if i in featuresSubset]] #preserve order of columns
 
-    logging.info("Fitting model")
+    logging.getLogger(__name__).info("Fitting model")
     model.fit(input_data,results)
     return model
 
@@ -77,7 +77,7 @@ def validate(model,inp_file,featuresSubset,prefix):
         plt.show()
         plt.clf()
     except:
-        logging.warning("Feature importances is not avaliable for the model "+str(model.__class__.__name__))
+        logging.getLogger(__name__).warning("Feature importances is not avaliable for the model "+str(model.__class__.__name__))
 
     mp = MatrixPlotter()
     input_data = pd.read_csv(inp_file,delimiter="\t") #read again to get chr and contacts count
@@ -136,7 +136,7 @@ def trainAndValidate(lm, training_file=None, validation_file=None, featuresSubse
 
     model_file = training_file + ".model"+str2hash(prefix)+".dump"
 
-    logging.info("Using following features: "+" ".join(featuresSubset))
+    logging.getLogger(__name__).info("Using following features: "+" ".join(featuresSubset))
 
     if os.path.exists(model_file) or rewriteModel:
         model = pickle.load(open(model_file,"rb"))
@@ -144,7 +144,7 @@ def trainAndValidate(lm, training_file=None, validation_file=None, featuresSubse
         model = train(lm,training_file,featuresSubset=featuresSubset)
         pickle.dump(model,open(model_file,"wb"))
 
-    logging.info("Validating model")
+    logging.getLogger(__name__).info("Validating model")
     validate(model,validation_file,featuresSubset=featuresSubset,prefix=prefix)
 
 #lm = linear_model.LinearRegression()

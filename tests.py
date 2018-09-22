@@ -14,17 +14,17 @@ def test_ctcf(): #comment
     ctcf_reader = ChiPSeqReader("D:/Lab Archive/ForChrRearrModel/input/Hepat_WT_MboI_rep1-rep2.IDR0.05.filt.narrowPeak")
     ctcf_reader.read_file()
     d = ctcf_reader.get_interval(Interval("chr1",3448235,3456306))
-    #logging.info(d)
+    #logging.getLogger(__name__).info(d)
     d1 = ctcf_reader.get_binned_interval(Interval("chr1",3448200,3457000),binsize=500)
-    logging.info(d1)
+    logging.getLogger(__name__).info(d1)
     #d1 = ctcf_reader.get_nearest_peaks(Interval("chr1",3025000,3025000),N=5,side="left")
-    logging.info(d1)
+    logging.getLogger(__name__).info(d1)
 
 def test_contacts():
     contacts_reader = ContactsReader()
     contacts_reader.read_files(["C:/Users/FishmanVS/Desktop/RNF3D_beds/chr1.Hepat.contacts"])
     c = contacts_reader.get_contacts(Interval("chr1",5000000,6000000))
-    logging.info(c)
+    logging.getLogger(__name__).info(c)
 
 def test_matrix_plot():
     contacts_reader = ContactsReader()
@@ -54,40 +54,40 @@ def test_E1reader():
 def test_ChipSeqRemoval():
     ctcf_reader = ChiPSeqReader("input/Hepat_WT_MboI_rep1-rep2.IDR0.05.filt.narrowPeak")
     ctcf_reader.read_file()
-    logging.info("------------Before deleting:")
+    logging.getLogger(__name__).info("------------Before deleting:")
 
     interval = Interval("chr1",3448235,3700000)
-    logging.info(interval)
+    logging.getLogger(__name__).info(interval)
     d = ctcf_reader.get_interval(interval)
-    logging.info(d)
+    logging.getLogger(__name__).info(d)
 
     interval = Interval("chr1", 3448235, 3900000)
-    logging.info(interval)
+    logging.getLogger(__name__).info(interval)
     d = ctcf_reader.get_interval(Interval("chr1",3448235,3900000))
-    logging.info(d)
+    logging.getLogger(__name__).info(d)
 
-    logging.info("----after deleting----")
+    logging.getLogger(__name__).info("----after deleting----")
     ctcf_reader.delete_region(Interval("chr1",3454000,3611129))
 
     interval = Interval("chr1",3448235,3700000)
-    logging.info(interval)
+    logging.getLogger(__name__).info(interval)
     d = ctcf_reader.get_interval(interval)
-    logging.info(d)
+    logging.getLogger(__name__).info(d)
 
     interval = Interval("chr1", 3448235, 3900000)
-    logging.info(interval)
+    logging.getLogger(__name__).info(interval)
     d = ctcf_reader.get_interval(Interval("chr1",3448235,3900000))
-    logging.info(d)
+    logging.getLogger(__name__).info(d)
 
 
 def test_ContactsRemoval():
     contacts_reader = ContactsReader()
     contacts_reader.read_files(["input/chr1.5MB.Hepat.contacts"])
     c = contacts_reader.get_contacts(Interval("chr1",5000000,5150000))
-    logging.info(c)
+    logging.getLogger(__name__).info(c)
     contacts_reader.delete_region(Interval("chr1",5030000,5100000))
     c = contacts_reader.get_contacts(Interval("chr1",5000000,5150000))
-    logging.info(c)
+    logging.getLogger(__name__).info(c)
 
 
 #test_E1reader()

@@ -11,7 +11,7 @@ logging.basicConfig(format='%(asctime)s %(name)s: %(message)s', datefmt='%I:%M:%
 def generate_data(params):
     contacts = params.contacts_reader.get_contacts(params.interval,mindist=params.mindist,maxdist=params.maxdist)
     sample_size = min(params.sample_size,len(contacts))
-    logging.info("Using sample size "+str(sample_size))
+    logging.getLogger(__name__).info("Using sample size "+str(sample_size))
     contacts_sample = contacts.sample(n=sample_size)
     assert len(contacts_sample) == sample_size
     generator = DataGenerator()
@@ -33,7 +33,7 @@ params.conttype = "contacts"
 
 training_file_name = "2018-08-23-trainingSmall.RandOnChr1."+str(params)+".txt"
 validation_file_name = "validatingSmall."+str(params)+".txt"
-logging.debug("Using input folder "+input_folder)
+logging.getLogger(__name__).debug("Using input folder "+input_folder)
 
 #Read contacts data
 params.contacts_reader = ContactsReader()
@@ -85,7 +85,7 @@ for interval in [#Interval("chr10", 59000000, 62000000),
                  #Interval("chr2", 47900000, 53900000),
                  #Interval("chr2", 85000000, 92500000),
                  Interval("chr6", 100000000, 110000000)]:
-    logging.info("Generating validation dataset for interval "+str(interval))
+    logging.getLogger(__name__).info("Generating validation dataset for interval "+str(interval))
     params.interval = interval
     params.out_file = params.interval.toFileName() + validation_file_name
     generate_data(params)
@@ -94,6 +94,6 @@ for object in [params.contacts_reader]+params.pgs:
     lostInterval = Interval("chr6",103842568,104979840)
     object.delete_region(lostInterval)
     params.interval = Interval("chr6",100000000,109000000)
-    #logging.info("Saving data to file "+params.interval.toFileName() + "DEL." + lostInterval.toFileName()+validation_file_name)
+    #logging.getLogger(__name__).info("Saving data to file "+params.interval.toFileName() + "DEL." + lostInterval.toFileName()+validation_file_name)
 params.out_file = params.interval.toFileName() + "DEL." + lostInterval.toFileName()+validation_file_name
 #generate_data(params)

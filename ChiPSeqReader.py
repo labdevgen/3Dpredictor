@@ -8,12 +8,29 @@ class ChiPSeqReader(FileReader): #Class process files with ChipSeq peaks
     def __init__(self,fname,name=None):
         self.data = None
         if name == None:
-            logging.warning("Using filename as a name for predictor")
+            logging.getLogger(__name__).warning("Using filename as a name for predictor")
             self.proteinName = os.path.basename(fname)
         else:
             self.proteinName = name
 
         super(ChiPSeqReader,self).__init__(fname)
+
+    #check duplicates, set mids, and split by chromosomes
+    def process_data(self,data):
+        #check duplicats
+        duplicated = data.duplicated(subset = ["chr","start","end"])
+        if sum(duplicated) > 0:
+            logging.getLogger(__name__).warning("Duplicates by genomic positions found in file "+self.fname) #TODO check why this happens
+        data.drop_duplicates(inplace=True) #Keep peaks with same coordinate and different sigVal, if such peask exist
+        del duplicated
+
+        #get peak mids
+        data["mids"] = (data["start"] + data["end"]) // 2
+
+        #convert to chr-dict
+        chr_data = dict([(chr,data[data["chr"]==chr]) \
+                         for chr in pd.unique(data["chr"])])
+        return chr_data
 
     def read_file(self): # store CTCF peaks as sorted pandas dataframe
         logging.log(msg="Reading CTCF file "+self.fname, level=logging.INFO)
@@ -28,22 +45,10 @@ class ChiPSeqReader(FileReader): #Class process files with ChipSeq peaks
         data.rename(columns={"0":"chr","1":"start","2":"end","6":"sigVal"},
                     inplace=True)
 
-        #check duplicats
-        duplicated = data.duplicated(subset = ["chr","start","end"])
-        if sum(duplicated) > 0:
-            logging.warning("Duplicates by genomic positions found in file "+self.fname) #TODO check why this happens
-        data.drop_duplicates(inplace=True) #Keep peaks with same coordinate and different sigVal, if such peask exist
-        del duplicated
-
-        #get peak mids
-        data["mids"] = (data["start"] + data["end"]) // 2
-
-        #convert to chr-dict
-        chr_data = dict([(chr,data[data["chr"]==chr]) \
-                         for chr in pd.unique(data["chr"])])
+        chr_data = self.process_data(data)
         del data
 
-        logging.warning(
+        logging.getLogger(__name__).warning(
             msg="Filling orientation with mock values!") #TODO fill with real data
 
         for data in chr_data.values():

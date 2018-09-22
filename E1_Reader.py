@@ -34,7 +34,7 @@ class E1Reader():
         E1["mid"] = np.arange(len(E1))*self.binsize + (self.binsize // 2)
         E1["chr"] = [chrName]*len(E1)
         if chrName in self.data:
-            logging.warning("Overwriting data for chr"+chrName)
+            logging.getLogger(__name__).warning("Overwriting data for chr"+chrName)
         self.data[chrName] = E1
 
     def read_files(self,fnames,**kwargs):
@@ -44,7 +44,7 @@ class E1Reader():
             if "binSizeFromName" in kwargs:
                 binsize = kwargs["binSizeFromName"](file)
                 if self.binsize != 0 and self.binsize != binsize:
-                    logging.warning("Binsize in file "+file
+                    logging.getLogger(__name__).warning("Binsize in file "+file
                                         +" does not match binsize "+str(binsize))
                     raise
                 self.binsize = binsize
@@ -56,9 +56,9 @@ class E1Reader():
         data = self.data[interval.chr]
         if start_id >= len(data):
             logging.error("Begining of the interval over the chromsome end")
-            logging.debug(str(interval))
-            logging.debug("start id "+str("start_id"))
-            logging.debug("binsize "+str(self.binsize))
+            logging.getLogger(__name__).debug(str(interval))
+            logging.getLogger(__name__).debug("start id "+str("start_id"))
+            logging.getLogger(__name__).debug("binsize "+str(self.binsize))
             raise
         end_id = start_id + ((interval.end - interval.start) // self.binsize)
         if end_id == start_id:
@@ -81,17 +81,17 @@ class E1Reader():
                         level=verbose)
             logging.log(msg=str(interval),level=verbose)
             self.warnings["End of the interval over the chromsome end"] += 1
-            #logging.debug("start id "+str("start_id"))
-            #logging.debug("end id "+str("end_id"))
-            #logging.debug("binsize "+str(self.binsize))
+            #logging.getLogger(__name__).debug("start id "+str("start_id"))
+            #logging.getLogger(__name__).debug("end id "+str("end_id"))
+            #logging.getLogger(__name__).debug("binsize "+str(self.binsize))
             result = data.iloc[start_id:len(data),:]
 
             if make_consistent_bins:
                 #add mock data
                 mock_len = (end_id - start_id - len(result))
                 if mock_len <= 0:
-                    logging.debug("Mock len = "+str(mock_len))
-                    logging.debug(" ".join(["Start",str(start_id),"End",str(end_id),"Len",
+                    logging.getLogger(__name__).debug("Mock len = "+str(mock_len))
+                    logging.getLogger(__name__).debug(" ".join(["Start",str(start_id),"End",str(end_id),"Len",
                                            str(len(data)),str(interval.len // self.binsize)]))
                 assert mock_len > 0
                 mock = pd.DataFrame(columns=result.columns)
