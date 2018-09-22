@@ -109,7 +109,7 @@ e1pg = E1PredictorGenerator(eig_reader,window_size)
 ctcfpg = ChipSeqPredictorGenerator(ctcf_reader, binsize, window_size)
 region = Interval("chr2", 39800000, 40000000)
 contacts = contacts_reader.get_contacts(region, mindist=mindist, maxdist=maxdist)
-print("----------",len(contacts))
+#print("----------",len(contacts))
 generator.contacts2file(contacts,[ctcfpg,e1pg],validation_file_name+".v2")
 
 window_size = 12500

@@ -269,13 +269,37 @@ class ChiPSeqReader(FileReader): #Class process files with ChipSeq peaks
             orient_minus_chr_data = orient_minus_chr_data.append(self.chr_data[chr][['chr', 'start', 'end', 'minus_orientation']])
         orient_plus_chr_data.to_csv(out_folder + "orient_plus.bedGraph", sep='\t', header=False, index=False)
         orient_minus_chr_data.to_csv(out_folder + "orient_minus.bedGraph", sep='\t', header=False, index=False)
+    #keep only sites with orientation and replace orientation score by zero for the lowest score for this motif
     def keep_only_with_orient_data(self):
         if not self.orient_data_real:
                logging.error("please set_orientation first")
         for chr in self.chr_data:
-            self.chr_data[chr].query("plus_orientation!='0'|"
-                                     "minus_orientation!='0'",inplace=True)
-            self.only_orient_peaks = True
+            if chr != 'chr1':
+                continue
+            print(self.chr_data[chr])
+            print(self.chr_data[chr].query("plus_orientation!='0'&"
+                                     "minus_orientation!='0'"))
+            print(self.chr_data[chr].query("plus_orientation!='0'&"
+                                     "minus_orientation!='0'").index)
+            print(self.chr_data[chr].loc[27550])
+            #print(self.chr_data[chr])
+            line_names = self.chr_data[chr].query("plus_orientation!='0'&"
+                                     "minus_orientation!='0'").index
+            print(line_names[0])
+            for line_name in line_names:
+                if self.chr_data[chr].loc[line_name, 'plus_orientation'] > self.chr_data[chr].loc[line_name, 'minus_orientation']:
+                    self.chr_data[chr].loc[line_name, 'minus_orientation'] = 0
+                elif  self.chr_data[chr].loc[line_name, 'plus_orientation'] < self.chr_data[chr].loc[line_name, 'minus_orientation']:
+                    self.chr_data[chr].loc[line_name, 'plus_orientation'] = 0
+                else:
+                    logging.error('')
+            #print(line_indexes)
+            # for row in self.chr_data[chr].query("plus_orientation!='0'&"
+            #                          "minus_orientation!='0'"):
+            #     print('j')
+            # self.chr_data[chr].query("plus_orientation!='0'|"
+            #                          "minus_orientation!='0'",inplace=True)
+            # self.only_orient_peaks = True
 
 
     def delete_region(self,interval):
