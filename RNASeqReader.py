@@ -12,6 +12,16 @@ import logging
 from ChiPSeqReader import ChiPSeqReader
 from shared import intersect_intervals
 
+# TODO :
+# This class is inhereted from ChiPSeqReader
+# Some functions may work without rewriting, some are already rewritten
+# However some are specific to ChiPseq signals. They won't work correct now, and it makes
+# no scence to rewrite them because they are not planned to be used
+# in future, it's probably better to split ChiPSeqReader to 2 classes
+# one that would be parent for both ChiPSeqReader and RNAseqReader with shared functions
+# and one for specific ChiPseq funcs, mainly related to oriented data
+
+
 class RNAseqReader(ChiPSeqReader):
      #Init is inhereted from ChiPSeqReader
      #It will set self.data to None
@@ -49,12 +59,10 @@ class RNAseqReader(ChiPSeqReader):
         del data
 
 
-     def get_nearest_peaks(self):
-        logging.getLogger(__name__).error("Function not yet ready")
-        raise Exception("Not ready")
+     # def get_nearest_peaks(...): - Should work well when inhereted from ChiPSeq reader
 
-     def get_interval(self,interval): #Return all genes that intersect interval
-                        #Also counts partiall intersections
+     def get_interval(self, interval): #Return all genes that intersect interval
+                                       #Also counts partiall intersections
         search_query = pd.DataFrame({"start":[interval.start],"end":[interval.end]})
         result = intersect_intervals(self.chr_data,
                                      {interval.chr:search_query},
