@@ -167,11 +167,25 @@ def correlation():
     print(res)
 
 def test_RNAseqReader():
-    RNA = RNAseqReader("input/GSE95111_genes.fpkm_table.txt.pre.txt")
+    RNA = RNAseqReader(fname="input/GSE95111_genes.fpkm_table.txt.pre.txt")
     RNA.read_file(rename={"Gene name":"gene",
-                          "Gene start (bp)":"stat",
+                          "Gene start (bp)":"start",
                           "Gene end (bp)":"end",
-                          ""})
+                          "Chromosome/scaffold name":"chr",
+                          "shCtrl-1_0":"sigVal"},
+                  sep="\t")
+    logging.getLogger(__name__).info(iter(RNA.chr_data.values()).__next__().head())
+    for inteval2 in [Interval("chr1",36511867,36528237),
+                        Interval("chr1",36511866,36528237),
+                        Interval("chr1",36511867, 36528238),
+                        Interval("chr1",36511866, 36528238),
+                        Interval("chr1",36528238, 36528238),
+                        Interval("chr1",36528238, 36528239),
+                        Interval("chr1",36528138, 36528149),
+                        Interval("chr1",36500000, 36550000)]:
+        logging.info("------------------")
+        logging.info(inteval2)
+        logging.info(str(RNA.get_interval(inteval2)))
 
 
 #correlation()
@@ -180,7 +194,7 @@ def test_RNAseqReader():
 #test_get_nearest_peaks()
 #test_N_nearest_peaks_in_interval()
 #test_add_orientation()
-test_sites_orientation()
+#test_sites_orientation()
 #test_intersect_intervals()
 #test_matrix_plot()
 #test_contacts()
@@ -189,3 +203,4 @@ test_sites_orientation()
 #test_ChipSeqRemoval()
 #test_ContactsRemoval() #TODO it doesn't throw errors, however the behaviour was not thoroughly tested
 #test_read_orient()
+test_RNAseqReader()

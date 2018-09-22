@@ -13,7 +13,8 @@ dataset = mart["mmusculus_gene_ensembl"]
 query = dataset.query(attributes=['ensembl_gene_id',
                           'start_position',
                           'end_position',
-                          'external_gene_name'],
+                          'external_gene_name',
+                          'chromosome_name'],
                         )
 
 FinalData = pd.merge(left=inp_data,right=query,how="inner",

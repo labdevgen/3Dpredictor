@@ -16,7 +16,7 @@ class ChiPSeqReader(FileReader): #Class process files with ChipSeq peaks
         self.only_orient_peaks = False
         super(ChiPSeqReader,self).__init__(fname)
 
-    #check duplicates, set mids, and split by chromosomes
+    #check duplicates, set mids, and split by chromosomes and sort
     def process_data(self,data):
         #check duplicats
         duplicated = data.duplicated(subset=["chr", "start", "end"])
@@ -32,7 +32,14 @@ class ChiPSeqReader(FileReader): #Class process files with ChipSeq peaks
         #convert to chr-dict
         chr_data = dict([(chr,data[data["chr"]==chr]) \
                          for chr in pd.unique(data["chr"])])
-        return chr_data
+
+        #sort
+        sorted_data = {}
+        for chr,data in chr_data.items():
+            sorted_data[chr] = data.sort_values(by=["chr","start"])
+        del chr_data
+
+        return sorted_data
 
     def read_file(self): # store CTCF peaks as sorted pandas dataframe
         logging.log(msg="Reading CTCF file "+self.fname, level=logging.INFO)
@@ -53,8 +60,8 @@ class ChiPSeqReader(FileReader): #Class process files with ChipSeq peaks
         logging.getLogger(__name__).warning(
             msg="Filling orientation with mock values!") #TODO fill with real data
 
+        #Fill orientation with mock values
         for data in chr_data.values():
-            data.sort_values(by=["chr","start"],inplace=True)
             data["plus_orientation"] = [0]*len(data)
             data["minus_orientation"] = [0]*len(data)
 
