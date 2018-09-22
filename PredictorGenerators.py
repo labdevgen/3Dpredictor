@@ -162,7 +162,7 @@ class SitesOrientPredictorGenerator(PredictorGenerator):
         self.chipSeq_reader = chipSeq_reader
         if not self.chipSeq_reader.orient_data_real:
             logging.error('please set orientation first')
-            raise Exception("Cann't generate predictions")
+            raise Exception("Can't generate predictions")
 
     def get_header(self,contact):
         self.header = []
@@ -234,17 +234,17 @@ class OrientBlocksPredictorGenerator(PredictorGenerator): #this PG
                 logging.error('please get data with orientations only first')
     def get_header(self,contact):
         self.header = [self.name + "_W_NBlocks"]
-        print(self.header)
+        return self.header
     def get_predictors(self,contact):
         assert contact.contact_st < contact.contact_en
         N_blocks_W = 1
-        return N_blocks_W
+        return [N_blocks_W]
 
 class SitesOnlyOrientPredictorGenerator(PredictorGenerator):
-    def __init__(self, chipSeq_reader, window_size, **kwargs):
-            self.name = chipSeq_reader.proteinName + '_OrientBlock'
+    def __init__(self, chipSeq_reader, N_closest, **kwargs):
+            self.name = chipSeq_reader.proteinName + '_OnlyOrient'
             self.chipSeq_reader = chipSeq_reader
-            self.window_size = window_size
+            self.N_closest = N_closest
             if not self.chipSeq_reader.orient_data_real:
                 logging.error('please set orientation first')
             if not self.chipSeq_reader.only_orient_peaks:
@@ -256,18 +256,27 @@ class SitesOnlyOrientPredictorGenerator(PredictorGenerator):
                 for metric in ["+_orient", "-_orient","sigVal", "dist"]:
                     for i in range(self.N_closest):
                         self.header += [self.name + "_" + contact_point + "_" + side + "_" + metric + "_" + str(i)]
-        print(self.header)
-
+        return self.header
     def get_predictors(self,contact):
         assert contact.contact_st < contact.contact_en
-        Left_start_peaks = self.chipSeq_reader.get_only_with_orient_data.get_nearest_peaks(
+        #Peaks outside the window
+        Left_start_peaks = self.chipSeq_reader.get_nearest_peaks(
             Interval(contact.chr, contact.contact_st, contact.contact_st),
             N=self.N_closest, side="left")
         Left_start_peaks = Left_start_peaks["plus_orientation"].values.tolist() + \
                            Left_start_peaks["minus_orientation"].values.tolist() + Left_start_peaks["sigVal"].values.tolist() + \
                      (contact.contact_st - Left_start_peaks["mids"]).values.tolist()
+        Right_end_peaks = self.chipSeq_reader.get_nearest_peaks(
+            Interval(contact.chr, contact.contact_en, contact.contact_en), side="right", N=self.N_closest)
 
-        Window_peaks = self.chipSeq_reader.get_only_with_orient_data.get_N_peaks_near_interval_boundaries(
+        Right_end_peaks = Right_end_peaks["plus_orientation"].values.tolist() + \
+                          Right_end_peaks["minus_orientation"].values.tolist() + Right_end_peaks[
+                              "sigVal"].values.tolist() + \
+                          (Right_end_peaks["mids"] - contact.contact_en).values.tolist()
+        # Next statmetn will return list of 2 dataframes
+        # 1st DF with first N peaks on the right side of left interval boundary
+        # 2nd DF with first N peaks on the left side of right interval boundary
+        Window_peaks = self.chipSeq_reader.get_N_peaks_near_interval_boundaries(
             Interval(contact.chr, contact.contact_st, contact.contact_en),
             N=self.N_closest)
 
@@ -280,14 +289,5 @@ class SitesOnlyOrientPredictorGenerator(PredictorGenerator):
             "minus_orientation"].values.tolist() + \
                              Window_peaks[1]["sigVal"].values.tolist() + (
                              contact.contact_en - Window_peaks[1]["mids"]).values.tolist()
-
-
-        Right_end_peaks = self.chipSeq_reader.get_only_with_orient_data.get_nearest_peaks(
-            Interval(contact.chr, contact.contact_en, contact.contact_en), side="right", N=self.N_closest)
-
-        Right_end_peaks = Right_end_peaks["plus_orientation"].values.tolist() + \
-                          Right_end_peaks["minus_orientation"].values.tolist() + Right_end_peaks[
-                                "sigVal"].values.tolist() + \
-                            (Right_end_peaks["mids"] - contact.contact_en).values.tolist()
         predictors = Left_start_peaks + Right_start_peaks + Left_end_peaks + Right_end_peaks
         return predictors

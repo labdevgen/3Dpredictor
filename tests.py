@@ -125,9 +125,9 @@ def test_sites_orientation():
     #print(ctcf_reader.chr_data['chr4'].iloc[23])
     #print(ctcf_reader.chr_data['chr4'])
     #ctcf_reader.export2bed_files_with_orientation("D:/Users/Polina/3Dpredictor/data/")
-    result = ctcf_reader.get_only_with_orient_data()
-    print(result.chr_data['chr1'])
-    print(result.chr_data['chr1'].query("start=='4516413'"))
+    ctcf_reader.keep_only_with_orient_data()
+    print(ctcf_reader.chr_data['chr1'])
+    print(ctcf_reader.chr_data['chr1'].query("start=='4516413'"))
     #print(result)
 def test_N_nearest_peaks_in_interval():
     ctcf_reader = ChiPSeqReader(
@@ -194,7 +194,7 @@ def test_RNAseqReader():
 #test_get_nearest_peaks()
 #test_N_nearest_peaks_in_interval()
 #test_add_orientation()
-#test_sites_orientation()
+test_sites_orientation()
 #test_intersect_intervals()
 #test_matrix_plot()
 #test_contacts()
@@ -203,4 +203,4 @@ def test_RNAseqReader():
 #test_ChipSeqRemoval()
 #test_ContactsRemoval() #TODO it doesn't throw errors, however the behaviour was not thoroughly tested
 #test_read_orient()
-test_RNAseqReader()
+#test_RNAseqReader()

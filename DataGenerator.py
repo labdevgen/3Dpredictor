@@ -52,7 +52,6 @@ class DataGenerator():
         #Get header row and calculate number of fields
         header = ["chr", "contact_st", "contact_en", "contact_dist", "contact_count"]
         for pg in predictor_generators:
-            print(contacts.iloc[0, :])
             header += pg.get_header(contacts.iloc[0,:])
         #print(header)
         assert len(header) == len(set(header))
