@@ -130,7 +130,7 @@ class ChiPSeqReader(FileReader): #Class process files with ChipSeq peaks
         else:
             return min(len(self.chr_data[interval.chr]) - 1, left),max(0, right)
 
-    def get_N_nearest_peaks_in_interval(self,interval,N,N_is_strict=True ):
+    def get_N_peaks_near_interval_boundaries(self,interval,N,N_is_strict=True ):
         all_peaks_in_interval = self.get_interval(interval)
         if not self.orient_data_real:
                logging.error("please set_orientation first")

@@ -136,7 +136,7 @@ def test_N_nearest_peaks_in_interval():
     ctcf_reader.set_sites_orientation(
         "D:/Users/Polina/3Dpredictor/input/Hepat_WT_MboI_rep1-rep2_IDR0_05_filt_narrowPeak-orient_N10.bed")
     #print(ctcf_reader.chr_data['chr1'])
-    result = ctcf_reader.get_N_nearest_peaks_in_interval(interval = Interval("chr1", 100800000, 101125000 ), N=6)
+    result = ctcf_reader.get_N_peaks_near_interval_boundaries(interval = Interval("chr1", 100800000, 101125000 ), N=6)
     print('-----------------------------------------')
     #print(result)
     print('sumr', result[0].sigVal.sum())
