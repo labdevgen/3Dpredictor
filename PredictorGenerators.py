@@ -166,13 +166,21 @@ class SmallE1PredictorGenerator(E1PredictorGenerator):
     # Less predictors:
     # 1. E1 in +/- winsize region around contact ancors
     def get_header(self,*args):
-        self.header = [self.name + "_L",self.name + "_R"]
+        self.header = [self.name + "_L",self.name + "_R",
+                       self.name + "_N_Changes", self.name + "_SD"]
         return self.header
 
     def get_predictors(self,contact):
         intL,intM,intR = self.intevals_around_ancor(contact)
+        E1_M = self.eig_reader.get_E1inInterval(intM)["E1"].values
+        if len(E1_M) == 0:
+            E1_SD = 0
+            E1_N_Changes = 0
+        else:
+            E1_SD = np.std(E1_M) #STD error of E1 values
+            E1_N_Changes = sum(len(E1_M) - np.equal(np.sign(E1_M[1:]),np.sign(E1_M[:-1]))) #Number of changes of sign
         return list(map(np.average,[self.eig_reader.get_E1inInterval(intL)["E1"].tolist(),
-               self.eig_reader.get_E1inInterval(intR)["E1"].tolist()]))
+               self.eig_reader.get_E1inInterval(intR)["E1"].tolist()]))+[E1_N_Changes,E1_SD]
 
 class SitesOrientPredictorGenerator(PredictorGenerator):
     def __init__(self, chipSeq_reader, N_closest, **kwargs):

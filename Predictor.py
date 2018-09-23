@@ -11,9 +11,9 @@ import numpy as np
 import pandas as pd
 from numpy import int64,float32
 from sklearn import ensemble
-from shared import str2hash
+from shared import str2hash,Interval
 import matplotlib.pyplot as plt
-
+from matrix_plotter import MatrixPlotter
 
 
 
@@ -30,7 +30,7 @@ class Predictor(object):
             self.validation_file
         except:
             raise Exception("Please read validation data firts")
-        return str2hash(self.validation_file+".model_"+str(self))
+        return str2hash(os.path.basename(self.validation_file)+".model_"+str(self))
 
     def __repr__(self): # Representation should reflect all paramteres
                         # so that 2 models having same repr are identical
@@ -39,7 +39,7 @@ class Predictor(object):
         except:
             raise Exception("Please train model first")
         representation = ".".join([self.shortcut,
-                                   self.input_file,
+                                   os.path.basename(self.input_file),
                                    ".".join(self.predictors),
                                    str(self.apply_log),
                                    str(self.alg.__class__.__name__)
@@ -64,22 +64,35 @@ class Predictor(object):
     def train(self, alg = ensemble.GradientBoostingRegressor(), shortcut = "model", apply_log = True,
               dump = True, out_dir = "out/models/", *args, **kwargs):
 
+        try:
+            self.input_file
+            self.predictors
+        except:
+            raise Exception("Please read the data and set predictors first")
+
         self.predictors = sorted(self.predictors)
         self.alg = alg
         self.shortcut = shortcut
         self.apply_log = apply_log
 
         try:
-            self.contacts
-            self.predictors
+            del self.validation_file
+            del self.validation_data
         except:
-            raise Exception("Please read the data and set predictors first")
+            pass
 
+        # First try to load model dump
         self.representation = str(self)
         dump_path = os.path.join(out_dir,self.representation)
         if os.path.exists(dump_path):
+            logging.info("Found dump for model" + dump_path)
             return pickle.load(open(dump_path,"rb"))
         else:
+            # read data
+            self.input_data = self.read_file(self.inp_file)
+            self.contacts = np.array(self.input_data["contact_count"].values)
+
+            #fit new model
             if apply_log:
                 self.contacts = np.log(self.contacts)
             logging.getLogger(__name__).info("Fitting model")
@@ -90,12 +103,12 @@ class Predictor(object):
                 #Remove large variables before dump
                 del self.contacts
                 del self.input_data
-                pickle.dump(self,dump_path)
+                pickle.dump(self,open(dump_path,"wb"))
 
         #Save feature importances
         try:
-            plt.plot(range(len(model.feature_importances_)), model.feature_importances_, marker="o")
-            plt.xticks(range(len(model.feature_importances_)), self.predictors, rotation='vertical')
+            plt.plot(range(len(self.trained_model.feature_importances_)), self.trained_model.feature_importances_, marker="o")
+            plt.xticks(range(len(self.trained_model.feature_importances_)), self.predictors, rotation='vertical')
             plt.xlabel("Feature")
             plt.ylabel("Importance")
             plt.title("Features importance for model " + self.representation)
@@ -107,6 +120,7 @@ class Predictor(object):
                 "Features importance is not avaliable for the model " + str(model.__class__.__name__))
 
         logging.getLogger(__name__).info("Done")
+        return self
 
 
     def r2score(self,validation_data,predicted,out_dir):
@@ -155,7 +169,7 @@ class Predictor(object):
         self.validation_data = self.read_file(validation_file)
         if self.apply_log:
             self.validation_data["contact_count"] = np.log(self.validation_data["contact_count"].values)
-        self.predicted = self.trained_model.predict(validation_file[self.predictors])
+        self.predicted = self.trained_model.predict(self.validation_data[self.predictors])
         self.plot_matrix(self.validation_data,self.predicted,out_dir)
         self.r2score(self.validation_data,self.predicted,out_dir)
 
@@ -189,18 +203,16 @@ class Predictor(object):
         for i in header[fixed_dtypes_count:]:
             dtypes[i] = float32
 
-        logging.getLogger(__name__).info("Reading data")
+        logging.getLogger(__name__).info("Reading file "+inp_file)
         input_data = pd.read_csv(inp_file, delimiter="\t", dtype=dtypes,
                                  header=1, names=header)
         input_data.fillna(value=0, inplace=True) # Filling N/A values TODO check why N/A appear
         return input_data
 
-    # Read the data, generate DF with predictors and contacts
-    # Fill self.predictors, self.contacts and self.input_data
-    def read_data(self,inp_file):
-        self.input_data = self.read_file(inp_file)
+    # Read available predictors, drop non-predictors
+    # Fill self.predictors
+    def read_data_predictors(self,inp_file):
         header = self.get_avaliable_predictors(inp_file)
         self.predictors = [h for h in header if not h in self.constant_nonpredictors]
-        self.contacts = np.array(self.input_data["contact_count"].values)
         self.input_file = inp_file
 

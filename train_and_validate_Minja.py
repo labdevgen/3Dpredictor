@@ -9,7 +9,7 @@ validation_files = [
     "out/Interval_chr2_85000000_92500000validatingOrient.contacts.gz.1000000.50001.500000.25000.txt"
             ]
 predictor = Predictor()
-predictor.read_data(training_file)
-predictor.train(shortcut="all")
+predictor.read_data_predictors(training_file)
+trained_predictor = predictor.train(shortcut="all")
 for validation_file in validation_files:
-    predictor.validate(validation_file)
+    trained_predictor.validate(validation_file)
