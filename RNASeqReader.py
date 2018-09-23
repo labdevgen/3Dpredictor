@@ -1,7 +1,7 @@
 #Written by Minja, 2018-09
 #A reader for RNA seq data
 #It should store RNAseq data as Pandas DataFrame:
-#Chr -- Start -- End -- Value
+#Chr -- Start -- End -- sigVal -- gene
 #The difference with ChipSeq data is that
 #Genes can be long, so we cannot convert whole gene
 #To one point called "mid", as we did with ChipSeq
@@ -10,7 +10,7 @@ import pandas as pd
 import numpy as np
 import logging
 from ChiPSeqReader import ChiPSeqReader
-from shared import intersect_intervals
+from shared import intersect_intervals, intersect_with_interval
 
 # TODO :
 # This class is inhereted from ChiPSeqReader
@@ -61,14 +61,20 @@ class RNAseqReader(ChiPSeqReader):
 
      # def get_nearest_peaks(...): - Should work well when inhereted from ChiPSeq reader
 
-     def get_interval(self, interval): #Return all genes that intersect interval
-                                       #Also counts partiall intersections
+     #Depricated, use get_interval
+     def _get_interval(self, interval): #Return all genes that intersect interval
+                                       #Also counts partial intersections
         search_query = pd.DataFrame({"start":[interval.start],"end":[interval.end]})
         result = intersect_intervals(self.chr_data,
                                      {interval.chr:search_query},
                                      suppreseChrNumberCheck=True)
         gene_idxs = result[interval.chr]["intersection"]
         return self.chr_data[interval.chr].iloc[gene_idxs,:]
+
+     def get_interval(self, interval): #Return all genes that intersect interval
+                                       #Also counts partial intersections
+        return intersect_with_interval(self.chr_data,interval)
+
 
      def get_binned_interval(self):
         logging.getLogger(__name__).error("Function not yet ready")

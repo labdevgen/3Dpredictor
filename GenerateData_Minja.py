@@ -1,6 +1,7 @@
 import logging
 from ChiPSeqReader import ChiPSeqReader
 from Contacts_reader import ContactsReader
+from RNASeqReader import RNAseqReader
 from E1_Reader import E1Reader,fileName2binsize
 from shared import Interval, Parameters
 from DataGenerator import generate_data
@@ -23,8 +24,8 @@ params.mindist = 50001 #minimum distance between contacting regions
 #params.maxdist = params.window_size #max distance between contacting regions
 params.maxdist = 1000000
 #params.binsize = 20000 #when binning regions with predictors, use this binsize
-params.sample_size = 5 #how many contacts write to file
-params.conttype = "contacts.gz"
+params.sample_size = 500000 #how many contacts write to file
+params.conttype = "oe.gz"
 
 training_file_name = "2018-09-22-trainingOrient.RandOnChr1."+str(params)+".txt"
 validation_file_name = "validatingOrient."+str(params)+".txt"
@@ -52,16 +53,27 @@ NotOrientCTCFpg = SmallChipSeqPredictorGenerator(params.ctcf_reader,
                                                  N_closest=4)
 
 # Read CTCF data and drop sites w/o known orientation
-params.ctcf_reader_orintOnly = ChiPSeqReader(input_folder + "Hepat_WT_MboI_rep1-rep2.IDR0.05.filt.narrowPeak",
-                                                    name="CTCF")
-params.ctcf_reader_orintOnly.read_file()
-params.ctcf_reader_orintOnly.set_sites_orientation(
-    input_folder + "Hepat_WT_MboI_rep1-rep2_IDR0_05_filt_narrowPeak-orient_N10.bed.gz")
-params.ctcf_reader_orintOnly.keep_only_with_orient_data()
+#params.ctcf_reader_orintOnly = ChiPSeqReader(input_folder + "Hepat_WT_MboI_rep1-rep2.IDR0.05.filt.narrowPeak",
+#                                                    name="CTCF")
+#params.ctcf_reader_orintOnly.read_file()
+#params.ctcf_reader_orintOnly.set_sites_orientation(
+#    input_folder + "Hepat_WT_MboI_rep1-rep2_IDR0_05_filt_narrowPeak-orient_N10.bed.gz")
+#params.ctcf_reader_orintOnly.keep_only_with_orient_data()
+#onlyOrientCtcfpg = SitesOnlyOrientPredictorGenerator(params.ctcf_reader_orintOnly,
+#                                                     N_closest=3)
 
-onlyOrientCtcfpg = SitesOnlyOrientPredictorGenerator(params.ctcf_reader_orintOnly,
-                                                     N_closest=3)
-
+#Read RNA-Seq data
+params.RNAseqReader = RNAseqReader(fname="input/GSE95111_genes.fpkm_table.txt.pre.txt",
+                                   name="RNA")
+params.RNAseqReader.read_file(rename={"Gene name": "gene",
+                      "Gene start (bp)": "start",
+                      "Gene end (bp)": "end",
+                      "Chromosome/scaffold name": "chr",
+                      "shCtrl-1_0": "sigVal"},
+              sep="\t")
+RNAseqPG = SmallChipSeqPredictorGenerator(params.RNAseqReader,
+                                          window_size=params.window_size,
+                                          N_closest=3)
 
 #Read E1 data
 params.eig_reader = E1Reader()
@@ -73,7 +85,7 @@ params.eig_reader.read_files([input_folder + "chr1.Hepat.E1.50k",
 
 e1pg = SmallE1PredictorGenerator(params.eig_reader,params.window_size)
 
-params.pgs = [e1pg,onlyOrientCtcfpg,OrientCtcfpg,NotOrientCTCFpg]#,onlyOrientCtcfpg]
+params.pgs = [e1pg,OrientCtcfpg,NotOrientCTCFpg,RNAseqPG]#,onlyOrientCtcfpg]
 
 #Generate train
 trainChrName = "chr1"
@@ -86,7 +98,8 @@ generate_data(params)
 #Generate test
 for interval in [# Interval("chr10", 59000000, 62000000)]:
                   Interval("chr2", 47900000, 53900000),
-                  Interval("chr2", 85000000, 92500000)]:
+                  Interval("chr2", 85000000, 92500000),
+                  Interval("chr2",36000000,41000000)]:
                  # Interval("chr1", 100000000, 110000000)]:
     logging.getLogger(__name__).info("Generating validation dataset for interval "+str(interval))
     params.interval = interval

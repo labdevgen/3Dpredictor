@@ -177,15 +177,19 @@ def test_RNAseqReader():
     logging.getLogger(__name__).info(iter(RNA.chr_data.values()).__next__().head())
     for inteval2 in [Interval("chr1",36511867,36528237),
                         Interval("chr1",36511866,36528237),
-                        Interval("chr1",36511867, 36528238),
-                        Interval("chr1",36511866, 36528238),
-                        Interval("chr1",36528238, 36528238),
-                        Interval("chr1",36528238, 36528239),
-                        Interval("chr1",36528138, 36528149),
-                        Interval("chr1",36500000, 36550000)]:
+#                        Interval("chr1",36511867, 36528238),
+#                        Interval("chr1",36511866, 36528238),
+#                        Interval("chr1",36528238, 36528238),
+#                        Interval("chr1",36528238, 36528239),
+#                        Interval("chr1",36528138, 36528149),
+#                        Interval("chr1",36500000, 36550000),
+                        Interval("chr5", 7280119, 7345756),
+                     Interval("chr5", 7311493, 7330491)]: #The last gives wrong results
         logging.info("------------------")
         logging.info(inteval2)
-        logging.info(str(RNA.get_interval(inteval2)))
+        logging.info(str(RNA.get_interval(inteval2))) #New func, based on Polina's intersect_intervals
+        logging.info(str(RNA._get_interval(inteval2))) #Original Polina's intersect intervals
+
 
 
 #correlation()
@@ -194,7 +198,7 @@ def test_RNAseqReader():
 #test_get_nearest_peaks()
 #test_N_nearest_peaks_in_interval()
 #test_add_orientation()
-test_sites_orientation()
+#test_sites_orientation()
 #test_intersect_intervals()
 #test_matrix_plot()
 #test_contacts()
@@ -203,4 +207,4 @@ test_sites_orientation()
 #test_ChipSeqRemoval()
 #test_ContactsRemoval() #TODO it doesn't throw errors, however the behaviour was not thoroughly tested
 #test_read_orient()
-#test_RNAseqReader()
+test_RNAseqReader() #TODO - intersect interval won't work for overlapping intervals

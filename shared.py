@@ -103,13 +103,17 @@ def intersect_intervals(chr_int_data1, chr_int_data2, suppreseChrNumberCheck=Fal
             continue
         st_end_i = np.searchsorted(chr_int_data1[chr]['end'], chr_int_data2[chr]['start'])
         end_st_i = np.searchsorted(chr_int_data1[chr]['start'], chr_int_data2[chr]['end'])
+
+        # TODO what does this assert mean?
+        # In fact, it checks that end_st == st_end occurs not more than 2 times...
         assert np.all(end_st_i - st_end_i) <= 2  # check that end_st_i always larger than st_end_i
         assert len(st_end_i) == len(end_st_i) == len(chr_int_data2[chr]['end'])
         intersection_result = []
         chr_intervals_result = []
         for ind,val in enumerate(st_end_i):
             if end_st_i[ind] == st_end_i[ind]:
-                logging.getLogger(__name__).warning("do not intersect other data " + str(chr_int_data2[chr].iloc[ind]) + '      ' +  str(ind))
+                pass #it's common situtation, so no need for warning
+                #logging.geotLogger(__name__).warning("do not intersect other data " + str(chr_int_data2[chr].iloc[ind]) + '      ' +  str(ind))
             elif end_st_i[ind] > st_end_i[ind]:
                 chr_intervals_result += [chr_int_data2[chr].iloc[ind]] * (end_st_i[ind] - st_end_i[ind])
                 [intersection_result.append(index)for index in range(st_end_i[ind], end_st_i[ind])]
@@ -123,6 +127,30 @@ def intersect_intervals(chr_int_data1, chr_int_data2, suppreseChrNumberCheck=Fal
         chr_intervals_result["intersection"] = intersection_result
         result[chr] = chr_intervals_result
     return result
+
+
+# input: chr_int_data - dictionaries of pd.dataframes where 1,2,3 columns == chr, start, end
+# key of dict: chr
+# interval - interval object
+# output:
+# returns subset of chr_int_data2 which intersects interval
+def intersect_with_interval(chr_int_data1, interval):
+    chr = interval.chr
+    if not chr in chr_int_data1:
+        logging.getLogger(__name__).warning("No intervals on chr", chr)
+        return pd.DataFrame({}) #Return empty DataFrame
+
+    #TODO Polina, if chr_int_data1 has nested intervals, chr_int_data1[chr]['end'] may not be sorted
+    #  will this still work?
+    st_end = np.searchsorted(chr_int_data1[chr]['end'], interval.start)[0]
+    end_st = np.searchsorted(chr_int_data1[chr]['start'], interval.end)[0]
+    if end_st < st_end:
+        logging.getLogger(__name__).error('st_end_i larger then end_st_i')
+        # As it's an error, I assume raising exeption.
+        raise Exception("Exception from intersect_intervals function")
+    else:
+        return chr_int_data1[chr].iloc[st_end:end_st,:]
+
 
 # File descriptions are saved in XML form
 # Description should be dict-like

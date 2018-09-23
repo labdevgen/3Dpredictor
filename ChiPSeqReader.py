@@ -17,7 +17,7 @@ class ChiPSeqReader(FileReader): #Class process files with ChipSeq peaks
         self.only_orient_peaks = False
         super(ChiPSeqReader,self).__init__(fname)
 
-    #check duplicates, set mids, and split by chromosomes and sort
+    #check duplicates, nested intervals, set mids, and split by chromosomes and sort
     def process_data(self,data):
         #check duplicats
         duplicated = data.duplicated(subset=["chr", "start", "end"])
@@ -39,6 +39,23 @@ class ChiPSeqReader(FileReader): #Class process files with ChipSeq peaks
         for chr,data in chr_data.items():
             sorted_data[chr] = data.sort_values(by=["chr","start"])
         del chr_data
+
+        # check for nested intervals
+        nested_intevals_count = 0
+        print_example = True
+        for data in sorted_data.values():
+            data_shifted = data.shift()
+            nested = [False] + (data["start"][1:] - data_shifted["start"][1:] > 0) & \
+                (data["end"][1:] - data_shifted["end"][1:] < 0)
+
+            nested_intevals_count += sum(nested)
+            if print_example and sum(nested) > 0:
+                logging.debug("Nested intervals found. Examples: ")
+                logging.debug(data[1:][nested].head(1))
+                print_example = False
+        if nested_intevals_count > 0:
+            logging.warning("Number of nested intervals: "+str(nested_intevals_count))
+
 
         return sorted_data
 
