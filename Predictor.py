@@ -25,12 +25,18 @@ class Predictor(object):
         self.__dict__[key] = value
 
     def toXMLDict(self):
+        try:
+            self.apply_log
+        except:
+            raise Exception("Please read validation data firts")
         result = OrderedDict()
         result["shortcut"] = self.shortcut
         result["input_file"] = self.input_file
         result["predictors"] = ".".join(self.predictors)
         result["algrorithm"] = str(self.alg.__class__.__name__)
         result["apply_log"] = str(self.apply_log)
+        if str(self.weightsFunc.__name__) != str(np.ones_like.__name__):
+            result["weights_func"] = str(self.weightsFunc.__name__)
         return result
 
     def __represent_validation__(self):
@@ -64,8 +70,10 @@ class Predictor(object):
     # Train model
     # if dump = True, save it to file dump_file
     # returns class instance with trained_model object
-    def train(self, alg = ensemble.GradientBoostingRegressor(), shortcut = "model", apply_log = True,
-              dump = True, out_dir = "out/models/", *args, **kwargs):
+    def train(self, alg = ensemble.GradientBoostingRegressor(n_estimators=500),
+              shortcut = "model", apply_log = True,
+              dump = True, out_dir = "out/models/",
+              weightsFunc = np.ones_like, *args, **kwargs):
 
         try:
             self.input_file
@@ -77,6 +85,7 @@ class Predictor(object):
         self.alg = alg
         self.shortcut = shortcut
         self.apply_log = apply_log
+        self.weightsFunc = weightsFunc
 
         try:
             del self.validation_file
