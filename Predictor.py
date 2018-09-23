@@ -182,13 +182,14 @@ class Predictor(object):
 
     # Filter list of available predictors according to the filter rule
     # Rule should be a valid re expression
-    def filter_predictors(self,rule):
+    def filter_predictors(self, rule, keep):
         try:
             self.predictors
         except:
             raise Exception("Please read data first")
         expression = re.compile(rule)
-        self.predictors = [p for p in self.predictors if expression.search(p) != None]
+        self.predictors = sorted([p for p in self.predictors if (expression.search(p) != None) == keep ])
+        logging.info("Using following predictors: "+" ".join(self.predictors))
 
 
     def read_file(self,inp_file):
