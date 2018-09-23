@@ -17,7 +17,7 @@ from shared import write_XML
 
 processed = 0
 
-def generate_data(params):
+def generate_data(params, saveFileDescription = True):
     contacts = params.contacts_reader.get_contacts(params.interval,mindist=params.mindist,maxdist=params.maxdist)
     sample_size = min(params.sample_size,len(contacts))
     logging.getLogger(__name__).info("Using sample size "+str(sample_size))
@@ -25,8 +25,9 @@ def generate_data(params):
     assert len(contacts_sample) == sample_size
     generator = DataGenerator()
     generator.contacts2file(contacts_sample, params)
-    XML_report = generator.toXMLDict()
-    write_XML(XML_report, header = params.out_file)
+    if saveFileDescription:
+        XML_report = generator.toXMLDict()
+        write_XML(XML_report, header = params.out_file)
 
 def contact2file(contact,DataGeneratorObj,report = 5000):
         global processed

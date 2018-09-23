@@ -27,7 +27,7 @@ params.maxdist = 1000000
 params.sample_size = 500000 #how many contacts write to file
 params.conttype = "oe.gz"
 
-training_file_name = "2018-09-22-trainingOrient.RandOnChr1."+str(params)+".txt"
+training_file_name = "2018-09-23-trainingOrient.RandOnChr1."+str(params)+".txt"
 validation_file_name = "validatingOrient."+str(params)+".txt"
 logging.getLogger(__name__).debug("Using input folder "+input_folder)
 
@@ -93,7 +93,7 @@ params.interval = Interval(trainChrName,
                       params.contacts_reader.get_min_contact_position(trainChrName),
                       params.contacts_reader.get_max_contact_position(trainChrName))
 params.out_file = output_folder + training_file_name
-generate_data(params)
+generate_data(params,saveFileDescription=False)
 
 #Generate test
 for interval in [# Interval("chr10", 59000000, 62000000)]:

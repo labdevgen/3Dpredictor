@@ -28,7 +28,7 @@ def train(model,inp_file,featuresSubset):
     input_data.fillna(value=0, inplace=True)
 
     if logFunc:
-        results = input_data["contact_count"].apply(math.log)
+            results = input_data["contact_count"].apply(math.log)
     else:
         results = input_data["contact_count"]
 
