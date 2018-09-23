@@ -240,7 +240,8 @@ class OrientBlocksPredictorGenerator(PredictorGenerator): #this PG
         return self.header
     def get_predictors(self,contact):
         assert contact.contact_st < contact.contact_en
-        all_Window_peaks = self.chipSeq_reader.get_interval(Interval(contact.chr, contact.contact_st, contact.contact_en))
+        all_Window_peaks = self.chipSeq_reader.get_interval(Interval(contact.chr, contact.contact_st + self.window_size//2, \
+                                                                     contact.contact_en - self.window_size//2))
         N_blocks_W = 0
         plus_ori_idx = all_Window_peaks.columns.get_loc('plus_orientation')
         minus_ori_idx = all_Window_peaks.columns.get_loc('minus_orientation')

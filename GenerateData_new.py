@@ -20,9 +20,8 @@ def generate_data(params):
     generator.contacts2file(contacts_sample, params.pgs, params.out_file)
 
 logging.basicConfig(level=logging.DEBUG)
-input_folder ="D:/Users/Polina/3Dpredictor/input/"
 output_folder = "D:/Users/Polina/3Dpredictor/"
-#input_folder =  "input"
+input_folder =  "input/"
 
 params = Parameters()
 params.window_size = 25000 #region around contact to be binned for predictors
@@ -34,8 +33,9 @@ params.binsize = 20000 #when binning regions with predictors, use this binsize
 params.sample_size = 5 #how many contacts write to file
 params.conttype = "contacts"
 
-training_file_name = "2018-09-22-trainingOrient.RandOnChr1."+str(params)+".txt"
+training_file_name = "2018-09-23-trainingOrient.RandOnChr1."+str(params)+".txt"
 validation_file_name = "validatingOrient."+str(params)+".txt"
+orient_file_name = "Hepat_WT_MboI_rep1-rep2_IDR0_05_filt_narrowPeak-orient_N10.bed"
 logging.getLogger(__name__).debug("Using input folder "+input_folder)
 
 #Read contacts data
@@ -46,20 +46,14 @@ params.contacts_reader.read_files([input_folder + "chr1.5MB.Hepat."+params.contt
                             #input_folder + "chr6.5MB.Hepat." + params.conttype])
 
 # Read CTCF data
-#params.ctcf_reader_for_onlyOrientPG = ChiPSeqReader(input_folder + "Hepat_WT_MboI_rep1-rep2.IDR0.05.filt.narrowPeak",name="CTCF")
-#params.ctcf_reader_for_SitesOrienrPG = ChiPSeqReader(input_folder + "Hepat_WT_MboI_rep1-rep2.IDR0.05.filt.narrowPeak",name="CTCF")
-params.ctcf_reader_for_OrientBlocksPG = ChiPSeqReader(input_folder + "Hepat_WT_MboI_rep1-rep2.IDR0.05.filt.narrowPeak",name="CTCF")
-#params.ctcf_reader = ChiPSeqReader(input_folder + "Hepat_WT_MboI_rep1-rep2.IDR0.05.filt.narrowPeak_no_chr2")
-params.ctcf_reader_for_OrientBlocksPG .read_file()
-#params.ctcf_reader_for_SitesOrienrPG.read_file()
-#params.ctcf_reader_for_onlyOrientPG.read_file()
-
+params.ctcf_reader = ChiPSeqReader(input_folder + "Hepat_WT_MboI_rep1-rep2.IDR0.05.filt.narrowPeak",name="CTCF")
+params.ctcf_reader.read_file()
+params.ctcf_reader_only_orient = ChiPSeqReader(input_folder + "Hepat_WT_MboI_rep1-rep2.IDR0.05.filt.narrowPeak",name="CTCF")
+params.ctcf_reader_only_orient.read_file()
 #read orient_data and set orientation
-params.ctcf_reader_for_OrientBlocksPG .set_sites_orientation(input_folder + "Hepat_WT_MboI_rep1-rep2_IDR0_05_filt_narrowPeak-orient_N10.bed")
-params.ctcf_reader_for_OrientBlocksPG.keep_only_with_orient_data()
-#params.ctcf_reader_for_SitesOrienrPG.set_sites_orientation(input_folder + "Hepat_WT_MboI_rep1-rep2_IDR0_05_filt_narrowPeak-orient_N10.bed")
-# params.ctcf_reader_for_onlyOrientPG.set_sites_orientation(input_folder + "Hepat_WT_MboI_rep1-rep2_IDR0_05_filt_narrowPeak-orient_N10.bed")
-# params.ctcf_reader_for_onlyOrientPG.keep_only_with_orient_data()
+params.ctcf_reader.set_sites_orientation(input_folder + orient_file_name)
+params.ctcf_reader_only_orient.set_sites_orientation(input_folder + orient_file_name)
+params.ctcf_reader_only_orient.keep_only_with_orient_data()
 # #Read other ChipSeq
 # params.ep3000_reader = ChiPSeqReader(input_folder + "ENCFF787DRX.bed",name="EP3000")
 # params.ep3000_reader.read_file()
@@ -73,20 +67,17 @@ params.eig_reader.read_files([input_folder + "chr1.Hepat.E1.50k",
                        input_folder + "chr10.Hepat.E1.50k"],
                        #input_folder + "chr6.Hepat.E1.50k"],
                       binSizeFromName=fileName2binsize) #infer size of E1 bins from file name using this function
+#set Predictor generators
+e1pg_small = SmallE1PredictorGenerator(params.eig_reader,params.window_size,name="E1")
+ctcfpg_small = SmallChipSeqPredictorGenerator(params.ctcf_reader, params.window_size, N_closest=3)
+SitesOrientPredictorGenerator
+OnlySitesOrientCtcfpg = SitesOrientPredictorGenerator(params.ctcf_reader_only_orient, N_closest=6)
+orientBlockspg = OrientBlocksPredictorGenerator(params.ctcf_reader_only_orient, window_size=params.window_size)
 
-#e1pg = E1PredictorGenerator(params.eig_reader,params.window_size)
-#ctcfpg = CTCFPredictorGenerator(params.ctcf_reader,params.binsize,params.window_size)
-#assert params.maxdist <= params.window_size #shouldn't be > window_size
-#params.pgs = [e1pg,ctcfpg]
-#onlyOrientCtcfpg = SitesOnlyOrientPredictorGenerator(params.ctcf_reader_for_onlyOrientPG, N_closest=3)
-orientBlockspg = OrientBlocksPredictorGenerator(params.ctcf_reader_for_OrientBlocksPG, window_size=params.window_size)
-#OrientCtcfpg = SitesOrientPredictorGenerator(params.ctcf_reader_for_SitesOrienrPG, N_closest=6)
-#e1pg_small = SmallE1PredictorGenerator(params.eig_reader,params.window_size,name="E1")
-#ctcfpg_small = SmallChipSeqPredictorGenerator(params.ctcf_reader, params.window_size, N_closest=3)
 # chd2pg_small = SmallChipSeqPredictorGenerator(params.chd2_reader, params.window_size, N_closest=3)
 # ep3000pg_small = SmallChipSeqPredictorGenerator(params.ep3000_reader, params.window_size, N_closest=3)
 #params.pgs = [e1pg_small,ctcfpg_small,chd2pg_small,ep3000pg_small]
-params.pgs = [orientBlockspg]#,onlyOrientCtcfpg]
+params.pgs = [orientBlockspg,onlyOrientCtcfpg]
 
 #Generate train
 trainChrName = "chr1"
