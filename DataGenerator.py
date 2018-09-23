@@ -46,7 +46,7 @@ class DataGenerator():
 
         #Check that predictor names are unique
         pg_names = [pg.name for pg in predictor_generators]
-        #print(pg_names)
+        print(pg_names)
         assert len(pg_names) == len(set(pg_names))
 
         #Get header row and calculate number of fields

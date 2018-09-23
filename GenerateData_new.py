@@ -30,7 +30,7 @@ params.mindist = 50001 #minimum distance between contacting regions
 #params.maxdist = params.window_size #max distance between contacting regions
 params.maxdist = 3000000
 params.binsize = 20000 #when binning regions with predictors, use this binsize
-params.sample_size = 5 #how many contacts write to file
+params.sample_size = 500000 #how many contacts write to file
 params.conttype = "contacts"
 
 training_file_name = "2018-09-23-trainingOrient.RandOnChr1."+str(params)+".txt"
@@ -70,14 +70,12 @@ params.eig_reader.read_files([input_folder + "chr1.Hepat.E1.50k",
 #set Predictor generators
 e1pg_small = SmallE1PredictorGenerator(params.eig_reader,params.window_size,name="E1")
 ctcfpg_small = SmallChipSeqPredictorGenerator(params.ctcf_reader, params.window_size, N_closest=3)
-SitesOrientPredictorGenerator
-OnlySitesOrientCtcfpg = SitesOrientPredictorGenerator(params.ctcf_reader_only_orient, N_closest=6)
+sitesOrientpg = SitesOrientPredictorGenerator(params.ctcf_reader, N_closest=6)
+onlySitesOrientCtcfpg = SitesOrientPredictorGenerator(params.ctcf_reader_only_orient, N_closest=6)
 orientBlockspg = OrientBlocksPredictorGenerator(params.ctcf_reader_only_orient, window_size=params.window_size)
-
 # chd2pg_small = SmallChipSeqPredictorGenerator(params.chd2_reader, params.window_size, N_closest=3)
 # ep3000pg_small = SmallChipSeqPredictorGenerator(params.ep3000_reader, params.window_size, N_closest=3)
-#params.pgs = [e1pg_small,ctcfpg_small,chd2pg_small,ep3000pg_small]
-params.pgs = [orientBlockspg,onlyOrientCtcfpg]
+params.pgs = [e1pg_small, ctcfpg_small, sitesOrientpg, onlySitesOrientCtcfpg,orientBlockspg]
 
 #Generate train
 trainChrName = "chr1"
@@ -87,15 +85,15 @@ params.interval = Interval(trainChrName,
 params.out_file = output_folder + training_file_name
 generate_data(params)
 
-# #Generate test
-# for interval in [Interval("chr10", 59000000, 62000000)]:
-#                  # Interval("chr2", 47900000, 53900000),
-#                  # Interval("chr2", 85000000, 92500000),
-#                  # Interval("chr1", 100000000, 110000000)]:
-#     logging.getLogger(__name__).info("Generating validation dataset for interval "+str(interval))
-#     params.interval = interval
-#     params.out_file = params.interval.toFileName() + validation_file_name
-#     generate_data(params)
+#Generate test
+for interval in [Interval("chr10", 59000000, 62000000),
+                 Interval("chr2", 47900000, 53900000)]:
+                 # Interval("chr2", 85000000, 92500000),
+                 # Interval("chr1", 100000000, 110000000)]:
+    logging.getLogger(__name__).info("Generating validation dataset for interval "+str(interval))
+    params.interval = interval
+    params.out_file = params.interval.toFileName() + validation_file_name
+    generate_data(params)
 
 # for object in [params.contacts_reader]+params.pgs:
 #     lostInterval = Interval("chr1",103842568,104979840)

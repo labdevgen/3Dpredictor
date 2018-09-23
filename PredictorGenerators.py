@@ -157,12 +157,12 @@ class SmallE1PredictorGenerator(E1PredictorGenerator):
 
 class SitesOrientPredictorGenerator(PredictorGenerator):
     def __init__(self, chipSeq_reader, N_closest, **kwargs):
+        self.chipSeq_reader = chipSeq_reader
         if self.chipSeq_reader.only_orient_peaks:
             self.name = chipSeq_reader.proteinName + '_OnlySitesOrient'
         else:
             self.name = chipSeq_reader.proteinName + '_SitesOrient'
         self.N_closest = N_closest
-        self.chipSeq_reader = chipSeq_reader
         if not self.chipSeq_reader.orient_data_real:
             logging.error('please set orientation first')
             raise Exception("Can't generate predictions")
