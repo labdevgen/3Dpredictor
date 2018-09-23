@@ -9,14 +9,18 @@ validation_files = [
     "out/Interval_chr2_85000000_92500000validatingOrient.contacts.gz.1000000.50001.500000.25000.txt"
             ]
 
-predictor = Predictor()
-predictor.read_data_predictors(training_file)
-#Some examples:
+
+#Some examples of predictors filtering:
 #predictor.filter_predictors(".*CTCF.*|.*RNA.*", keep=False) #-- discard CTCF AND RNA
 #predictor.filter_predictors(".*CTCF.*", keep=False) #-- discard CTCF
 #predictor.filter_predictors(".*contact_dist.*|.*CTCF_W.*", keep=True) #-- keep only distance and CTCF in window
 
-trained_predictor = predictor.train(shortcut="all")
-for validation_file in validation_files:
-    trained_predictor.validate(validation_file)
+for (filter,keep),shortcut in zip(zip([".*","E1"],[True,False]),
+                                       ["all","no E1"]):
+    predictor = Predictor()
+    predictor.read_data_predictors(training_file)
+    predictor.filter_predictors(filter, keep)
+    trained_predictor = predictor.train(shortcut=shortcut)
+    for validation_file in validation_files:
+        trained_predictor.validate(validation_file)
 

@@ -30,7 +30,7 @@ class Predictor(object):
             self.validation_file
         except:
             raise Exception("Please read validation data firts")
-        return str2hash(os.path.basename(self.validation_file)+".model_"+str(self))
+        return "model"+str(self)+".validation."+str2hash(os.path.basename(self.validation_file))
 
     def __repr__(self): # Representation should reflect all paramteres
                         # so that 2 models having same repr are identical
@@ -89,7 +89,7 @@ class Predictor(object):
             return pickle.load(open(dump_path,"rb"))
         else:
             # read data
-            self.input_data = self.read_file(self.inp_file)
+            self.input_data = self.read_file(self.input_file)
             self.contacts = np.array(self.input_data["contact_count"].values)
 
             #fit new model
