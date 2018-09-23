@@ -25,12 +25,18 @@ class Predictor(object):
         self.__dict__[key] = value
 
     def toXMLDict(self):
+        try:
+            self.apply_log
+        except:
+            raise Exception("Please read validation data firts")
         result = OrderedDict()
         result["shortcut"] = self.shortcut
         result["input_file"] = self.input_file
         result["predictors"] = ".".join(self.predictors)
         result["algrorithm"] = str(self.alg.__class__.__name__)
         result["apply_log"] = str(self.apply_log)
+        if str(self.weightsFunc.__name__) != str(np.ones_like.__name__):
+            result["weights_func"] = str(self.weightsFunc.__name__)
         return result
 
     def __represent_validation__(self):
@@ -64,8 +70,10 @@ class Predictor(object):
     # Train model
     # if dump = True, save it to file dump_file
     # returns class instance with trained_model object
-    def train(self, alg = ensemble.GradientBoostingRegressor(), shortcut = "model", apply_log = True,
-              dump = True, out_dir = "out/models/", *args, **kwargs):
+    def train(self, alg = ensemble.GradientBoostingRegressor(n_estimators=500),
+              shortcut = "model", apply_log = True,
+              dump = True, out_dir = "out/models/",
+              weightsFunc = np.ones_like, *args, **kwargs):
 
         try:
             self.input_file
@@ -77,6 +85,7 @@ class Predictor(object):
         self.alg = alg
         self.shortcut = shortcut
         self.apply_log = apply_log
+        self.weightsFunc = weightsFunc
 
         try:
             del self.validation_file
@@ -127,7 +136,7 @@ class Predictor(object):
         return self
 
 
-    def r2score(self,validation_data,predicted,out_dir):
+    def r2score(self,validation_data,predicted,out_dir,**kwargs):
 
         real = validation_data["contact_count"].values
         r2 = sklearn.metrics.r2_score(predicted, real)
@@ -144,10 +153,11 @@ class Predictor(object):
         plt.ylabel("Real Contact")
         print("Saving file " + os.path.join(out_dir,self.__represent_validation__()) + ".r2scatter.png")
         plt.savefig(os.path.join(out_dir,self.__represent_validation__()) + ".r2scatter.png", dpi=300)
-        plt.show()
+        if not ("show_plot" in kwargs) or kwargs["show_plot"]:
+            plt.show()
         plt.clf()
 
-    def plot_matrix(self,validation_data,predicted,out_dir):
+    def plot_matrix(self,validation_data,predicted,out_dir,**kwargs):
         predicted_data = validation_data.copy(deep=True)
         predicted_data["contact_count"] = predicted
         mp = MatrixPlotter()
@@ -165,17 +175,24 @@ class Predictor(object):
         plt.title(self.__represent_validation__())
         plt.imsave(os.path.join(out_dir,self.__represent_validation__()) + ".matrix.png", matrix,
                     cmap="OrRd", dpi=600)
-        plt.show()
+        if not ("show_plot" in kwargs) or kwargs["show_plot"]:
+            plt.show()
+        plt.clf()
 
     # Validate model
-    def validate(self, validation_file, out_dir = "out/pics/"):
+    def validate(self, validation_file,
+                 out_dir = "out/pics/",
+                 validators = None,
+                 **kwargs):
+        validators = validators if validators is not None else [self.r2score,self.plot_matrix]
         self.validation_file = validation_file
         self.validation_data = self.read_file(validation_file)
         if self.apply_log:
             self.validation_data["contact_count"] = np.log(self.validation_data["contact_count"].values)
         self.predicted = self.trained_model.predict(self.validation_data[self.predictors])
-        self.plot_matrix(self.validation_data,self.predicted,out_dir)
-        self.r2score(self.validation_data,self.predicted,out_dir)
+        for validataion_function in validators:
+            validataion_function(self.validation_data,self.predicted,
+                                 out_dir = out_dir, **kwargs)
 
 
     # Read header of predictors file, get list of avaliable predictors

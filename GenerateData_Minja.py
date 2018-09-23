@@ -25,7 +25,7 @@ params.mindist = 50001 #minimum distance between contacting regions
 params.maxdist = 1000000
 #params.binsize = 20000 #when binning regions with predictors, use this binsize
 params.sample_size = 500000 #how many contacts write to file
-params.conttype = "contacts.gz"
+params.conttype = "oe.gz"
 
 training_file_name = "2018-09-23-trainingOrient.RandOnChr1."+str(params)+".txt"
 validation_file_name = "validatingOrient."+str(params)+".txt"
