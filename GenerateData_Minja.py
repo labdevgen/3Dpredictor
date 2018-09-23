@@ -25,7 +25,7 @@ params.mindist = 50001 #minimum distance between contacting regions
 params.maxdist = 1000000
 #params.binsize = 20000 #when binning regions with predictors, use this binsize
 params.sample_size = 500000 #how many contacts write to file
-params.conttype = "oe.gz"
+params.conttype = "contacts.gz"
 
 training_file_name = "2018-09-23-trainingOrient.RandOnChr1."+str(params)+".txt"
 validation_file_name = "validatingOrient."+str(params)+".txt"
@@ -93,7 +93,7 @@ params.interval = Interval(trainChrName,
                       params.contacts_reader.get_min_contact_position(trainChrName),
                       params.contacts_reader.get_max_contact_position(trainChrName))
 params.out_file = output_folder + training_file_name
-generate_data(params,saveFileDescription=False)
+generate_data(params,saveFileDescription=True)
 
 #Generate test
 for interval in [# Interval("chr10", 59000000, 62000000)]:

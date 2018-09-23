@@ -165,7 +165,7 @@ def write_XML(XML_report, header,fname="files_description.xml"):
     to_write = parseString(xml_line).toprettyxml()
 
     #write to file
-    f = open(fname,"a")
+    f = open(fname,"w")
     f.write(to_write)
     f.close()
 

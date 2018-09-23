@@ -677,3 +677,249 @@
 		</Predictor_generator_RNA>
 	</key>
 </root>
+<?xml version="1.0" ?>
+<root>
+	<key name="out/Interval_chr2_47900000_53900000validatingOrient.oe.gz.1000000.50001.500000.25000.txt">
+		<date>2018-09-23 16:17:27.567303</date>
+		<class>DataGenerator</class>
+		<output_file_name>out/Interval_chr2_47900000_53900000validatingOrient.oe.gz.1000000.50001.500000.25000.txt</output_file_name>
+		<N_contacts>8232</N_contacts>
+		<Global_paramteres>
+			<conttype>oe.gz</conttype>
+			<maxdist>1000000</maxdist>
+			<mindist>50001</mindist>
+			<out_file>out/Interval_chr2_47900000_53900000validatingOrient.oe.gz.1000000.50001.500000.25000.txt</out_file>
+			<sample_size>500000</sample_size>
+			<window_size>25000</window_size>
+		</Global_paramteres>
+		<Predictor_generator_E1>
+			<name>E1</name>
+			<predictors>E1_L,E1_R,E1_N_Changes,E1_SD</predictors>
+			<window_size>25000</window_size>
+		</Predictor_generator_E1>
+		<Predictor_generator_CTCF_SitesOrient>
+			<name>CTCF_SitesOrient</name>
+			<predictors>CTCF_SitesOrient_L_plus_orientation_0,CTCF_SitesOrient_L_plus_orientation_1,CTCF_SitesOrient_L_plus_orientation_2,CTCF_SitesOrient_L_plus_orientation_3,CTCF_SitesOrient_L_minus_orientation_0,CTCF_SitesOrient_L_minus_orientation_1,CTCF_SitesOrient_L_minus_orientation_2,CTCF_SitesOrient_L_minus_orientation_3,CTCF_SitesOrient_L_sigVal_0,CTCF_SitesOrient_L_sigVal_1,CTCF_SitesOrient_L_sigVal_2,CTCF_SitesOrient_L_sigVal_3,CTCF_SitesOrient_L_dist_0,CTCF_SitesOrient_L_dist_1,CTCF_SitesOrient_L_dist_2,CTCF_SitesOrient_L_dist_3,CTCF_SitesOrient_W_L_plus_orientation_0,CTCF_SitesOrient_W_L_plus_orientation_1,CTCF_SitesOrient_W_L_plus_orientation_2,CTCF_SitesOrient_W_L_plus_orientation_3,CTCF_SitesOrient_W_L_minus_orientation_0,CTCF_SitesOrient_W_L_minus_orientation_1,CTCF_SitesOrient_W_L_minus_orientation_2,CTCF_SitesOrient_W_L_minus_orientation_3,CTCF_SitesOrient_W_L_sigVal_0,CTCF_SitesOrient_W_L_sigVal_1,CTCF_SitesOrient_W_L_sigVal_2,CTCF_SitesOrient_W_L_sigVal_3,CTCF_SitesOrient_W_L_dist_0,CTCF_SitesOrient_W_L_dist_1,CTCF_SitesOrient_W_L_dist_2,CTCF_SitesOrient_W_L_dist_3,CTCF_SitesOrient_W_R_plus_orientation_0,CTCF_SitesOrient_W_R_plus_orientation_1,CTCF_SitesOrient_W_R_plus_orientation_2,CTCF_SitesOrient_W_R_plus_orientation_3,CTCF_SitesOrient_W_R_minus_orientation_0,CTCF_SitesOrient_W_R_minus_orientation_1,CTCF_SitesOrient_W_R_minus_orientation_2,CTCF_SitesOrient_W_R_minus_orientation_3,CTCF_SitesOrient_W_R_sigVal_0,CTCF_SitesOrient_W_R_sigVal_1,CTCF_SitesOrient_W_R_sigVal_2,CTCF_SitesOrient_W_R_sigVal_3,CTCF_SitesOrient_W_R_dist_0,CTCF_SitesOrient_W_R_dist_1,CTCF_SitesOrient_W_R_dist_2,CTCF_SitesOrient_W_R_dist_3,CTCF_SitesOrient_R_plus_orientation_0,CTCF_SitesOrient_R_plus_orientation_1,CTCF_SitesOrient_R_plus_orientation_2,CTCF_SitesOrient_R_plus_orientation_3,CTCF_SitesOrient_R_minus_orientation_0,CTCF_SitesOrient_R_minus_orientation_1,CTCF_SitesOrient_R_minus_orientation_2,CTCF_SitesOrient_R_minus_orientation_3,CTCF_SitesOrient_R_sigVal_0,CTCF_SitesOrient_R_sigVal_1,CTCF_SitesOrient_R_sigVal_2,CTCF_SitesOrient_R_sigVal_3,CTCF_SitesOrient_R_dist_0,CTCF_SitesOrient_R_dist_1,CTCF_SitesOrient_R_dist_2,CTCF_SitesOrient_R_dist_3,CTCF_SitesOrient_W_sumSigVal,CTCF_SitesOrient_W_N+orient,CTCF_SitesOrient_W_N-orient</predictors>
+			<N_closest>4</N_closest>
+		</Predictor_generator_CTCF_SitesOrient>
+		<Predictor_generator_CTCF>
+			<name>CTCF</name>
+			<predictors>CTCF_L,CTCF_W,CTCF_R,CTCF_LSig_0,CTCF_LSig_1,CTCF_LSig_2,CTCF_LSig_3,CTCF_LDist_0,CTCF_LDist_1,CTCF_LDist_2,CTCF_LDist_3,CTCF_RSig_0,CTCF_RSig_1,CTCF_RSig_2,CTCF_RSig_3,CTCF_RDist_0,CTCF_RDist_1,CTCF_RDist_2,CTCF_RDist_3</predictors>
+			<binsize>0</binsize>
+			<N_closest>4</N_closest>
+			<window_size>25000</window_size>
+		</Predictor_generator_CTCF>
+		<Predictor_generator_RNA>
+			<name>RNA</name>
+			<predictors>RNA_L,RNA_W,RNA_R,RNA_LSig_0,RNA_LSig_1,RNA_LSig_2,RNA_LDist_0,RNA_LDist_1,RNA_LDist_2,RNA_RSig_0,RNA_RSig_1,RNA_RSig_2,RNA_RDist_0,RNA_RDist_1,RNA_RDist_2</predictors>
+			<binsize>0</binsize>
+			<N_closest>3</N_closest>
+			<window_size>25000</window_size>
+		</Predictor_generator_RNA>
+	</key>
+</root>
+<?xml version="1.0" ?>
+<root>
+	<key name="out/Interval_chr2_85000000_92500000validatingOrient.oe.gz.1000000.50001.500000.25000.txt">
+		<date>2018-09-23 16:19:49.279816</date>
+		<class>DataGenerator</class>
+		<output_file_name>out/Interval_chr2_85000000_92500000validatingOrient.oe.gz.1000000.50001.500000.25000.txt</output_file_name>
+		<N_contacts>10026</N_contacts>
+		<Global_paramteres>
+			<conttype>oe.gz</conttype>
+			<maxdist>1000000</maxdist>
+			<mindist>50001</mindist>
+			<out_file>out/Interval_chr2_85000000_92500000validatingOrient.oe.gz.1000000.50001.500000.25000.txt</out_file>
+			<sample_size>500000</sample_size>
+			<window_size>25000</window_size>
+		</Global_paramteres>
+		<Predictor_generator_E1>
+			<name>E1</name>
+			<predictors>E1_L,E1_R,E1_N_Changes,E1_SD</predictors>
+			<window_size>25000</window_size>
+		</Predictor_generator_E1>
+		<Predictor_generator_CTCF_SitesOrient>
+			<name>CTCF_SitesOrient</name>
+			<predictors>CTCF_SitesOrient_L_plus_orientation_0,CTCF_SitesOrient_L_plus_orientation_1,CTCF_SitesOrient_L_plus_orientation_2,CTCF_SitesOrient_L_plus_orientation_3,CTCF_SitesOrient_L_minus_orientation_0,CTCF_SitesOrient_L_minus_orientation_1,CTCF_SitesOrient_L_minus_orientation_2,CTCF_SitesOrient_L_minus_orientation_3,CTCF_SitesOrient_L_sigVal_0,CTCF_SitesOrient_L_sigVal_1,CTCF_SitesOrient_L_sigVal_2,CTCF_SitesOrient_L_sigVal_3,CTCF_SitesOrient_L_dist_0,CTCF_SitesOrient_L_dist_1,CTCF_SitesOrient_L_dist_2,CTCF_SitesOrient_L_dist_3,CTCF_SitesOrient_W_L_plus_orientation_0,CTCF_SitesOrient_W_L_plus_orientation_1,CTCF_SitesOrient_W_L_plus_orientation_2,CTCF_SitesOrient_W_L_plus_orientation_3,CTCF_SitesOrient_W_L_minus_orientation_0,CTCF_SitesOrient_W_L_minus_orientation_1,CTCF_SitesOrient_W_L_minus_orientation_2,CTCF_SitesOrient_W_L_minus_orientation_3,CTCF_SitesOrient_W_L_sigVal_0,CTCF_SitesOrient_W_L_sigVal_1,CTCF_SitesOrient_W_L_sigVal_2,CTCF_SitesOrient_W_L_sigVal_3,CTCF_SitesOrient_W_L_dist_0,CTCF_SitesOrient_W_L_dist_1,CTCF_SitesOrient_W_L_dist_2,CTCF_SitesOrient_W_L_dist_3,CTCF_SitesOrient_W_R_plus_orientation_0,CTCF_SitesOrient_W_R_plus_orientation_1,CTCF_SitesOrient_W_R_plus_orientation_2,CTCF_SitesOrient_W_R_plus_orientation_3,CTCF_SitesOrient_W_R_minus_orientation_0,CTCF_SitesOrient_W_R_minus_orientation_1,CTCF_SitesOrient_W_R_minus_orientation_2,CTCF_SitesOrient_W_R_minus_orientation_3,CTCF_SitesOrient_W_R_sigVal_0,CTCF_SitesOrient_W_R_sigVal_1,CTCF_SitesOrient_W_R_sigVal_2,CTCF_SitesOrient_W_R_sigVal_3,CTCF_SitesOrient_W_R_dist_0,CTCF_SitesOrient_W_R_dist_1,CTCF_SitesOrient_W_R_dist_2,CTCF_SitesOrient_W_R_dist_3,CTCF_SitesOrient_R_plus_orientation_0,CTCF_SitesOrient_R_plus_orientation_1,CTCF_SitesOrient_R_plus_orientation_2,CTCF_SitesOrient_R_plus_orientation_3,CTCF_SitesOrient_R_minus_orientation_0,CTCF_SitesOrient_R_minus_orientation_1,CTCF_SitesOrient_R_minus_orientation_2,CTCF_SitesOrient_R_minus_orientation_3,CTCF_SitesOrient_R_sigVal_0,CTCF_SitesOrient_R_sigVal_1,CTCF_SitesOrient_R_sigVal_2,CTCF_SitesOrient_R_sigVal_3,CTCF_SitesOrient_R_dist_0,CTCF_SitesOrient_R_dist_1,CTCF_SitesOrient_R_dist_2,CTCF_SitesOrient_R_dist_3,CTCF_SitesOrient_W_sumSigVal,CTCF_SitesOrient_W_N+orient,CTCF_SitesOrient_W_N-orient</predictors>
+			<N_closest>4</N_closest>
+		</Predictor_generator_CTCF_SitesOrient>
+		<Predictor_generator_CTCF>
+			<name>CTCF</name>
+			<predictors>CTCF_L,CTCF_W,CTCF_R,CTCF_LSig_0,CTCF_LSig_1,CTCF_LSig_2,CTCF_LSig_3,CTCF_LDist_0,CTCF_LDist_1,CTCF_LDist_2,CTCF_LDist_3,CTCF_RSig_0,CTCF_RSig_1,CTCF_RSig_2,CTCF_RSig_3,CTCF_RDist_0,CTCF_RDist_1,CTCF_RDist_2,CTCF_RDist_3</predictors>
+			<binsize>0</binsize>
+			<N_closest>4</N_closest>
+			<window_size>25000</window_size>
+		</Predictor_generator_CTCF>
+		<Predictor_generator_RNA>
+			<name>RNA</name>
+			<predictors>RNA_L,RNA_W,RNA_R,RNA_LSig_0,RNA_LSig_1,RNA_LSig_2,RNA_LDist_0,RNA_LDist_1,RNA_LDist_2,RNA_RSig_0,RNA_RSig_1,RNA_RSig_2,RNA_RDist_0,RNA_RDist_1,RNA_RDist_2</predictors>
+			<binsize>0</binsize>
+			<N_closest>3</N_closest>
+			<window_size>25000</window_size>
+		</Predictor_generator_RNA>
+	</key>
+</root>
+<?xml version="1.0" ?>
+<root>
+	<key name="out/Interval_chr2_36000000_41000000validatingOrient.oe.gz.1000000.50001.500000.25000.txt">
+		<date>2018-09-23 16:21:19.935142</date>
+		<class>DataGenerator</class>
+		<output_file_name>out/Interval_chr2_36000000_41000000validatingOrient.oe.gz.1000000.50001.500000.25000.txt</output_file_name>
+		<N_contacts>6546</N_contacts>
+		<Global_paramteres>
+			<conttype>oe.gz</conttype>
+			<maxdist>1000000</maxdist>
+			<mindist>50001</mindist>
+			<out_file>out/Interval_chr2_36000000_41000000validatingOrient.oe.gz.1000000.50001.500000.25000.txt</out_file>
+			<sample_size>500000</sample_size>
+			<window_size>25000</window_size>
+		</Global_paramteres>
+		<Predictor_generator_E1>
+			<name>E1</name>
+			<predictors>E1_L,E1_R,E1_N_Changes,E1_SD</predictors>
+			<window_size>25000</window_size>
+		</Predictor_generator_E1>
+		<Predictor_generator_CTCF_SitesOrient>
+			<name>CTCF_SitesOrient</name>
+			<predictors>CTCF_SitesOrient_L_plus_orientation_0,CTCF_SitesOrient_L_plus_orientation_1,CTCF_SitesOrient_L_plus_orientation_2,CTCF_SitesOrient_L_plus_orientation_3,CTCF_SitesOrient_L_minus_orientation_0,CTCF_SitesOrient_L_minus_orientation_1,CTCF_SitesOrient_L_minus_orientation_2,CTCF_SitesOrient_L_minus_orientation_3,CTCF_SitesOrient_L_sigVal_0,CTCF_SitesOrient_L_sigVal_1,CTCF_SitesOrient_L_sigVal_2,CTCF_SitesOrient_L_sigVal_3,CTCF_SitesOrient_L_dist_0,CTCF_SitesOrient_L_dist_1,CTCF_SitesOrient_L_dist_2,CTCF_SitesOrient_L_dist_3,CTCF_SitesOrient_W_L_plus_orientation_0,CTCF_SitesOrient_W_L_plus_orientation_1,CTCF_SitesOrient_W_L_plus_orientation_2,CTCF_SitesOrient_W_L_plus_orientation_3,CTCF_SitesOrient_W_L_minus_orientation_0,CTCF_SitesOrient_W_L_minus_orientation_1,CTCF_SitesOrient_W_L_minus_orientation_2,CTCF_SitesOrient_W_L_minus_orientation_3,CTCF_SitesOrient_W_L_sigVal_0,CTCF_SitesOrient_W_L_sigVal_1,CTCF_SitesOrient_W_L_sigVal_2,CTCF_SitesOrient_W_L_sigVal_3,CTCF_SitesOrient_W_L_dist_0,CTCF_SitesOrient_W_L_dist_1,CTCF_SitesOrient_W_L_dist_2,CTCF_SitesOrient_W_L_dist_3,CTCF_SitesOrient_W_R_plus_orientation_0,CTCF_SitesOrient_W_R_plus_orientation_1,CTCF_SitesOrient_W_R_plus_orientation_2,CTCF_SitesOrient_W_R_plus_orientation_3,CTCF_SitesOrient_W_R_minus_orientation_0,CTCF_SitesOrient_W_R_minus_orientation_1,CTCF_SitesOrient_W_R_minus_orientation_2,CTCF_SitesOrient_W_R_minus_orientation_3,CTCF_SitesOrient_W_R_sigVal_0,CTCF_SitesOrient_W_R_sigVal_1,CTCF_SitesOrient_W_R_sigVal_2,CTCF_SitesOrient_W_R_sigVal_3,CTCF_SitesOrient_W_R_dist_0,CTCF_SitesOrient_W_R_dist_1,CTCF_SitesOrient_W_R_dist_2,CTCF_SitesOrient_W_R_dist_3,CTCF_SitesOrient_R_plus_orientation_0,CTCF_SitesOrient_R_plus_orientation_1,CTCF_SitesOrient_R_plus_orientation_2,CTCF_SitesOrient_R_plus_orientation_3,CTCF_SitesOrient_R_minus_orientation_0,CTCF_SitesOrient_R_minus_orientation_1,CTCF_SitesOrient_R_minus_orientation_2,CTCF_SitesOrient_R_minus_orientation_3,CTCF_SitesOrient_R_sigVal_0,CTCF_SitesOrient_R_sigVal_1,CTCF_SitesOrient_R_sigVal_2,CTCF_SitesOrient_R_sigVal_3,CTCF_SitesOrient_R_dist_0,CTCF_SitesOrient_R_dist_1,CTCF_SitesOrient_R_dist_2,CTCF_SitesOrient_R_dist_3,CTCF_SitesOrient_W_sumSigVal,CTCF_SitesOrient_W_N+orient,CTCF_SitesOrient_W_N-orient</predictors>
+			<N_closest>4</N_closest>
+		</Predictor_generator_CTCF_SitesOrient>
+		<Predictor_generator_CTCF>
+			<name>CTCF</name>
+			<predictors>CTCF_L,CTCF_W,CTCF_R,CTCF_LSig_0,CTCF_LSig_1,CTCF_LSig_2,CTCF_LSig_3,CTCF_LDist_0,CTCF_LDist_1,CTCF_LDist_2,CTCF_LDist_3,CTCF_RSig_0,CTCF_RSig_1,CTCF_RSig_2,CTCF_RSig_3,CTCF_RDist_0,CTCF_RDist_1,CTCF_RDist_2,CTCF_RDist_3</predictors>
+			<binsize>0</binsize>
+			<N_closest>4</N_closest>
+			<window_size>25000</window_size>
+		</Predictor_generator_CTCF>
+		<Predictor_generator_RNA>
+			<name>RNA</name>
+			<predictors>RNA_L,RNA_W,RNA_R,RNA_LSig_0,RNA_LSig_1,RNA_LSig_2,RNA_LDist_0,RNA_LDist_1,RNA_LDist_2,RNA_RSig_0,RNA_RSig_1,RNA_RSig_2,RNA_RDist_0,RNA_RDist_1,RNA_RDist_2</predictors>
+			<binsize>0</binsize>
+			<N_closest>3</N_closest>
+			<window_size>25000</window_size>
+		</Predictor_generator_RNA>
+	</key>
+</root>
+<?xml version="1.0" ?>
+<root>
+	<key name="out/Interval_chr2_47900000_53900000validatingOrient.contacts.gz.1000000.50001.500000.25000.txt">
+		<date>2018-09-23 17:44:04.813414</date>
+		<class>DataGenerator</class>
+		<output_file_name>out/Interval_chr2_47900000_53900000validatingOrient.contacts.gz.1000000.50001.500000.25000.txt</output_file_name>
+		<N_contacts>8232</N_contacts>
+		<Global_paramteres>
+			<conttype>contacts.gz</conttype>
+			<maxdist>1000000</maxdist>
+			<mindist>50001</mindist>
+			<out_file>out/Interval_chr2_47900000_53900000validatingOrient.contacts.gz.1000000.50001.500000.25000.txt</out_file>
+			<sample_size>500000</sample_size>
+			<window_size>25000</window_size>
+		</Global_paramteres>
+		<Predictor_generator_E1>
+			<name>E1</name>
+			<predictors>E1_L,E1_R,E1_N_Changes,E1_SD</predictors>
+			<window_size>25000</window_size>
+		</Predictor_generator_E1>
+		<Predictor_generator_CTCF_SitesOrient>
+			<name>CTCF_SitesOrient</name>
+			<predictors>CTCF_SitesOrient_L_plus_orientation_0,CTCF_SitesOrient_L_plus_orientation_1,CTCF_SitesOrient_L_plus_orientation_2,CTCF_SitesOrient_L_plus_orientation_3,CTCF_SitesOrient_L_minus_orientation_0,CTCF_SitesOrient_L_minus_orientation_1,CTCF_SitesOrient_L_minus_orientation_2,CTCF_SitesOrient_L_minus_orientation_3,CTCF_SitesOrient_L_sigVal_0,CTCF_SitesOrient_L_sigVal_1,CTCF_SitesOrient_L_sigVal_2,CTCF_SitesOrient_L_sigVal_3,CTCF_SitesOrient_L_dist_0,CTCF_SitesOrient_L_dist_1,CTCF_SitesOrient_L_dist_2,CTCF_SitesOrient_L_dist_3,CTCF_SitesOrient_W_L_plus_orientation_0,CTCF_SitesOrient_W_L_plus_orientation_1,CTCF_SitesOrient_W_L_plus_orientation_2,CTCF_SitesOrient_W_L_plus_orientation_3,CTCF_SitesOrient_W_L_minus_orientation_0,CTCF_SitesOrient_W_L_minus_orientation_1,CTCF_SitesOrient_W_L_minus_orientation_2,CTCF_SitesOrient_W_L_minus_orientation_3,CTCF_SitesOrient_W_L_sigVal_0,CTCF_SitesOrient_W_L_sigVal_1,CTCF_SitesOrient_W_L_sigVal_2,CTCF_SitesOrient_W_L_sigVal_3,CTCF_SitesOrient_W_L_dist_0,CTCF_SitesOrient_W_L_dist_1,CTCF_SitesOrient_W_L_dist_2,CTCF_SitesOrient_W_L_dist_3,CTCF_SitesOrient_W_R_plus_orientation_0,CTCF_SitesOrient_W_R_plus_orientation_1,CTCF_SitesOrient_W_R_plus_orientation_2,CTCF_SitesOrient_W_R_plus_orientation_3,CTCF_SitesOrient_W_R_minus_orientation_0,CTCF_SitesOrient_W_R_minus_orientation_1,CTCF_SitesOrient_W_R_minus_orientation_2,CTCF_SitesOrient_W_R_minus_orientation_3,CTCF_SitesOrient_W_R_sigVal_0,CTCF_SitesOrient_W_R_sigVal_1,CTCF_SitesOrient_W_R_sigVal_2,CTCF_SitesOrient_W_R_sigVal_3,CTCF_SitesOrient_W_R_dist_0,CTCF_SitesOrient_W_R_dist_1,CTCF_SitesOrient_W_R_dist_2,CTCF_SitesOrient_W_R_dist_3,CTCF_SitesOrient_R_plus_orientation_0,CTCF_SitesOrient_R_plus_orientation_1,CTCF_SitesOrient_R_plus_orientation_2,CTCF_SitesOrient_R_plus_orientation_3,CTCF_SitesOrient_R_minus_orientation_0,CTCF_SitesOrient_R_minus_orientation_1,CTCF_SitesOrient_R_minus_orientation_2,CTCF_SitesOrient_R_minus_orientation_3,CTCF_SitesOrient_R_sigVal_0,CTCF_SitesOrient_R_sigVal_1,CTCF_SitesOrient_R_sigVal_2,CTCF_SitesOrient_R_sigVal_3,CTCF_SitesOrient_R_dist_0,CTCF_SitesOrient_R_dist_1,CTCF_SitesOrient_R_dist_2,CTCF_SitesOrient_R_dist_3,CTCF_SitesOrient_W_sumSigVal,CTCF_SitesOrient_W_N+orient,CTCF_SitesOrient_W_N-orient</predictors>
+			<N_closest>4</N_closest>
+		</Predictor_generator_CTCF_SitesOrient>
+		<Predictor_generator_CTCF>
+			<name>CTCF</name>
+			<predictors>CTCF_L,CTCF_W,CTCF_R,CTCF_LSig_0,CTCF_LSig_1,CTCF_LSig_2,CTCF_LSig_3,CTCF_LDist_0,CTCF_LDist_1,CTCF_LDist_2,CTCF_LDist_3,CTCF_RSig_0,CTCF_RSig_1,CTCF_RSig_2,CTCF_RSig_3,CTCF_RDist_0,CTCF_RDist_1,CTCF_RDist_2,CTCF_RDist_3</predictors>
+			<binsize>0</binsize>
+			<N_closest>4</N_closest>
+			<window_size>25000</window_size>
+		</Predictor_generator_CTCF>
+		<Predictor_generator_RNA>
+			<name>RNA</name>
+			<predictors>RNA_L,RNA_W,RNA_R,RNA_LSig_0,RNA_LSig_1,RNA_LSig_2,RNA_LDist_0,RNA_LDist_1,RNA_LDist_2,RNA_RSig_0,RNA_RSig_1,RNA_RSig_2,RNA_RDist_0,RNA_RDist_1,RNA_RDist_2</predictors>
+			<binsize>0</binsize>
+			<N_closest>3</N_closest>
+			<window_size>25000</window_size>
+		</Predictor_generator_RNA>
+	</key>
+</root>
+<?xml version="1.0" ?>
+<root>
+	<key name="out/Interval_chr2_85000000_92500000validatingOrient.contacts.gz.1000000.50001.500000.25000.txt">
+		<date>2018-09-23 17:46:27.603886</date>
+		<class>DataGenerator</class>
+		<output_file_name>out/Interval_chr2_85000000_92500000validatingOrient.contacts.gz.1000000.50001.500000.25000.txt</output_file_name>
+		<N_contacts>10026</N_contacts>
+		<Global_paramteres>
+			<conttype>contacts.gz</conttype>
+			<maxdist>1000000</maxdist>
+			<mindist>50001</mindist>
+			<out_file>out/Interval_chr2_85000000_92500000validatingOrient.contacts.gz.1000000.50001.500000.25000.txt</out_file>
+			<sample_size>500000</sample_size>
+			<window_size>25000</window_size>
+		</Global_paramteres>
+		<Predictor_generator_E1>
+			<name>E1</name>
+			<predictors>E1_L,E1_R,E1_N_Changes,E1_SD</predictors>
+			<window_size>25000</window_size>
+		</Predictor_generator_E1>
+		<Predictor_generator_CTCF_SitesOrient>
+			<name>CTCF_SitesOrient</name>
+			<predictors>CTCF_SitesOrient_L_plus_orientation_0,CTCF_SitesOrient_L_plus_orientation_1,CTCF_SitesOrient_L_plus_orientation_2,CTCF_SitesOrient_L_plus_orientation_3,CTCF_SitesOrient_L_minus_orientation_0,CTCF_SitesOrient_L_minus_orientation_1,CTCF_SitesOrient_L_minus_orientation_2,CTCF_SitesOrient_L_minus_orientation_3,CTCF_SitesOrient_L_sigVal_0,CTCF_SitesOrient_L_sigVal_1,CTCF_SitesOrient_L_sigVal_2,CTCF_SitesOrient_L_sigVal_3,CTCF_SitesOrient_L_dist_0,CTCF_SitesOrient_L_dist_1,CTCF_SitesOrient_L_dist_2,CTCF_SitesOrient_L_dist_3,CTCF_SitesOrient_W_L_plus_orientation_0,CTCF_SitesOrient_W_L_plus_orientation_1,CTCF_SitesOrient_W_L_plus_orientation_2,CTCF_SitesOrient_W_L_plus_orientation_3,CTCF_SitesOrient_W_L_minus_orientation_0,CTCF_SitesOrient_W_L_minus_orientation_1,CTCF_SitesOrient_W_L_minus_orientation_2,CTCF_SitesOrient_W_L_minus_orientation_3,CTCF_SitesOrient_W_L_sigVal_0,CTCF_SitesOrient_W_L_sigVal_1,CTCF_SitesOrient_W_L_sigVal_2,CTCF_SitesOrient_W_L_sigVal_3,CTCF_SitesOrient_W_L_dist_0,CTCF_SitesOrient_W_L_dist_1,CTCF_SitesOrient_W_L_dist_2,CTCF_SitesOrient_W_L_dist_3,CTCF_SitesOrient_W_R_plus_orientation_0,CTCF_SitesOrient_W_R_plus_orientation_1,CTCF_SitesOrient_W_R_plus_orientation_2,CTCF_SitesOrient_W_R_plus_orientation_3,CTCF_SitesOrient_W_R_minus_orientation_0,CTCF_SitesOrient_W_R_minus_orientation_1,CTCF_SitesOrient_W_R_minus_orientation_2,CTCF_SitesOrient_W_R_minus_orientation_3,CTCF_SitesOrient_W_R_sigVal_0,CTCF_SitesOrient_W_R_sigVal_1,CTCF_SitesOrient_W_R_sigVal_2,CTCF_SitesOrient_W_R_sigVal_3,CTCF_SitesOrient_W_R_dist_0,CTCF_SitesOrient_W_R_dist_1,CTCF_SitesOrient_W_R_dist_2,CTCF_SitesOrient_W_R_dist_3,CTCF_SitesOrient_R_plus_orientation_0,CTCF_SitesOrient_R_plus_orientation_1,CTCF_SitesOrient_R_plus_orientation_2,CTCF_SitesOrient_R_plus_orientation_3,CTCF_SitesOrient_R_minus_orientation_0,CTCF_SitesOrient_R_minus_orientation_1,CTCF_SitesOrient_R_minus_orientation_2,CTCF_SitesOrient_R_minus_orientation_3,CTCF_SitesOrient_R_sigVal_0,CTCF_SitesOrient_R_sigVal_1,CTCF_SitesOrient_R_sigVal_2,CTCF_SitesOrient_R_sigVal_3,CTCF_SitesOrient_R_dist_0,CTCF_SitesOrient_R_dist_1,CTCF_SitesOrient_R_dist_2,CTCF_SitesOrient_R_dist_3,CTCF_SitesOrient_W_sumSigVal,CTCF_SitesOrient_W_N+orient,CTCF_SitesOrient_W_N-orient</predictors>
+			<N_closest>4</N_closest>
+		</Predictor_generator_CTCF_SitesOrient>
+		<Predictor_generator_CTCF>
+			<name>CTCF</name>
+			<predictors>CTCF_L,CTCF_W,CTCF_R,CTCF_LSig_0,CTCF_LSig_1,CTCF_LSig_2,CTCF_LSig_3,CTCF_LDist_0,CTCF_LDist_1,CTCF_LDist_2,CTCF_LDist_3,CTCF_RSig_0,CTCF_RSig_1,CTCF_RSig_2,CTCF_RSig_3,CTCF_RDist_0,CTCF_RDist_1,CTCF_RDist_2,CTCF_RDist_3</predictors>
+			<binsize>0</binsize>
+			<N_closest>4</N_closest>
+			<window_size>25000</window_size>
+		</Predictor_generator_CTCF>
+		<Predictor_generator_RNA>
+			<name>RNA</name>
+			<predictors>RNA_L,RNA_W,RNA_R,RNA_LSig_0,RNA_LSig_1,RNA_LSig_2,RNA_LDist_0,RNA_LDist_1,RNA_LDist_2,RNA_RSig_0,RNA_RSig_1,RNA_RSig_2,RNA_RDist_0,RNA_RDist_1,RNA_RDist_2</predictors>
+			<binsize>0</binsize>
+			<N_closest>3</N_closest>
+			<window_size>25000</window_size>
+		</Predictor_generator_RNA>
+	</key>
+</root>
+<?xml version="1.0" ?>
+<root>
+	<key name="out/Interval_chr2_36000000_41000000validatingOrient.contacts.gz.1000000.50001.500000.25000.txt">
+		<date>2018-09-23 17:47:59.024333</date>
+		<class>DataGenerator</class>
+		<output_file_name>out/Interval_chr2_36000000_41000000validatingOrient.contacts.gz.1000000.50001.500000.25000.txt</output_file_name>
+		<N_contacts>6546</N_contacts>
+		<Global_paramteres>
+			<conttype>contacts.gz</conttype>
+			<maxdist>1000000</maxdist>
+			<mindist>50001</mindist>
+			<out_file>out/Interval_chr2_36000000_41000000validatingOrient.contacts.gz.1000000.50001.500000.25000.txt</out_file>
+			<sample_size>500000</sample_size>
+			<window_size>25000</window_size>
+		</Global_paramteres>
+		<Predictor_generator_E1>
+			<name>E1</name>
+			<predictors>E1_L,E1_R,E1_N_Changes,E1_SD</predictors>
+			<window_size>25000</window_size>
+		</Predictor_generator_E1>
+		<Predictor_generator_CTCF_SitesOrient>
+			<name>CTCF_SitesOrient</name>
+			<predictors>CTCF_SitesOrient_L_plus_orientation_0,CTCF_SitesOrient_L_plus_orientation_1,CTCF_SitesOrient_L_plus_orientation_2,CTCF_SitesOrient_L_plus_orientation_3,CTCF_SitesOrient_L_minus_orientation_0,CTCF_SitesOrient_L_minus_orientation_1,CTCF_SitesOrient_L_minus_orientation_2,CTCF_SitesOrient_L_minus_orientation_3,CTCF_SitesOrient_L_sigVal_0,CTCF_SitesOrient_L_sigVal_1,CTCF_SitesOrient_L_sigVal_2,CTCF_SitesOrient_L_sigVal_3,CTCF_SitesOrient_L_dist_0,CTCF_SitesOrient_L_dist_1,CTCF_SitesOrient_L_dist_2,CTCF_SitesOrient_L_dist_3,CTCF_SitesOrient_W_L_plus_orientation_0,CTCF_SitesOrient_W_L_plus_orientation_1,CTCF_SitesOrient_W_L_plus_orientation_2,CTCF_SitesOrient_W_L_plus_orientation_3,CTCF_SitesOrient_W_L_minus_orientation_0,CTCF_SitesOrient_W_L_minus_orientation_1,CTCF_SitesOrient_W_L_minus_orientation_2,CTCF_SitesOrient_W_L_minus_orientation_3,CTCF_SitesOrient_W_L_sigVal_0,CTCF_SitesOrient_W_L_sigVal_1,CTCF_SitesOrient_W_L_sigVal_2,CTCF_SitesOrient_W_L_sigVal_3,CTCF_SitesOrient_W_L_dist_0,CTCF_SitesOrient_W_L_dist_1,CTCF_SitesOrient_W_L_dist_2,CTCF_SitesOrient_W_L_dist_3,CTCF_SitesOrient_W_R_plus_orientation_0,CTCF_SitesOrient_W_R_plus_orientation_1,CTCF_SitesOrient_W_R_plus_orientation_2,CTCF_SitesOrient_W_R_plus_orientation_3,CTCF_SitesOrient_W_R_minus_orientation_0,CTCF_SitesOrient_W_R_minus_orientation_1,CTCF_SitesOrient_W_R_minus_orientation_2,CTCF_SitesOrient_W_R_minus_orientation_3,CTCF_SitesOrient_W_R_sigVal_0,CTCF_SitesOrient_W_R_sigVal_1,CTCF_SitesOrient_W_R_sigVal_2,CTCF_SitesOrient_W_R_sigVal_3,CTCF_SitesOrient_W_R_dist_0,CTCF_SitesOrient_W_R_dist_1,CTCF_SitesOrient_W_R_dist_2,CTCF_SitesOrient_W_R_dist_3,CTCF_SitesOrient_R_plus_orientation_0,CTCF_SitesOrient_R_plus_orientation_1,CTCF_SitesOrient_R_plus_orientation_2,CTCF_SitesOrient_R_plus_orientation_3,CTCF_SitesOrient_R_minus_orientation_0,CTCF_SitesOrient_R_minus_orientation_1,CTCF_SitesOrient_R_minus_orientation_2,CTCF_SitesOrient_R_minus_orientation_3,CTCF_SitesOrient_R_sigVal_0,CTCF_SitesOrient_R_sigVal_1,CTCF_SitesOrient_R_sigVal_2,CTCF_SitesOrient_R_sigVal_3,CTCF_SitesOrient_R_dist_0,CTCF_SitesOrient_R_dist_1,CTCF_SitesOrient_R_dist_2,CTCF_SitesOrient_R_dist_3,CTCF_SitesOrient_W_sumSigVal,CTCF_SitesOrient_W_N+orient,CTCF_SitesOrient_W_N-orient</predictors>
+			<N_closest>4</N_closest>
+		</Predictor_generator_CTCF_SitesOrient>
+		<Predictor_generator_CTCF>
+			<name>CTCF</name>
+			<predictors>CTCF_L,CTCF_W,CTCF_R,CTCF_LSig_0,CTCF_LSig_1,CTCF_LSig_2,CTCF_LSig_3,CTCF_LDist_0,CTCF_LDist_1,CTCF_LDist_2,CTCF_LDist_3,CTCF_RSig_0,CTCF_RSig_1,CTCF_RSig_2,CTCF_RSig_3,CTCF_RDist_0,CTCF_RDist_1,CTCF_RDist_2,CTCF_RDist_3</predictors>
+			<binsize>0</binsize>
+			<N_closest>4</N_closest>
+			<window_size>25000</window_size>
+		</Predictor_generator_CTCF>
+		<Predictor_generator_RNA>
+			<name>RNA</name>
+			<predictors>RNA_L,RNA_W,RNA_R,RNA_LSig_0,RNA_LSig_1,RNA_LSig_2,RNA_LDist_0,RNA_LDist_1,RNA_LDist_2,RNA_RSig_0,RNA_RSig_1,RNA_RSig_2,RNA_RDist_0,RNA_RDist_1,RNA_RDist_2</predictors>
+			<binsize>0</binsize>
+			<N_closest>3</N_closest>
+			<window_size>25000</window_size>
+		</Predictor_generator_RNA>
+	</key>
+</root>

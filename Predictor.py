@@ -11,19 +11,27 @@ import numpy as np
 import pandas as pd
 from numpy import int64,float32
 from sklearn import ensemble
-from shared import str2hash,Interval
+from shared import str2hash,Interval,write_XML
 import matplotlib.pyplot as plt
 from matrix_plotter import MatrixPlotter
-
+from collections import OrderedDict
 
 
 
 class Predictor(object):
-    #TODO check that as soon as one changes predictors, self.trained_mode becomes None
     def __setattr__(self, key, value):
         if key == "predictors":
             self.trained_model = None
         self.__dict__[key] = value
+
+    def toXMLDict(self):
+        result = OrderedDict()
+        result["shortcut"] = self.shortcut
+        result["input_file"] = self.input_file
+        result["predictors"] = ".".join(self.predictors)
+        result["algrorithm"] = str(self.alg.__class__.__name__)
+        result["apply_log"] = str(self.apply_log)
+        return result
 
     def __represent_validation__(self):
         try:
@@ -38,13 +46,8 @@ class Predictor(object):
             self.apply_log
         except:
             raise Exception("Please train model first")
-        representation = ".".join([self.shortcut,
-                                   os.path.basename(self.input_file),
-                                   ".".join(self.predictors),
-                                   str(self.apply_log),
-                                   str(self.alg.__class__.__name__)
-                                   ]
-                                  )
+        properties = self.toXMLDict()
+        representation = ".".join(list(properties.values()))
         return str2hash(representation)
 
     def __init__(self):
@@ -104,6 +107,7 @@ class Predictor(object):
                 del self.contacts
                 del self.input_data
                 pickle.dump(self,open(dump_path,"wb"))
+                write_XML(self.toXMLDict(),str(self),dump_path+".xml")
 
         #Save feature importances
         try:
@@ -216,4 +220,3 @@ class Predictor(object):
         header = self.get_avaliable_predictors(inp_file)
         self.predictors = [h for h in header if not h in self.constant_nonpredictors]
         self.input_file = inp_file
-

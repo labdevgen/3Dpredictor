@@ -27,7 +27,9 @@ def generate_data(params, saveFileDescription = True):
     generator.contacts2file(contacts_sample, params)
     if saveFileDescription:
         XML_report = generator.toXMLDict()
-        write_XML(XML_report, header = params.out_file)
+        write_XML(XML_report,
+                  header = params.out_file,
+                  fname = params.out_file+".xml")
 
 def contact2file(contact,DataGeneratorObj,report = 5000):
         global processed

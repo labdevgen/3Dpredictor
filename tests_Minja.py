@@ -190,7 +190,31 @@ def test_RNAseqReader():
         logging.info(str(RNA.get_interval(inteval2))) #New func, based on Polina's intersect_intervals
         logging.info(str(RNA._get_interval(inteval2))) #Original Polina's intersect intervals
 
+def test_E1_pg():
+    from PredictorGenerators import  SmallE1PredictorGenerator
+    input_folder = "input/"
+    eig_reader = E1Reader()
+    eig_reader.read_files([input_folder + "chr1.Hepat.E1.50k",
+                                  input_folder + "chr2.Hepat.E1.50k"],
+                                 # input_folder + "chr10.Hepat.E1.50k"],
+                                 # input_folder + "chr6.Hepat.E1.50k"],
+                                 binSizeFromName=fileName2binsize)  # infer size of E1 bins from file name using this function
 
+    e1pg = SmallE1PredictorGenerator(eig_reader, 25000)
+    contacts_reader = ContactsReader()
+    contacts_reader.read_files([input_folder + "chr1.5MB.Hepat.contacts",
+                           input_folder + "chr2.5MB.Hepat.contacts"])
+                            #input_folder + "chr10.5MB.Hepat."+params.conttype])
+                            #input_older + "chr6.5MB.Hepat." + params.conttype])
+    data = contacts_reader.data["chr1"].query("dist > 50000").head(500)
+    #data = contacts_reader.data["chr1"].loc[66:67,:]
+    print (data)
+
+    data["E1"] = data.apply(e1pg.get_predictors,axis='columns')
+    data["E1"] = data["E1"].apply(lambda x: x[2])
+    data = data.query("E1 > 0")
+    data["dist"] = data["dist"] / 25000
+    print (data)
 
 #correlation()
 #test_get_interval()
@@ -207,4 +231,5 @@ def test_RNAseqReader():
 #test_ChipSeqRemoval()
 #test_ContactsRemoval() #TODO it doesn't throw errors, however the behaviour was not thoroughly tested
 #test_read_orient()
-test_RNAseqReader() #TODO - intersect interval won't work for overlapping intervals
+#test_RNAseqReader() #TODO - intersect interval won't work for overlapping intervals
+test_E1_pg()

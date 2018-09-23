@@ -178,7 +178,7 @@ class SmallE1PredictorGenerator(E1PredictorGenerator):
             E1_N_Changes = 0
         else:
             E1_SD = np.std(E1_M) #STD error of E1 values
-            E1_N_Changes = sum(len(E1_M) - np.equal(np.sign(E1_M[1:]),np.sign(E1_M[:-1]))) #Number of changes of sign
+            E1_N_Changes = len(E1_M) - 1 - sum(np.equal(np.sign(E1_M[1:]),np.sign(E1_M[:-1]))) #Number of changes of sign
         return list(map(np.average,[self.eig_reader.get_E1inInterval(intL)["E1"].tolist(),
                self.eig_reader.get_E1inInterval(intR)["E1"].tolist()]))+[E1_N_Changes,E1_SD]
 
