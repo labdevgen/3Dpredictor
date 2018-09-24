@@ -121,13 +121,13 @@ def test_sites_orientation():
         "D:/Users/Polina/3Dpredictor/input/Hepat_WT_MboI_rep1-rep2.IDR0.05.filt.narrowPeak")
     ctcf_reader.read_file()
     ctcf_reader.set_sites_orientation("D:/Users/Polina/3Dpredictor/input/Hepat_WT_MboI_rep1-rep2_IDR0_05_filt_narrowPeak-orient_N10.bed")
-    print(ctcf_reader.chr_data['chr1'])
+    #print(ctcf_reader.chr_data['chr1'])
     #print(ctcf_reader.chr_data['chr4'].iloc[23])
     #print(ctcf_reader.chr_data['chr4'])
     #ctcf_reader.export2bed_files_with_orientation("D:/Users/Polina/3Dpredictor/data/")
     ctcf_reader.keep_only_with_orient_data()
-    print(ctcf_reader.chr_data['chr1'])
-    print(ctcf_reader.chr_data['chr1'].query("start=='4516413'"))
+    #print(ctcf_reader.chr_data['chr1'])
+    #print(ctcf_reader.chr_data['chr1'].query("start=='4516413'"))
     #print(result)
 def test_N_nearest_peaks_in_interval():
     ctcf_reader = ChiPSeqReader(
