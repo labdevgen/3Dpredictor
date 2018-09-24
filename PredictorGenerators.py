@@ -263,10 +263,13 @@ class OrientBlocksPredictorGenerator(PredictorGenerator): #this PG
             if not self.chipSeq_reader.only_orient_peaks:
                 logging.error('please get data with orientations only first')
     def get_header(self,contact):
-        self.header = [self.name + "_W_NBlocks"]
+        self.header = [self.name + "_W_NBlocks", self.name + "_HasDivergOrient"]
         return self.header
     def get_predictors(self,contact):
         assert contact.contact_st < contact.contact_en
+
+        # Get peaks in window and count "blocks"
+        # Blocks are CTCF sites with divergent orientation, i.e. --> <-- <-- is a block
         all_Window_peaks = self.chipSeq_reader.get_interval(Interval(contact.chr, contact.contact_st + self.window_size//2, \
                                                                      contact.contact_en - self.window_size//2))
         N_blocks_W = 0
@@ -278,7 +281,16 @@ class OrientBlocksPredictorGenerator(PredictorGenerator): #this PG
             if all_Window_peaks.iloc[i,plus_ori_idx ]!=0 and all_Window_peaks.iloc[i+1,minus_ori_idx] !=0:
                 N_blocks_W +=1
         # print(N_blocks_W)
-        return [N_blocks_W]
+
+        # Check wheather we have CTCF sites in divergent orientation in contact ancors
+        intL, intM, intR = self.intevals_around_ancor(contact)
+        L_peaks = self.chipSeq_reader.get_interval(intL)
+        R_peaks = self.chipSeq_reader.get_interval(intR)
+        has_convergent_peak = 0
+        if len(L_peaks) > 0 and len(R_peaks) > 0:
+            has_convergent_peak = L_peaks.plus_orientation.sum()*R_peaks.minus_orientation.sum()
+
+        return [N_blocks_W,has_convergent_peak]
 
 # class SitesOnlyOrientPredictorGenerator(PredictorGenerator):
 #     def __init__(self, chipSeq_reader, N_closest, **kwargs):

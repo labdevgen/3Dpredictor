@@ -50,17 +50,17 @@ class ChiPSeqReader(FileReader): #Class process files with ChipSeq peaks
 
             nested_intevals_count += sum(nested)
             if print_example and sum(nested) > 0:
-                logging.debug("Nested intervals found. Examples: ")
-                logging.debug(data[1:][nested].head(1))
+                logging.getLogger(__name__).debug("Nested intervals found. Examples: ")
+                logging.getLogger(__name__).debug(data[1:][nested].head(1))
                 print_example = False
         if nested_intevals_count > 0:
-            logging.warning("Number of nested intervals: "+str(nested_intevals_count))
+            logging.getLogger(__name__).warning("Number of nested intervals: "+str(nested_intevals_count))
 
 
         return sorted_data
 
     def read_file(self): # store CTCF peaks as sorted pandas dataframe
-        logging.log(msg="Reading CTCF file "+self.fname, level=logging.INFO)
+        logging.getLogger(__name__).info(msg="Reading CTCF file "+self.fname)
 
         # set random temporary labels
         Nfields = len(open(self.fname).readline().strip().split())
@@ -75,8 +75,8 @@ class ChiPSeqReader(FileReader): #Class process files with ChipSeq peaks
         chr_data = self.process_data(data)
         del data
 
-        logging.getLogger(__name__).warning(
-            msg="Filling orientation with mock values!") #TODO fill with real data
+        logging.getLogger(__name__).debug(
+            msg="Filling orientation with mock values!")
 
         #Fill orientation with mock values
         for data in chr_data.values():
@@ -151,7 +151,7 @@ class ChiPSeqReader(FileReader): #Class process files with ChipSeq peaks
     def get_N_peaks_near_interval_boundaries(self,interval,N,N_is_strict=True ):
         all_peaks_in_interval = self.get_interval(interval)
         if not self.orient_data_real:
-               logging.error("please set_orientation first")
+               logging.getLogger(__name__).error("please set_orientation first")
         if len(all_peaks_in_interval) >= N*2:
             result_right = all_peaks_in_interval.head(N)
             result_left = all_peaks_in_interval.tail(N)
@@ -307,7 +307,7 @@ class ChiPSeqReader(FileReader): #Class process files with ChipSeq peaks
                 elif  self.chr_data[chr].loc[line_name, 'plus_orientation'] < self.chr_data[chr].loc[line_name, 'minus_orientation']:
                     self.chr_data[chr].loc[line_name, 'plus_orientation'] = 0
                 else:
-                    logging.warning('plus score equals minus score in line name '+str(line_name))
+                    logging.getLogger(__name__).warning('plus score equals minus score in line name '+str(line_name))
                     self.chr_data[chr].loc[line_name, 'minus_orientation'] = 0
                     self.chr_data[chr].loc[line_name, 'plus_orientation'] = 0
                     #print(self.chr_data[chr].loc[line_name, :])

@@ -6,8 +6,8 @@ from E1_Reader import E1Reader,fileName2binsize
 from shared import Interval, Parameters
 from DataGenerator import generate_data
 from PredictorGenerators import E1PredictorGenerator,ChipSeqPredictorGenerator, \
-                            SmallChipSeqPredictorGenerator,SmallE1PredictorGenerator, SitesOrientPredictorGenerator, OrientBlocksPredictorGenerator, \
-                            SitesOnlyOrientPredictorGenerator
+                SmallChipSeqPredictorGenerator,SmallE1PredictorGenerator, \
+                SitesOrientPredictorGenerator, OrientBlocksPredictorGenerator
 
 
 logging.basicConfig(format='%(asctime)s %(name)s: %(message)s', datefmt='%I:%M:%S', level=logging.DEBUG)
@@ -27,7 +27,7 @@ params.maxdist = 1000000
 params.sample_size = 500000 #how many contacts write to file
 params.conttype = "oe.gz"
 
-training_file_name = "2018-09-23-trainingOrient.RandOnChr1."+str(params)+".txt"
+training_file_name = "2018-09-24-trainingOrient.RandOnChr1."+str(params)+".txt"
 validation_file_name = "validatingOrient."+str(params)+".txt"
 logging.getLogger(__name__).debug("Using input folder "+input_folder)
 
@@ -53,14 +53,14 @@ NotOrientCTCFpg = SmallChipSeqPredictorGenerator(params.ctcf_reader,
                                                  N_closest=4)
 
 # Read CTCF data and drop sites w/o known orientation
-#params.ctcf_reader_orintOnly = ChiPSeqReader(input_folder + "Hepat_WT_MboI_rep1-rep2.IDR0.05.filt.narrowPeak",
-#                                                    name="CTCF")
-#params.ctcf_reader_orintOnly.read_file()
-#params.ctcf_reader_orintOnly.set_sites_orientation(
-#    input_folder + "Hepat_WT_MboI_rep1-rep2_IDR0_05_filt_narrowPeak-orient_N10.bed.gz")
-#params.ctcf_reader_orintOnly.keep_only_with_orient_data()
-#onlyOrientCtcfpg = SitesOnlyOrientPredictorGenerator(params.ctcf_reader_orintOnly,
-#                                                     N_closest=3)
+params.ctcf_reader_orintOnly = ChiPSeqReader(input_folder + "Hepat_WT_MboI_rep1-rep2.IDR0.05.filt.narrowPeak",
+                                                    name="CTCF")
+params.ctcf_reader_orintOnly.read_file()
+params.ctcf_reader_orintOnly.set_sites_orientation(
+    input_folder + "Hepat_WT_MboI_rep1-rep2_IDR0_05_filt_narrowPeak-orient_N10.bed.gz")
+params.ctcf_reader_orintOnly.keep_only_with_orient_data()
+OrientBlocksCTCFpg = OrientBlocksPredictorGenerator(params.ctcf_reader_orintOnly,
+                                                     params.window_size)
 
 #Read RNA-Seq data
 params.RNAseqReader = RNAseqReader(fname="input/GSE95111_genes.fpkm_table.txt.pre.txt",
@@ -85,7 +85,7 @@ params.eig_reader.read_files([input_folder + "chr1.Hepat.E1.50k",
 
 e1pg = SmallE1PredictorGenerator(params.eig_reader,params.window_size)
 
-params.pgs = [e1pg,OrientCtcfpg,NotOrientCTCFpg,RNAseqPG]#,onlyOrientCtcfpg]
+params.pgs = [e1pg, OrientCtcfpg, NotOrientCTCFpg, OrientBlocksCTCFpg, RNAseqPG]
 
 #Generate train
 trainChrName = "chr1"

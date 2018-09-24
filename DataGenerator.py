@@ -74,7 +74,7 @@ class DataGenerator():
         self.contacts = contacts
         self.params = params
 
-        self.out_file = open(params.out_file, "w")
+        out_file = open(params.out_file, "w")
 
         #Check that predictor names are unique
         pg_names = [pg.name for pg in self.predictor_generators]
@@ -85,10 +85,9 @@ class DataGenerator():
         header = ["chr", "contact_st", "contact_en", "contact_dist", "contact_count"]
         for pg in self.predictor_generators:
             header += pg.get_header(contacts.iloc[0,:])
-        #print(header)
         assert len(header) == len(set(header))
         self.N_fields = len(header)
-        self.out_file.write("\t".join(header) + "\n")
+        out_file.write("\t".join(header) + "\n")
 
         logging.getLogger(__name__).debug("Going to generate predictors for "+ \
                                           str(len(contacts))+" contacts")
@@ -106,10 +105,10 @@ class DataGenerator():
         pool.close()
         logging.getLogger(__name__).debug("Writing to file")
         for i in result:
-            i.apply(self.out_file.write)
+            i.apply(out_file.write)
         for pg in self.predictor_generators:
             pg.print_warnings_occured_during_predGeneration()
-        self.out_file.close()
+        out_file.close()
 
     def toXMLDict(self):
         if len(self.contacts) == 0:
