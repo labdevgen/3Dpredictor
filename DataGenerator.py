@@ -14,19 +14,16 @@ import logging
 import numpy as np
 import datetime
 import multiprocessing
-import pandas as pd
 from collections import OrderedDict
 from shared import write_XML
 
 
 processed = 0
-out_file2 = None
-MainObject = None
-
 
 def _apply_df(args):
     df, DataGeneratorObj = args
-    return df.apply(contact2file,DataGeneratorObj=DataGeneratorObj, axis="columns")
+    return df.apply(contact2file,DataGeneratorObj=DataGeneratorObj,
+                    axis="columns")
 
 def generate_data(params, saveFileDescription = True):
     contacts = params.contacts_reader.get_contacts(params.interval,mindist=params.mindist,maxdist=params.maxdist)
@@ -93,12 +90,21 @@ class DataGenerator():
         self.N_fields = len(header)
         self.out_file.write("\t".join(header) + "\n")
 
-        logging.getLogger(__name__).debug("Going to generate predictors for "+str(len(contacts))+" contacts")
-        pool = multiprocessing.Pool(processes=4)
-        global MainObject
-        MainObject = self
-        result = pool.map(_apply_df, [(d, self) for d in np.array_split(contacts, 4)])
+        logging.getLogger(__name__).debug("Going to generate predictors for "+ \
+                                          str(len(contacts))+" contacts")
+        n_cpus = multiprocessing.cpu_count()
+        n_cpus = min(len(contacts) // 100 + 1, n_cpus) # don't use many CPUs
+                                                # if we have <100 few contacts
+
+        if hasattr(params,"max_cpus"): #allow user to limit cpus used
+            n_cpus = min(n_cpus,params.max_cpus)
+
+        logging.getLogger(__name__).debug("Number of CPUs set to " + str(n_cpus ))
+        logging.getLogger(__name__).debug("Generating contact predictors")
+        pool = multiprocessing.Pool(processes=n_cpus)
+        result = pool.map(_apply_df, [(d, self) for d in np.array_split(contacts, n_cpus)])
         pool.close()
+        logging.getLogger(__name__).debug("Writing to file")
         for i in result:
             i.apply(self.out_file.write)
         for pg in self.predictor_generators:
