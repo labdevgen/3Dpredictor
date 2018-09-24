@@ -94,10 +94,10 @@ class DataGenerator():
         self.out_file.write("\t".join(header) + "\n")
 
         logging.getLogger(__name__).debug("Going to generate predictors for "+str(len(contacts))+" contacts")
-        pool = multiprocessing.Pool(processes=2)
+        pool = multiprocessing.Pool(processes=4)
         global MainObject
         MainObject = self
-        result = pool.map(_apply_df, [(d, self) for d in np.array_split(contacts, 2)])
+        result = pool.map(_apply_df, [(d, self) for d in np.array_split(contacts, 4)])
         pool.close()
         for i in result:
             i.apply(self.out_file.write)
