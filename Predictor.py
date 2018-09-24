@@ -69,24 +69,31 @@ class Predictor(object):
 
     # Train model
     # if dump = True, save it to file dump_file
+    # show_plot = True/False show features importance plot
     # returns class instance with trained_model object
     def train(self, alg = ensemble.GradientBoostingRegressor(n_estimators=500),
               shortcut = "model", apply_log = True,
               dump = True, out_dir = "out/models/",
-              weightsFunc = np.ones_like, *args, **kwargs):
+              weightsFunc = np.ones_like,
+              show_plot = True,
+              *args, **kwargs):
 
+        # Check that we have got data file
         try:
             self.input_file
             self.predictors
         except:
             raise Exception("Please read the data and set predictors first")
 
+        # Save paramters to be able to hash model name
         self.predictors = sorted(self.predictors)
         self.alg = alg
         self.shortcut = shortcut
         self.apply_log = apply_log
         self.weightsFunc = weightsFunc
 
+        # remove validation data since we are going to dump instance and
+        # do not want file to be large
         try:
             del self.validation_file
             del self.validation_data
@@ -104,7 +111,7 @@ class Predictor(object):
             self.input_data = self.read_file(self.input_file)
             self.contacts = np.array(self.input_data["contact_count"].values)
 
-            #fit new model
+            # fit new model
             if apply_log:
                 self.contacts = np.log(self.contacts)
             logging.getLogger(__name__).info("Fitting model")
@@ -118,26 +125,27 @@ class Predictor(object):
                 pickle.dump(self,open(dump_path,"wb"))
                 write_XML(self.toXMLDict(),str(self),dump_path+".xml")
 
-        #Save feature importances
+        # Draw and Save feature importances
         try:
             plt.plot(range(len(self.trained_model.feature_importances_)), self.trained_model.feature_importances_, marker="o")
             plt.xticks(range(len(self.trained_model.feature_importances_)), self.predictors, rotation='vertical')
+            plt.grid(which='both',axis="x",ls=":")
             plt.xlabel("Feature")
             plt.ylabel("Importance")
             plt.title("Features importance for model " + self.representation)
             plt.savefig(dump_path + ".FeatureImportance.png", dpi=300)
-            plt.show()
+            if show_plot:
+                plt.show()
             plt.clf()
         except:
             logging.getLogger(__name__).warning(
-                "Features importance is not avaliable for the model " + str(model.__class__.__name__))
+                "Features importance is not avaliable for the model " + str(self.trained_model.__class__.__name__))
 
         logging.getLogger(__name__).info("Done")
         return self
 
 
     def r2score(self,validation_data,predicted,out_dir,**kwargs):
-
         real = validation_data["contact_count"].values
         r2 = sklearn.metrics.r2_score(predicted, real)
 
