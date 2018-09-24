@@ -11,11 +11,22 @@
 # Calls DataGenerator instance and, finally, writes xml description about model
 
 import logging
+import numpy as np
 import datetime
+import multiprocessing
+import pandas as pd
 from collections import OrderedDict
 from shared import write_XML
 
+
 processed = 0
+out_file2 = None
+MainObject = None
+
+
+def _apply_df(args):
+    df, DataGeneratorObj = args
+    return df.apply(contact2file,DataGeneratorObj=DataGeneratorObj, axis="columns")
 
 def generate_data(params, saveFileDescription = True):
     contacts = params.contacts_reader.get_contacts(params.interval,mindist=params.mindist,maxdist=params.maxdist)
@@ -46,7 +57,7 @@ def contact2file(contact,DataGeneratorObj,report = 5000):
             logging.error(str(len(line))+" "+str(DataGeneratorObj.N_fields))
             logging.error(line)
             raise Exception("Length of predictors does not match header")
-        DataGeneratorObj.out_file.write("\t".join(map(str, line)) + "\n")
+        return "\t".join(map(str, line)) + "\n"
 
 class DataGenerator():
     def __init__(self,**kwargs):
@@ -83,7 +94,13 @@ class DataGenerator():
         self.out_file.write("\t".join(header) + "\n")
 
         logging.getLogger(__name__).debug("Going to generate predictors for "+str(len(contacts))+" contacts")
-        contacts.apply(contact2file, DataGeneratorObj=self, axis="columns")
+        pool = multiprocessing.Pool(processes=2)
+        global MainObject
+        MainObject = self
+        result = pool.map(_apply_df, [(d, self) for d in np.array_split(contacts, 2)])
+        pool.close()
+        for i in result:
+            i.apply(self.out_file.write)
         for pg in self.predictor_generators:
             pg.print_warnings_occured_during_predGeneration()
         self.out_file.close()
