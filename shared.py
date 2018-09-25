@@ -120,6 +120,7 @@ def intersect_intervals(chr_int_data1, chr_int_data2, suppreseChrNumberCheck=Fal
                 [intersection_result.append(index) for index in range(st_end_i[ind], end_st_i[ind])]
             else:
                 logging.getLogger(__name__).error('st_end_i larger then end_st_i')
+                logging.getLogger(__name__).error(str(st_end_i)+" "+str(end_st_i))
                 #As it's an error, I assume raising exeption.
                 raise Exception("Exception from intersect_intervals function")
         #print(len(intersection_result), len(chr_intervals_result))

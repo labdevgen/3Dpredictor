@@ -11,8 +11,10 @@ class VectPredictorGenerator(PredictorGenerator):
 
 class loopsPredictorGenerator(VectPredictorGenerator):
     def __init__(self,loopsReader,window_size):
+        self.name = loopsReader.name
         super(VectPredictorGenerator, self).__init__(loopsReader = loopsReader,
                                                     window_size = window_size)
+        self.vectorizable = True
 
     def get_header(self,contact):
         return ["IsLoop"]
@@ -56,12 +58,14 @@ class loopsPredictorGenerator(VectPredictorGenerator):
             #print (left)
             #print (left_loops)
             intersections_L = intersect_intervals(left_loops, left)[chr]
+            intersections_L["Loop_id"] = intersections_L.intersection.apply(lambda x: left_loops[chr].id.iloc[x])
 
             intersections_R = intersect_intervals(right_loops, right)[chr]
+            intersections_R["Loop_id"] = intersections_R.intersection.apply(lambda x: right_loops[chr].id.iloc[x])
 
             # id_of_element_in_left -- id_of_intersecting_element_in_right_loops
 
-            intersections = intersections_L.merge(intersections_R, on=["intersection","ids_column"], how="inner")
+            intersections = intersections_L.merge(intersections_R, on=["Loop_id","ids_column"], how="inner")
             idxs2 = intersections["ids_column"].values
             global_idxs = np.flatnonzero(idxs)[idxs2]
             result.iloc[global_idxs,0] = 1

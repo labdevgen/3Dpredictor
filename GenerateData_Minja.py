@@ -8,6 +8,8 @@ from DataGenerator import generate_data
 from PredictorGenerators import E1PredictorGenerator,ChipSeqPredictorGenerator, \
                 SmallChipSeqPredictorGenerator,SmallE1PredictorGenerator, \
                 SitesOrientPredictorGenerator, OrientBlocksPredictorGenerator
+from VectPredictorGenerators import loopsPredictorGenerator
+from LoopReader import LoopReader
 
 
 logging.basicConfig(format='%(asctime)s %(name)s: %(message)s', datefmt='%I:%M:%S', level=logging.DEBUG)
@@ -24,19 +26,23 @@ params.mindist = 50001 #minimum distance between contacting regions
 #params.maxdist = params.window_size #max distance between contacting regions
 params.maxdist = 1000000
 #params.binsize = 20000 #when binning regions with predictors, use this binsize
-params.sample_size = 500000 #how many contacts write to file
+params.sample_size = 1000 #how many contacts write to file
 params.conttype = "contacts.gz"
 
-training_file_name = "2018-09-24-trainingOrient.RandOnChr1."+str(params)+".txt"
-validation_file_name = "validatingOrient."+str(params)+".txt"
 logging.getLogger(__name__).debug("Using input folder "+input_folder)
 
 #Read contacts data
 params.contacts_reader = ContactsReader()
 params.contacts_reader.read_files([input_folder + "chr1.5MB.Hepat."+params.conttype,
-                           input_folder + "chr2.5MB.Hepat."+params.conttype])
-                            #input_folder + "chr10.5MB.Hepat."+params.conttype])
+                           input_folder + "chr2.5MB.Hepat."+params.conttype,
+                            input_folder + "chr10.5MB.Hepat."+params.conttype])
                             #input_folder + "chr6.5MB.Hepat." + params.conttype])
+
+#Loops predictor
+loopsReader = LoopReader("input/Hepat.merged.loops")
+loopsReader.read_loops()
+loopspg = loopsPredictorGenerator(loopsReader, params.window_size)
+
 
 # Read CTCF data
 params.ctcf_reader = ChiPSeqReader(input_folder + "Hepat_WT_MboI_rep1-rep2.IDR0.05.filt.narrowPeak.gz",
@@ -78,28 +84,31 @@ RNAseqPG = SmallChipSeqPredictorGenerator(params.RNAseqReader,
 #Read E1 data
 params.eig_reader = E1Reader()
 params.eig_reader.read_files([input_folder + "chr1.Hepat.E1.50k",
-                       input_folder + "chr2.Hepat.E1.50k"],
-                       #input_folder + "chr10.Hepat.E1.50k"],
+                       input_folder + "chr2.Hepat.E1.50k",
+                       input_folder + "chr10.Hepat.E1.50k"],
                        #input_folder + "chr6.Hepat.E1.50k"],
                       binSizeFromName=fileName2binsize) #infer size of E1 bins from file name using this function
 
 e1pg = SmallE1PredictorGenerator(params.eig_reader,params.window_size)
 
-params.pgs = [e1pg, OrientCtcfpg, NotOrientCTCFpg, OrientBlocksCTCFpg, RNAseqPG]
+params.pgs = [e1pg, OrientCtcfpg, NotOrientCTCFpg, OrientBlocksCTCFpg, loopspg, RNAseqPG]
 
 #Generate train
-trainChrName = "chr1"
+trainChrName = "chr2"
 params.interval = Interval(trainChrName,
                       params.contacts_reader.get_min_contact_position(trainChrName),
                       params.contacts_reader.get_max_contact_position(trainChrName))
+training_file_name = "2018-09-25-training.RandOn"+trainChrName+str(params)+".txt"
 params.out_file = output_folder + training_file_name
+params.max_cpus = 1
 generate_data(params,saveFileDescription=True)
 
 #Generate test
+validation_file_name = "validatingOrient."+str(params)+".txt"
 for interval in [# Interval("chr10", 59000000, 62000000)]:
-                  Interval("chr2", 47900000, 53900000),
-                  Interval("chr2", 85000000, 92500000),
-                  Interval("chr2",36000000,41000000)]:
+                  Interval("chr10", 47900000, 53900000),
+                  Interval("chr10", 15000000, 20000000),
+                  Interval("chr10",36000000,41000000)]:
                  # Interval("chr1", 100000000, 110000000)]:
     logging.getLogger(__name__).info("Generating validation dataset for interval "+str(interval))
     params.interval = interval

@@ -25,15 +25,17 @@ def _apply_df(args):
     df, DataGeneratorObj = args
     # Get not-vectorizable predicors
     basic_info = [df[["chr", "contact_st", "contact_en"]], df["contact_en"] - df["contact_st"],
-     df["contact_count"]]
+                    df["contact_count"]]
     not_vect_result = df.apply(contact2file,DataGeneratorObj=DataGeneratorObj,
                     axis="columns")
 
     # Get vecrorizable predictors
     vect_results = []
+    logging.getLogger(__name__).info("Running vectorized predictors")
     for pg in DataGeneratorObj.vect_predictor_generators:
-        vect_results.append(pg.get_predictors(df))
-        assert len(vect_results) == len(df) == len(not_vect_result)
+        current_result = pg.get_predictors(df)
+        assert len(current_result) == len(df) == len(not_vect_result)
+        vect_results.append(current_result)
     return pd.concat(basic_info + [not_vect_result] + vect_results, axis = 1)
 
 
@@ -82,6 +84,7 @@ class DataGenerator():
         #Save some variables if we would like to have stats later on
         self.not_vect_predictor_generators = [p for p in params.pgs if not p.vectorizable]
         self.vect_predictor_generators = [p for p in params.pgs if p.vectorizable]
+
         self.predictor_generators = self.not_vect_predictor_generators + self.vect_predictor_generators
         self.contacts = contacts
         self.contacts.reset_index(drop=True,inplace=True) #This is requered to solve probles with concat later on
@@ -95,10 +98,11 @@ class DataGenerator():
         assert len(pg_names) == len(set(pg_names))
 
         #Get header row and calculate number of fields
-        header = ["chr", "contact_st", "contact_en", "contact_dist", "contact_count"]
+        header = []
         for pg in self.not_vect_predictor_generators:
             header += pg.get_header(contacts.iloc[0,:])
         self.N_notVect_fields = len(header)
+        header = ["chr", "contact_st", "contact_en", "contact_dist", "contact_count"] + header
         for pg in self.vect_predictor_generators:
             header += pg.get_header(contacts.iloc[0,:])
         assert len(header) == len(set(header))
@@ -120,6 +124,7 @@ class DataGenerator():
         # Now get predictors
         pool = multiprocessing.Pool(processes=n_cpus)
         result = pool.map(_apply_df, [(d, self) for d in np.array_split(contacts, n_cpus)])
+        #result = list(map(_apply_df, [(d, self) for d in np.array_split(contacts, n_cpus)]))
         pool.close()
 
         logging.getLogger(__name__).debug("Writing to file")

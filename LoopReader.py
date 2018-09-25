@@ -6,9 +6,17 @@ import logging
 import pandas as pd
 from shared import FileReader
 import numpy as np
+import os
 
 
 class LoopReader(FileReader):
+    def __init__(self,fname,name=None):
+        super(LoopReader,self).__init__(fname)
+        if name is None:
+            logging.getLogger(__name__).warning("Using filename as a name for predictor")
+            self.name = os.path.basename(self.fname)
+        else:
+            self.name = name
 
     def process_data(self,data):
         #check duplicats
@@ -23,20 +31,25 @@ class LoopReader(FileReader):
         # check inter-chromosomal loops
         assert len(data.query("chr1 != chr2"))==0
 
-        #convert to chr-dict
+        # Set unique id for each loop
+        data["id"] = list(range(len(data)))
+
+        # Convert to chr-dict
         chr_data = dict([(chr,data[data["chr1"]==chr]) \
                          for chr in pd.unique(data["chr1"])])
 
         #sort
-        sorted_data = {}
+        sorted_data_l = {}
+        sorted_data_r = {}
         for chr,data in chr_data.items():
-            sorted_data[chr] = data.sort_values(by=["chr1","x1","x2","y1","y2"])
+            sorted_data_l[chr] = data.sort_values(by=["chr1","x1","x2","y1","y2"])
+            sorted_data_r[chr] = data.sort_values(by=["chr1","y1","y2","x1","x2"])
         del chr_data
 
         # check for nested intervals
         nested_intevals_count = 0
         print_example = True
-        for data in sorted_data.values():
+        for data in sorted_data_l.values():
             data_shifted = data.shift()
             nested_x = [False] + (data["x1"][1:] - data_shifted["x2"][1:] > 0) & \
                 (data["x1"][1:] - data_shifted["x2"][1:] < 0)
@@ -58,7 +71,7 @@ class LoopReader(FileReader):
             logging.getLogger(__name__).warning("Number of nested intervals: "+str(nested_intevals_count))
 
 
-        return sorted_data
+        return sorted_data_l,sorted_data_r
 
 
     def read_loops(self, start_chr_name_with_chr=True):
@@ -73,24 +86,24 @@ class LoopReader(FileReader):
                 data["chr2"] = data["chr2"].apply(lambda x: "chr"+str(x))
 
         #save
-        self.chr_data = self.process_data(data)
+        self.chr_data_l, self.chr_data_r = self.process_data(data)
         del data
 
     def empty_like(self):
-        return pd.DataFrame(columns = list(self.chr_data.values())[0].columns)
+        return pd.DataFrame(columns = list(self.chr_data_l.values())[0].columns)
 
 
     def getLoops(self,chr):
-        if not chr in self.chr_data.keys():
+        if not chr in self.chr_data_l.keys():
             return {chr:self.empty_like()}
-        return {chr:self.chr_data[chr]}
+        return {chr:self.chr_data_l[chr]}
 
     def getLeftLoopAncors(self,chr):
-        if not chr in self.chr_data.keys():
+        if not chr in self.chr_data_l.keys():
             return {chr:self.empty_like()}
-        return {chr:self.chr_data[chr][["x1","x2"]].rename(columns={"x1":"start","x2":"end"})}
+        return {chr:self.chr_data_l[chr][["x1","x2","id"]].rename(columns={"x1":"start","x2":"end"})}
 
     def getRightLoopAncors(self,chr):
-        if not chr in self.chr_data.keys():
+        if not chr in self.chr_data_r.keys():
             return {chr:self.empty_like()}
-        return {chr:self.chr_data[chr][["y1","y2"]].rename(columns={"y1":"start","y2":"end"})}
+        return {chr:self.chr_data_r[chr][["y1","y2","id"]].rename(columns={"y1":"start","y2":"end"})}
