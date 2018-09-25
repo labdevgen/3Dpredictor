@@ -12,6 +12,7 @@
 
 import logging
 import numpy as np
+import pandas as pd
 import datetime
 import multiprocessing
 from collections import OrderedDict
@@ -22,8 +23,19 @@ processed = 0
 
 def _apply_df(args):
     df, DataGeneratorObj = args
-    return df.apply(contact2file,DataGeneratorObj=DataGeneratorObj,
+    # Get not-vectorizable predicors
+    basic_info = [df[["chr", "contact_st", "contact_en"]], df["contact_en"] - df["contact_st"],
+     df["contact_count"]]
+    not_vect_result = df.apply(contact2file,DataGeneratorObj=DataGeneratorObj,
                     axis="columns")
+
+    # Get vecrorizable predictors
+    vect_results = []
+    for pg in DataGeneratorObj.vect_predictor_generators:
+        vect_results.append(pg.get_predictors(df))
+        assert len(vect_results) == len(df) == len(not_vect_result)
+    return pd.concat(basic_info + [not_vect_result] + vect_results, axis = 1)
+
 
 def generate_data(params, saveFileDescription = True):
     contacts = params.contacts_reader.get_contacts(params.interval,mindist=params.mindist,maxdist=params.maxdist)
@@ -45,16 +57,14 @@ def contact2file(contact,DataGeneratorObj,report = 5000):
         if (processed > report) and (processed % report == 0):
             print(str(datetime.datetime.now())+"Processed: "+str(processed))
 
-        line = [contact.chr, contact.contact_st, contact.contact_en,
-                contact.contact_en - contact.contact_st, contact["contact_count"]]
-
-        for pg in DataGeneratorObj.predictor_generators:
+        line=[]
+        for pg in DataGeneratorObj.not_vect_predictor_generators:
             line += pg.get_predictors(contact)
-        if len(line) != DataGeneratorObj.N_fields:
-            logging.error(str(len(line))+" "+str(DataGeneratorObj.N_fields))
+        if len(line) != DataGeneratorObj.N_notVect_fields:
+            logging.error(str(len(line))+" "+str(DataGeneratorObj.N_notVect_fields))
             logging.error(line)
             raise Exception("Length of predictors does not match header")
-        return "\t".join(map(str, line)) + "\n"
+        return "\t".join(map(str, line))
 
 class DataGenerator():
     def __init__(self,**kwargs):
@@ -70,7 +80,9 @@ class DataGenerator():
         logging.getLogger(__name__).info("Writing data to file " + params.out_file)
 
         #Save some variables if we would like to have stats later on
-        self.predictor_generators = params.pgs
+        self.not_vect_predictor_generators = [p for p in params.pgs if not p.vectorizable]
+        self.vect_predictor_generators = [p for p in params.pgs if p.vectorizable]
+        self.predictor_generators = self.not_vect_predictor_generators + self.vect_predictor_generators
         self.contacts = contacts
         self.params = params
 
@@ -83,29 +95,35 @@ class DataGenerator():
 
         #Get header row and calculate number of fields
         header = ["chr", "contact_st", "contact_en", "contact_dist", "contact_count"]
-        for pg in self.predictor_generators:
+        for pg in self.not_vect_predictor_generators:
+            header += pg.get_header(contacts.iloc[0,:])
+        self.N_notVect_fields = len(header)
+        for pg in self.vect_predictor_generators:
             header += pg.get_header(contacts.iloc[0,:])
         assert len(header) == len(set(header))
-        self.N_fields = len(header)
+
         out_file.write("\t".join(header) + "\n")
 
         logging.getLogger(__name__).debug("Going to generate predictors for "+ \
                                           str(len(contacts))+" contacts")
+        # Calculate CPU's number
         n_cpus = multiprocessing.cpu_count()
         n_cpus = min(len(contacts) // 100 + 1, n_cpus) # don't use many CPUs
-                                                # if we have <100 few contacts
+                                                # if we have <100 contacts
 
         if hasattr(params,"max_cpus"): #allow user to limit cpus used
             n_cpus = min(n_cpus,params.max_cpus)
-
         logging.getLogger(__name__).debug("Number of CPUs set to " + str(n_cpus ))
         logging.getLogger(__name__).debug("Generating contact predictors")
+
+        # Now get predictors
         pool = multiprocessing.Pool(processes=n_cpus)
         result = pool.map(_apply_df, [(d, self) for d in np.array_split(contacts, n_cpus)])
         pool.close()
+
         logging.getLogger(__name__).debug("Writing to file")
         for i in result:
-            i.apply(out_file.write)
+            i.apply(lambda x: out_file.write("\t".join(map(str,x))+"\n"), axis="columns")
         for pg in self.predictor_generators:
             pg.print_warnings_occured_during_predGeneration()
         out_file.close()

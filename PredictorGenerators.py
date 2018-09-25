@@ -17,6 +17,7 @@ class PredictorGenerator(object):
     def __init__(self,**kwargs):
         for key,val in kwargs:
             self.__setattr__(key,val)
+        self.vectorizable = False
 
     def get_header(self,contact): #Returns predictor header line, i.e. name(s) of predictors
         pass
@@ -141,6 +142,7 @@ class E1PredictorGenerator(PredictorGenerator):
         self.eig_reader = eig_reader
         self.window_size = window_size
         self.name = name
+        self.vectorizable = False
 
     def get_header(self,contact):
         self.header = [self.name + "win_st",self.name + "win_en",self.name + "win_rel_st",self.name + "win_rel_en"]
@@ -193,6 +195,7 @@ class SitesOrientPredictorGenerator(PredictorGenerator):
         if not self.chipSeq_reader.orient_data_real:
             logging.error('please set orientation first')
             raise Exception("Can't generate predictions")
+        self.vectorizable = False
 
     def get_header(self,contact):
         self.header = []
@@ -262,6 +265,7 @@ class OrientBlocksPredictorGenerator(PredictorGenerator): #this PG
                 logging.error('please set orientation first')
             if not self.chipSeq_reader.only_orient_peaks:
                 logging.error('please get data with orientations only first')
+            self.vectorizable = False
     def get_header(self,contact):
         self.header = [self.name + "_W_NBlocks", self.name + "_HasDivergOrient"]
         return self.header

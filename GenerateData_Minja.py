@@ -39,7 +39,7 @@ params.contacts_reader.read_files([input_folder + "chr1.5MB.Hepat."+params.contt
                             #input_folder + "chr6.5MB.Hepat." + params.conttype])
 
 # Read CTCF data
-params.ctcf_reader = ChiPSeqReader(input_folder + "Hepat_WT_MboI_rep1-rep2.IDR0.05.filt.narrowPeak",
+params.ctcf_reader = ChiPSeqReader(input_folder + "Hepat_WT_MboI_rep1-rep2.IDR0.05.filt.narrowPeak.gz",
                                                     name="CTCF")
 params.ctcf_reader.read_file()
 params.ctcf_reader.set_sites_orientation(
@@ -53,7 +53,7 @@ NotOrientCTCFpg = SmallChipSeqPredictorGenerator(params.ctcf_reader,
                                                  N_closest=4)
 
 # Read CTCF data and drop sites w/o known orientation
-params.ctcf_reader_orintOnly = ChiPSeqReader(input_folder + "Hepat_WT_MboI_rep1-rep2.IDR0.05.filt.narrowPeak",
+params.ctcf_reader_orintOnly = ChiPSeqReader(input_folder + "Hepat_WT_MboI_rep1-rep2.IDR0.05.filt.narrowPeak.gz",
                                                     name="CTCF")
 params.ctcf_reader_orintOnly.read_file()
 params.ctcf_reader_orintOnly.set_sites_orientation(

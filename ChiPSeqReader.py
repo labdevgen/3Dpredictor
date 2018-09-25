@@ -63,7 +63,14 @@ class ChiPSeqReader(FileReader): #Class process files with ChipSeq peaks
         logging.getLogger(__name__).info(msg="Reading CTCF file "+self.fname)
 
         # set random temporary labels
-        Nfields = len(open(self.fname).readline().strip().split())
+        if self.fname.endswith(".gz"): #check gzipped files
+            import gzip
+            temp_file = gzip.open(self.fname)
+        else:
+            temp_file = open(self.fname)
+        Nfields = len(temp_file.readline().strip().split())
+        temp_file.close()
+
         names = list(map(str,list(range(Nfields))))
         data = pd.read_csv(self.fname,sep="\t",header=None,names=names)
 
