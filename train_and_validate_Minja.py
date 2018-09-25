@@ -18,7 +18,7 @@ def decorate_mult_abs_log(func,coeff):
 
 contact_type = ["oe","contacts"]
 suffix = ".gz.1000000.50001.500000.25000.txt"
-training_file = "out/2018-09-23-trainingOrient.RandOnChr1."
+training_file = "out/2018-09-24-trainingOrient.RandOnChr1."
 validation_files = [
     "out/Interval_chr2_36000000_41000000validatingOrient.",
     "out/Interval_chr2_47900000_53900000validatingOrient.",
@@ -31,8 +31,8 @@ validation_files = [
 #predictor.filter_predictors(".*CTCF.*", keep=False) #-- discard CTCF
 #predictor.filter_predictors(".*contact_dist.*|.*CTCF_W.*", keep=True) #-- keep only distance and CTCF in window
 
-#for contact_type,apply_log in zip(["contacts","oe"],[True,False]):
-for contact_type,apply_log in zip(["oe"],[False]):
+for contact_type,apply_log in zip(["contacts","oe"],[True,False]):
+#for contact_type,apply_log in zip(["oe"],[False]):
     for (filter,keep),shortcut in zip(zip([".*","E1"],[True,False]),
                                            ["all","no E1"]):
         if contact_type == "oe":
@@ -45,8 +45,10 @@ for contact_type,apply_log in zip(["oe"],[False]):
             predictor.read_data_predictors(training_file + contact_type + suffix)
             predictor.filter_predictors(filter, keep)
             trained_predictor = predictor.train(shortcut=shortcut, apply_log = apply_log,
-                                                weightsFunc = weightFunc, show_plot=False)
-            for validation_file in validation_files:
-                trained_predictor.validate(validation_file + contact_type + suffix,
-                                           show_plot = False)
+                                                weightsFunc = weightFunc, show_plot=True)
+            trained_predictor.out_dir = "out/models/"
+            trained_predictor.draw_Feature_importances()
+            #for validation_file in validation_files:
+            #    trained_predictor.validate(validation_file + contact_type + suffix,
+            #                               show_plot = False)
 

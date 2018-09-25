@@ -64,8 +64,32 @@ class Predictor(object):
         self.shortcut = "model"
         self.alg = None
         self.trained_model = None
-        self.trained_model = None
         self.constant_nonpredictors = ["chr", "contact_st", "contact_en", "contact_count"]
+
+    def draw_Feature_importances(self, show_plot=True):
+        if self.trained_model is None:
+            logging.getLogger(__name__).error("Please train model first")
+            return
+        dump_path = os.path.join(self.out_dir,self.representation)
+        # Draw and Save feature importances
+        try:
+            plt.plot(range(len(self.trained_model.feature_importances_)),
+                     self.trained_model.feature_importances_, marker="o")
+            plt.xticks(range(len(self.trained_model.feature_importances_)),
+                       self.predictors, rotation='vertical')
+            plt.setp(plt.gca().get_xticklabels(), rotation='vertical', fontsize=7)
+            plt.grid(which='both',axis="x",ls=":")
+            plt.xlabel("Feature")
+            plt.ylabel("Importance")
+            plt.title("Features importance for model " + self.representation)
+            plt.savefig(dump_path + ".FeatureImportance.png", dpi=300)
+            if show_plot:
+                plt.show()
+            plt.clf()
+        except:
+            logging.getLogger(__name__).warning(
+                "Features importance is not avaliable for the model " + str(self.trained_model.__class__.__name__))
+
 
     # Train model
     # if dump = True, save it to file dump_file
@@ -91,6 +115,7 @@ class Predictor(object):
         self.shortcut = shortcut
         self.apply_log = apply_log
         self.weightsFunc = weightsFunc
+        self.out_dit = out_dir
 
         # remove validation data since we are going to dump instance and
         # do not want file to be large
@@ -104,7 +129,7 @@ class Predictor(object):
         self.representation = str(self)
         dump_path = os.path.join(out_dir,self.representation)
         if os.path.exists(dump_path):
-            logging.info("Found dump for model" + dump_path)
+            logging.info("Found dump for model " + dump_path)
             return pickle.load(open(dump_path,"rb"))
         else:
             # read data
@@ -124,22 +149,6 @@ class Predictor(object):
                 del self.input_data
                 pickle.dump(self,open(dump_path,"wb"))
                 write_XML(self.toXMLDict(),str(self),dump_path+".xml")
-
-        # Draw and Save feature importances
-        try:
-            plt.plot(range(len(self.trained_model.feature_importances_)), self.trained_model.feature_importances_, marker="o")
-            plt.xticks(range(len(self.trained_model.feature_importances_)), self.predictors, rotation='vertical')
-            plt.grid(which='both',axis="x",ls=":")
-            plt.xlabel("Feature")
-            plt.ylabel("Importance")
-            plt.title("Features importance for model " + self.representation)
-            plt.savefig(dump_path + ".FeatureImportance.png", dpi=300)
-            if show_plot:
-                plt.show()
-            plt.clf()
-        except:
-            logging.getLogger(__name__).warning(
-                "Features importance is not avaliable for the model " + str(self.trained_model.__class__.__name__))
 
         logging.getLogger(__name__).info("Done")
         return self
