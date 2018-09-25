@@ -60,7 +60,7 @@ class ChiPSeqReader(FileReader): #Class process files with ChipSeq peaks
         return sorted_data
 
     def read_file(self): # store CTCF peaks as sorted pandas dataframe
-        logging.getLogger(__name__).info(msg="Reading CTCF file "+self.fname)
+        logging.getLogger(__name__).info(msg="Reading ChipSeq file "+self.fname)
 
         # set random temporary labels
         if self.fname.endswith(".gz"): #check gzipped files

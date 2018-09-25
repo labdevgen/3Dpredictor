@@ -89,17 +89,16 @@ def intersect_intervals(chr_int_data1, chr_int_data2, suppreseChrNumberCheck=Fal
                                                        #output:
                                                        #returns chr_int_data2 with additional column 'intersection'. It is column with row indices
                                                        #of chr_int_data1 which intersect intervals in chr_data_2
-    if (len(chr_int_data1.keys()) != len(chr_int_data2)) and (not suppreseChrNumberCheck):
-        logging.warning("Data have different number of chromosomes", str(chr_int_data1.keys()), '=', len(chr_int_data1.keys()), 'chrs', \
-                      str(chr_int_data2.keys()), '=', len(chr_int_data2), 'chrs')
+    if (len(chr_int_data1.keys()) != len(chr_int_data2.keys())) and (not suppreseChrNumberCheck):
+        logging.getLogger(__name__).warning("Data have different number of chromosomes: ")
+        logging.getLogger(__name__).warning(str(chr_int_data1.keys()))
+        logging.getLogger(__name__).warning(str(chr_int_data2.keys()))
     result = {}
     for chr in chr_int_data2.keys():
-        #if chr != 'chr4':
-         #   continue
-        #print(chr)
         result[chr] = pd.DataFrame([])
         if not chr in chr_int_data1:
             logging.getLogger(__name__).warning("Not intervals on chr", chr)
+            result[chr] = pd.DataFrame(columns=chr_int_data2[chr].columns.values)
             continue
         st_end_i = np.searchsorted(chr_int_data1[chr]['end'], chr_int_data2[chr]['start'])
         end_st_i = np.searchsorted(chr_int_data1[chr]['start'], chr_int_data2[chr]['end'])
@@ -109,6 +108,7 @@ def intersect_intervals(chr_int_data1, chr_int_data2, suppreseChrNumberCheck=Fal
         assert np.all(end_st_i - st_end_i) <= 2  # check that end_st_i always larger than st_end_i
         assert len(st_end_i) == len(end_st_i) == len(chr_int_data2[chr]['end'])
         intersection_result = []
+        ids_column = []
         chr_intervals_result = []
         for ind,val in enumerate(st_end_i):
             if end_st_i[ind] == st_end_i[ind]:
@@ -116,15 +116,20 @@ def intersect_intervals(chr_int_data1, chr_int_data2, suppreseChrNumberCheck=Fal
                 #logging.geotLogger(__name__).warning("do not intersect other data " + str(chr_int_data2[chr].iloc[ind]) + '      ' +  str(ind))
             elif end_st_i[ind] > st_end_i[ind]:
                 chr_intervals_result += [chr_int_data2[chr].iloc[ind]] * (end_st_i[ind] - st_end_i[ind])
-                [intersection_result.append(index)for index in range(st_end_i[ind], end_st_i[ind])]
+                [ids_column.append(ind) for index in range(st_end_i[ind], end_st_i[ind])]
+                [intersection_result.append(index) for index in range(st_end_i[ind], end_st_i[ind])]
             else:
                 logging.getLogger(__name__).error('st_end_i larger then end_st_i')
                 #As it's an error, I assume raising exeption.
                 raise Exception("Exception from intersect_intervals function")
         #print(len(intersection_result), len(chr_intervals_result))
         assert len(intersection_result) == len(chr_intervals_result)
-        chr_intervals_result = pd.DataFrame(chr_intervals_result)
+        if len(chr_intervals_result)==0:
+            chr_intervals_result = pd.DataFrame(columns=chr_int_data2[chr].columns.values)
+        else:
+            chr_intervals_result = pd.DataFrame(chr_intervals_result)
         chr_intervals_result["intersection"] = intersection_result
+        chr_intervals_result["ids_column"] = ids_column
         result[chr] = chr_intervals_result
     return result
 

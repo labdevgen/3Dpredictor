@@ -84,6 +84,7 @@ class DataGenerator():
         self.vect_predictor_generators = [p for p in params.pgs if p.vectorizable]
         self.predictor_generators = self.not_vect_predictor_generators + self.vect_predictor_generators
         self.contacts = contacts
+        self.contacts.reset_index(drop=True,inplace=True) #This is requered to solve probles with concat later on
         self.params = params
 
         out_file = open(params.out_file, "w")

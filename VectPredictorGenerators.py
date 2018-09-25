@@ -1,3 +1,4 @@
+import logging
 import pandas as pd
 import numpy as np
 from PredictorGenerators import PredictorGenerator
@@ -17,10 +18,27 @@ class loopsPredictorGenerator(VectPredictorGenerator):
         return ["IsLoop"]
 
     def get_predictors(self,contacts):
-        result = pd.DataFrame({"IsLoop":[-1]*len(contacts)})
+        # Basic idea:
+        # First, set predictor for all contacts to 0
+        # Next, intersect left and right anchor with loops
+        # Then, intersect these intersections to get contacts with both anchors belonging to same loop
+        # Finally set predictors for these contacts to 1
+
+        result = pd.DataFrame({"IsLoop": [0]*len(contacts)})
         left = {}
         right = {}
         for chr in np.unique(contacts["chr"].values):
+
+            # Important think about index
+            # Contacts are not assumned to belong to same chr or be sorted by chr
+            # But other funcs, i.e. intersect_intervals operate on chr-based dicts of intervals
+            # To solve this, we have idxs which is boolean index of contacts belonging to single chrm
+            # And we will get intersections["ids_column"] which is idxs of those elements of idxs,
+            # which have intersections. I.e. if we have chr1 in 3rd, 5th and 6th contact, and 6th
+            # has intersection with loop, intersections["ids_column"] will be not 6, but 2.
+            # To remap from intersections["ids_column"] to initial indexing of contacts we
+            # use np.flatnonzero(idxs)[idxs2] statment (see blow
+
             idxs = contacts["chr"] == chr
             left[chr] = pd.DataFrame({"start":contacts[idxs]["contact_st"] - self.window_size,
                                       "end": contacts[idxs]["contact_st"] + self.window_size})
@@ -28,13 +46,23 @@ class loopsPredictorGenerator(VectPredictorGenerator):
                                       "end": contacts[idxs]["contact_en"] + self.window_size})
 
             left_loops = self.loopsReader.getLeftLoopAncors(chr)
+            if len(left_loops[chr]) == 0: # No loops on this chr
+                logging.getLogger(__name__).warning("No loops on chr "+chr)
+                continue
             right_loops = self.loopsReader.getRightLoopAncors(chr)
+            if len(right_loops[chr]) == 0:
+                continue
 
-            intersections_L = intersect_intervals(left_loops, left)["intersection"]
-            intersections_R = intersect_intervals(right_loops, right)["intersection"]
-            intersectios = pd.concat([intersections_L,intersections_R],axis=1)
-            intersectios.columns = ["L","R"]
-            predictor = intersectios.apply(lambda x: len(np.intersect1d(x.L,x.R)==0))
-            contacts[idxs] = predictor.values
-        assert len(result.query("IsLoop == -1"))==0
+            #print (left)
+            #print (left_loops)
+            intersections_L = intersect_intervals(left_loops, left)[chr]
+
+            intersections_R = intersect_intervals(right_loops, right)[chr]
+
+            # id_of_element_in_left -- id_of_intersecting_element_in_right_loops
+
+            intersections = intersections_L.merge(intersections_R, on=["intersection","ids_column"], how="inner")
+            idxs2 = intersections["ids_column"].values
+            global_idxs = np.flatnonzero(idxs)[idxs2]
+            result.iloc[global_idxs,0] = 1
         return result

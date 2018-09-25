@@ -8,6 +8,8 @@ from E1_Reader import E1Reader, fileName2binsize
 import matplotlib.pyplot as plt
 import numpy as np
 from PredictorGenerators import PredictorGenerator, SitesOrientPredictorGenerator
+from VectPredictorGenerators import loopsPredictorGenerator
+from LoopReader import  LoopReader
 import pandas as pd
 import scipy.stats
 
@@ -216,6 +218,34 @@ def test_E1_pg():
     data["dist"] = data["dist"] / 25000
     print (data)
 
+def test_loops_reader():
+    l = LoopReader("input/Hepat.10000.loops")
+    l.read_loops()
+    print (l.getLeftLoopAncors("chr1")["chr1"].head())
+    print (l.getRightLoopAncors("chr1")["chr1"].head())
+    print (l.getLeftLoopAncors("chr2")["chr2"].head())
+    print (l.getRightLoopAncors("chr2")["chr2"].head())
+
+def test_loops_pg():
+    l = LoopReader("input/Hepat.10000.loops")
+    l.read_loops()
+    lpg = loopsPredictorGenerator(l,25000)
+    contacts_reader = ContactsReader()
+    contacts_reader.read_files(["input/chr1.5MB.Hepat.contacts.gz",
+                                "input/chr2.5MB.Hepat.contacts.gz"])
+                            #input_folder + "chr10.5MB.Hepat."+params.conttype])
+                            #input_older + "chr6.5MB.Hepat." + params.conttype])
+    data = contacts_reader.data["chr2"].query("contact_st == 3550000 & dist < 500000 & dist > 50000 ").head(500)
+    data = pd.concat((contacts_reader.data["chr1"].head(10),data),axis=0)
+    print (data.head(20))
+    data.reset_index(inplace=True, drop=True)
+    print(lpg.get_header(data))
+    print ("-----------------------")
+    print (pd.concat((data,lpg.get_predictors(data)),axis=1,ignore_index=True))
+
+
+
+
 #correlation()
 #test_get_interval()
 #test_ori_predictor_generator()
@@ -232,4 +262,6 @@ def test_E1_pg():
 #test_ContactsRemoval() #TODO it doesn't throw errors, however the behaviour was not thoroughly tested
 #test_read_orient()
 #test_RNAseqReader() #TODO - intersect interval won't work for overlapping intervals
-test_E1_pg()
+#test_E1_pg()
+#test_loops_reader()
+test_loops_pg()

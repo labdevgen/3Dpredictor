@@ -15,7 +15,7 @@ from collections import  OrderedDict
 
 class PredictorGenerator(object):
     def __init__(self,**kwargs):
-        for key,val in kwargs:
+        for key,val in kwargs.items():
             self.__setattr__(key,val)
         self.vectorizable = False
 
