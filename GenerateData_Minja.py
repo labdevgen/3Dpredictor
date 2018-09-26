@@ -27,7 +27,7 @@ if __name__ == '__main__': #Requered for parallization, at least on Windows
     params.maxdist = 1000000
     #params.binsize = 20000 #when binning regions with predictors, use this binsize
     params.sample_size = 500000 #how many contacts write to file
-    params.conttype = "contacts.gz"
+    params.conttype = "oe.gz"
 
     trainChrName = "chr2"
     training_file_name = "2018-09-25-training.RandOn"+trainChrName+str(params)+".txt"
@@ -102,6 +102,7 @@ if __name__ == '__main__': #Requered for parallization, at least on Windows
                           params.contacts_reader.get_min_contact_position(trainChrName),
                           params.contacts_reader.get_max_contact_position(trainChrName))
     params.out_file = output_folder + training_file_name
+    params.max_cpus = 6
     generate_data(params,saveFileDescription=True)
 
     #Generate test

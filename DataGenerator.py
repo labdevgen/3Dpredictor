@@ -23,6 +23,7 @@ processed = 0
 
 def _apply_df(args):
     df, DataGeneratorObj = args
+    df.reset_index(inplace=True,drop=True) # To allow concat
     # Get not-vectorizable predicors
     basic_info = [df[["chr", "contact_st", "contact_en"]], df["contact_en"] - df["contact_st"],
                     df["contact_count"]]
