@@ -166,18 +166,26 @@ lm=ensemble.GradientBoostingRegressor()
 #training_file = "training.RandOnChr11000000.50001.1000000.5000.100000.txt"
 #training_file = "training.RandOnChr13000000.50001.3000000.10000.500000.txt"
 #training_file = "Data/2018-08-20-trainingSmall.RandOnChr1.20000.contacts.3000000.50001.500000.25000.txt"
-training_file = "2018-09-17-trainingOrient.RandOnChr1.20000.contacts.3000000.50001.500000.25000.txt"
+training_file = "2018-09-23-trainingOrient.RandOnChr1.20000.contacts.3000000.50001.500000.25000.txt"
 
-validation_files = ["Interval_chr1_100000000_110000000validatingOrient.20000.contacts.3000000.50001.500000.25000.txt",
-                    "Interval_chr2_47900000_53900000validatingOrient.20000.contacts.3000000.50001.500000.25000.txt",
-                    "Interval_chr2_85000000_92500000validatingOrient.20000.contacts.3000000.50001.500000.25000.txt",
+validation_files = ["Interval_chr2_47900000_53900000validatingOrient.20000.contacts.3000000.50001.500000.25000.txt",
                     "Interval_chr10_59000000_62000000validatingOrient.20000.contacts.3000000.50001.500000.25000.txt"]
+                   #"Interval_chr2_85000000_92500000validatingOrient.20000.contacts.3000000.50001.500000.25000.txt",
+                    #"Interval_chr10_59000000_62000000validatingOrient.20000.contacts.3000000.50001.500000.25000.txt"]
 # keep = ["all",["CTCF_W","contact_dist"],
 #         ["CTCF_W","contact_dist","CTCF_L","CTCF_R","CTCF_LDist_0","CTCF_LDist_2","CTCF_RDist_0","CTCF_RDist_2"]]
 predictors = get_avaliable_predictors(training_file)
 keep = []
+#keep = ["all"]
 #all except E1
-keep+=[[p for p in predictors if p.find("E1")==-1 and p.find("contact")==-1]]
+#keep+=[[p for p in predictors if p.find("E1")==-1 and p.find("contact")==-1]]
+#only with orientation and N_blocks
+keep+=[[p for p in predictors if p.find("OnlySitesOrient")!=-1 or p.find("NBlocks")!=-1]]
+#only with orientation and N_blocks, CTCF_L,CTCF_W, CTCF_R
+keep+=[[p for p in predictors if p.find("OnlySitesOrient")!=-1 or p.find("NBlocks")!=-1 \
+        or p.find("CTCF_R")!=-1 or p.find("CTCF_W")!=-1 or p.find("CTCF_L")!=-1]]
+#sitesOriPG for all peaks and N_blocks
+keep+=[[p for p in predictors if p.find("SitesOrient")!=-1 or p.find("NBlocks")!=-1]]
 
 # #Contact distance + all non-CTCF chipSeqs
 # keep += ["contact_dist"] + [p for p in predictors if p.find("CTCF")==-1 and p.find("E1")==-1]
