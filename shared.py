@@ -1,9 +1,12 @@
-import os,sys
+import os,sys,numbers
 import logging
 import inspect
 from hashlib import sha224
 import numpy as np
 import pandas as pd
+import dicttoxml
+from xml.dom.minidom import parseString
+from collections import OrderedDict
 
 class Interval:
     def __init__(self,chr,start,end=None,strand=0):
@@ -64,6 +67,13 @@ class Parameters (object):
                    (isinstance(a[1],int) or isinstance(a[1],str))]
         return ".".join(map(str,members))
 
+    def toXMLDict(self):
+        members = inspect.getmembers(self, lambda a: not (inspect.isroutine(a)))
+        members = OrderedDict(a for a in members if not (a[0].startswith('__') and a[0].endswith('__')) and \
+                   (isinstance(a[1], numbers.Number) or isinstance(a[1],str)))
+        return members
+
+
 def str2hash(s,maxlen=100): # Used to hash long file names into shorter ones.
                             # Long fnames (> ~150 characters) are not supported by Windows
                             # This converts long part of the filename "s" which is >100 chars to short hash <= 9 chars
@@ -79,38 +89,89 @@ def intersect_intervals(chr_int_data1, chr_int_data2, suppreseChrNumberCheck=Fal
                                                        #output:
                                                        #returns chr_int_data2 with additional column 'intersection'. It is column with row indices
                                                        #of chr_int_data1 which intersect intervals in chr_data_2
-    if (len(chr_int_data1.keys()) != len(chr_int_data2)) and (not suppreseChrNumberCheck):
-        logging.warning("Data have different number of chromosomes", str(chr_int_data1.keys()), '=', len(chr_int_data1.keys()), 'chrs', \
-                      str(chr_int_data2.keys()), '=', len(chr_int_data2), 'chrs')
+    if (len(chr_int_data1.keys()) != len(chr_int_data2.keys())) and (not suppreseChrNumberCheck):
+        logging.getLogger(__name__).warning("Data have different number of chromosomes: ")
+        logging.getLogger(__name__).warning(str(chr_int_data1.keys()))
+        logging.getLogger(__name__).warning(str(chr_int_data2.keys()))
     result = {}
     for chr in chr_int_data2.keys():
-        #if chr != 'chr4':
-         #   continue
-        #print(chr)
         result[chr] = pd.DataFrame([])
         if not chr in chr_int_data1:
             logging.getLogger(__name__).warning("Not intervals on chr", chr)
+            result[chr] = pd.DataFrame(columns=chr_int_data2[chr].columns.values)
             continue
         st_end_i = np.searchsorted(chr_int_data1[chr]['end'], chr_int_data2[chr]['start'])
         end_st_i = np.searchsorted(chr_int_data1[chr]['start'], chr_int_data2[chr]['end'])
+
+        # TODO what does this assert mean?
+        # In fact, it checks that end_st == st_end occurs not more than 2 times...
         assert np.all(end_st_i - st_end_i) <= 2  # check that end_st_i always larger than st_end_i
         assert len(st_end_i) == len(end_st_i) == len(chr_int_data2[chr]['end'])
         intersection_result = []
+        ids_column = []
         chr_intervals_result = []
         for ind,val in enumerate(st_end_i):
             if end_st_i[ind] == st_end_i[ind]:
-                logging.getLogger(__name__).warning("do not intersect other data " + str(chr_int_data2[chr].iloc[ind]) + '      ' +  str(ind))
+                pass #it's common situtation, so no need for warning
+                #logging.geotLogger(__name__).warning("do not intersect other data " + str(chr_int_data2[chr].iloc[ind]) + '      ' +  str(ind))
             elif end_st_i[ind] > st_end_i[ind]:
                 chr_intervals_result += [chr_int_data2[chr].iloc[ind]] * (end_st_i[ind] - st_end_i[ind])
-                [intersection_result.append(index)for index in range(st_end_i[ind], end_st_i[ind])]
+                [ids_column.append(ind) for index in range(st_end_i[ind], end_st_i[ind])]
+                [intersection_result.append(index) for index in range(st_end_i[ind], end_st_i[ind])]
             else:
                 logging.getLogger(__name__).error('st_end_i larger then end_st_i')
+                logging.getLogger(__name__).error(str(st_end_i)+" "+str(end_st_i))
                 #As it's an error, I assume raising exeption.
                 raise Exception("Exception from intersect_intervals function")
         #print(len(intersection_result), len(chr_intervals_result))
         assert len(intersection_result) == len(chr_intervals_result)
-        chr_intervals_result = pd.DataFrame(chr_intervals_result)
+        if len(chr_intervals_result)==0:
+            chr_intervals_result = pd.DataFrame(columns=chr_int_data2[chr].columns.values)
+        else:
+            chr_intervals_result = pd.DataFrame(chr_intervals_result)
         chr_intervals_result["intersection"] = intersection_result
+        chr_intervals_result["ids_column"] = ids_column
         result[chr] = chr_intervals_result
     return result
+
+
+# input: chr_int_data - dictionaries of pd.dataframes where 1,2,3 columns == chr, start, end
+# key of dict: chr
+# interval - interval object
+# output:
+# returns subset of chr_int_data2 which intersects interval
+def intersect_with_interval(chr_int_data1, interval):
+    chr = interval.chr
+    if not chr in chr_int_data1:
+        logging.getLogger(__name__).warning("No intervals on chr", chr)
+        return pd.DataFrame({}) #Return empty DataFrame
+
+    #TODO Polina, if chr_int_data1 has nested intervals, chr_int_data1[chr]['end'] may not be sorted
+    #  will this still work?
+    st_end = np.searchsorted(chr_int_data1[chr]['end'], interval.start)[0]
+    end_st = np.searchsorted(chr_int_data1[chr]['start'], interval.end)[0]
+    if end_st < st_end:
+        logging.getLogger(__name__).error('st_end_i larger then end_st_i')
+        # As it's an error, I assume raising exeption.
+        raise Exception("Exception from intersect_intervals function")
+    else:
+        return chr_int_data1[chr].iloc[st_end:end_st,:]
+
+
+# File descriptions are saved in XML form
+# Description should be dict-like
+def write_XML(XML_report, header,fname="files_description.xml"):
+    dicttoxml.LOG.setLevel(logging.WARNING) #Get rid of tonnes of INFO/DEBUG logs from dicttoxml
+
+    #Add top level object representing file name
+    XML_report = {header:XML_report}
+    #get xml line without data-types
+    xml_line = dicttoxml.dicttoxml(XML_report,attr_type=False)
+    #convert to pretty string
+    to_write = parseString(xml_line).toprettyxml()
+
+    #write to file
+    f = open(fname,"w")
+    f.write(to_write)
+    f.close()
 

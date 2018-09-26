@@ -8,14 +8,16 @@
 # Function contact2file aggregates these predictors and writes data to file
 
 import logging
-from shared import Interval
+import numbers
 import numpy as np
-import datetime
+from shared import Interval
+from collections import  OrderedDict
 
 class PredictorGenerator(object):
     def __init__(self,**kwargs):
-        for key,val in kwargs:
+        for key,val in kwargs.items():
             self.__setattr__(key,val)
+        self.vectorizable = False
 
     def get_header(self,contact): #Returns predictor header line, i.e. name(s) of predictors
         pass
@@ -48,6 +50,24 @@ class PredictorGenerator(object):
                 )
     def print_warnings_occured_during_predGeneration(self):
         pass
+
+    def toXMLDict(self,contact):
+        res = OrderedDict()
+        res["name"] = self.name
+        res["predictors"] = ",".join(self.get_header(contact))
+
+        # Here we want to run toXMLDict(contact) from each reader
+        # but we don't know the reader variable name
+        # To find reader we iter over all class fields
+        # Untill we get a member with .toXMLDict function avaliable
+        for k,v in self.__dict__.items():
+            try:
+                res[k] = self.__dict__[v].toXMLDict
+            except:
+                pass
+            if (isinstance(v, numbers.Number)): #Also save all numeric parameters
+                res[k] = v
+        return res
 
 
 class ChipSeqPredictorGenerator(PredictorGenerator):
@@ -122,6 +142,7 @@ class E1PredictorGenerator(PredictorGenerator):
         self.eig_reader = eig_reader
         self.window_size = window_size
         self.name = name
+        self.vectorizable = False
 
     def get_header(self,contact):
         self.header = [self.name + "win_st",self.name + "win_en",self.name + "win_rel_st",self.name + "win_rel_en"]
@@ -147,13 +168,21 @@ class SmallE1PredictorGenerator(E1PredictorGenerator):
     # Less predictors:
     # 1. E1 in +/- winsize region around contact ancors
     def get_header(self,*args):
-        self.header = [self.name + "_L",self.name + "_R"]
+        self.header = [self.name + "_L",self.name + "_R",
+                       self.name + "_N_Changes", self.name + "_SD"]
         return self.header
 
     def get_predictors(self,contact):
         intL,intM,intR = self.intevals_around_ancor(contact)
+        E1_M = self.eig_reader.get_E1inInterval(intM)["E1"].values
+        if len(E1_M) == 0:
+            E1_SD = 0
+            E1_N_Changes = 0
+        else:
+            E1_SD = np.std(E1_M) #STD error of E1 values
+            E1_N_Changes = len(E1_M) - 1 - sum(np.equal(np.sign(E1_M[1:]),np.sign(E1_M[:-1]))) #Number of changes of sign
         return list(map(np.average,[self.eig_reader.get_E1inInterval(intL)["E1"].tolist(),
-               self.eig_reader.get_E1inInterval(intR)["E1"].tolist()]))
+               self.eig_reader.get_E1inInterval(intR)["E1"].tolist()]))+[E1_N_Changes,E1_SD]
 
 class SitesOrientPredictorGenerator(PredictorGenerator):
     def __init__(self, chipSeq_reader, N_closest, **kwargs):
@@ -166,6 +195,7 @@ class SitesOrientPredictorGenerator(PredictorGenerator):
         if not self.chipSeq_reader.orient_data_real:
             logging.error('please set orientation first')
             raise Exception("Can't generate predictions")
+        self.vectorizable = False
 
     def get_header(self,contact):
         self.header = []
@@ -235,11 +265,15 @@ class OrientBlocksPredictorGenerator(PredictorGenerator): #this PG
                 logging.error('please set orientation first')
             if not self.chipSeq_reader.only_orient_peaks:
                 logging.error('please get data with orientations only first')
+            self.vectorizable = False
     def get_header(self,contact):
-        self.header = [self.name + "_W_NBlocks"]
+        self.header = [self.name + "_W_NBlocks", self.name + "_HasDivergOrient"]
         return self.header
     def get_predictors(self,contact):
         assert contact.contact_st < contact.contact_en
+
+        # Get peaks in window and count "blocks"
+        # Blocks are CTCF sites with divergent orientation, i.e. --> <-- <-- is a block
         all_Window_peaks = self.chipSeq_reader.get_interval(Interval(contact.chr, contact.contact_st + self.window_size//2, \
                                                                      contact.contact_en - self.window_size//2))
         N_blocks_W = 0
@@ -251,7 +285,16 @@ class OrientBlocksPredictorGenerator(PredictorGenerator): #this PG
             if all_Window_peaks.iloc[i,plus_ori_idx ]!=0 and all_Window_peaks.iloc[i+1,minus_ori_idx] !=0:
                 N_blocks_W +=1
         # print(N_blocks_W)
-        return [N_blocks_W]
+
+        # Check wheather we have CTCF sites in divergent orientation in contact ancors
+        intL, intM, intR = self.intevals_around_ancor(contact)
+        L_peaks = self.chipSeq_reader.get_interval(intL)
+        R_peaks = self.chipSeq_reader.get_interval(intR)
+        has_convergent_peak = 0
+        if len(L_peaks) > 0 and len(R_peaks) > 0:
+            has_convergent_peak = L_peaks.plus_orientation.sum()*R_peaks.minus_orientation.sum()
+
+        return [N_blocks_W,has_convergent_peak]
 
 # class SitesOnlyOrientPredictorGenerator(PredictorGenerator):
 #     def __init__(self, chipSeq_reader, N_closest, **kwargs):

@@ -1,7 +1,8 @@
 import logging,os
-from shared import Position,FileReader,intersect_intervals
 import pandas as pd
 import numpy as np
+from collections import OrderedDict
+from shared import Position,FileReader,intersect_intervals
 
 
 class ChiPSeqReader(FileReader): #Class process files with ChipSeq peaks
@@ -16,7 +17,7 @@ class ChiPSeqReader(FileReader): #Class process files with ChipSeq peaks
         self.only_orient_peaks = False
         super(ChiPSeqReader,self).__init__(fname)
 
-    #check duplicates, set mids, and split by chromosomes and sort
+    #check duplicates, nested intervals, set mids, and split by chromosomes and sort
     def process_data(self,data):
         #check duplicats
         duplicated = data.duplicated(subset=["chr", "start", "end"])
@@ -39,13 +40,37 @@ class ChiPSeqReader(FileReader): #Class process files with ChipSeq peaks
             sorted_data[chr] = data.sort_values(by=["chr","start"])
         del chr_data
 
+        # check for nested intervals
+        nested_intevals_count = 0
+        print_example = True
+        for data in sorted_data.values():
+            data_shifted = data.shift()
+            nested = [False] + (data["start"][1:] - data_shifted["start"][1:] > 0) & \
+                (data["end"][1:] - data_shifted["end"][1:] < 0)
+
+            nested_intevals_count += sum(nested)
+            if print_example and sum(nested) > 0:
+                logging.getLogger(__name__).debug("Nested intervals found. Examples: ")
+                logging.getLogger(__name__).debug(data[1:][nested].head(1))
+                print_example = False
+        if nested_intevals_count > 0:
+            logging.getLogger(__name__).warning("Number of nested intervals: "+str(nested_intevals_count))
+
+
         return sorted_data
 
     def read_file(self): # store CTCF peaks as sorted pandas dataframe
-        logging.log(msg="Reading CTCF file "+self.fname, level=logging.INFO)
+        logging.getLogger(__name__).info(msg="Reading ChipSeq file "+self.fname)
 
         # set random temporary labels
-        Nfields = len(open(self.fname).readline().strip().split())
+        if self.fname.endswith(".gz"): #check gzipped files
+            import gzip
+            temp_file = gzip.open(self.fname)
+        else:
+            temp_file = open(self.fname)
+        Nfields = len(temp_file.readline().strip().split())
+        temp_file.close()
+
         names = list(map(str,list(range(Nfields))))
         data = pd.read_csv(self.fname,sep="\t",header=None,names=names)
 
@@ -57,8 +82,8 @@ class ChiPSeqReader(FileReader): #Class process files with ChipSeq peaks
         chr_data = self.process_data(data)
         del data
 
-        logging.getLogger(__name__).warning(
-            msg="Filling orientation with mock values!") #TODO fill with real data
+        logging.getLogger(__name__).debug(
+            msg="Filling orientation with mock values!")
 
         #Fill orientation with mock values
         for data in chr_data.values():
@@ -114,7 +139,7 @@ class ChiPSeqReader(FileReader): #Class process files with ChipSeq peaks
         try:
             self.chr_data
         except:
-            logging.error("Please read data first")
+            logging.getLogger(__name__).error("Please read data first")
             return None
 
         if not interval.chr in self.chr_data:
@@ -133,7 +158,7 @@ class ChiPSeqReader(FileReader): #Class process files with ChipSeq peaks
     def get_N_peaks_near_interval_boundaries(self,interval,N,N_is_strict=True ):
         all_peaks_in_interval = self.get_interval(interval)
         if not self.orient_data_real:
-               logging.error("please set_orientation first")
+               logging.getLogger(__name__).error("please set_orientation first")
         if len(all_peaks_in_interval) >= N*2:
             result_right = all_peaks_in_interval.head(N)
             result_left = all_peaks_in_interval.tail(N)
@@ -199,7 +224,14 @@ class ChiPSeqReader(FileReader): #Class process files with ChipSeq peaks
         logging.log(msg="Reading CTCF_orientation file " + orient_fname, level=logging.INFO)
 
         # set random temporary labels
-        Nfields = len(open(orient_fname).readline().strip().split())
+        if orient_fname.endswith(".gz"): #check gzipped files
+            import gzip
+            temp_file = gzip.open(orient_fname)
+        else:
+            temp_file = open(orient_fname)
+        Nfields = len(temp_file.readline().strip().split())
+        temp_file.close()
+
         names = list(map(str, list(range(Nfields))))
         data = pd.read_csv(orient_fname, sep="\t", header=None, names=names)  #TODO check: CTCF fname == CTCF orient fname.split('-')[0]
         # print(data)
@@ -282,7 +314,7 @@ class ChiPSeqReader(FileReader): #Class process files with ChipSeq peaks
                 elif  self.chr_data[chr].loc[line_name, 'plus_orientation'] < self.chr_data[chr].loc[line_name, 'minus_orientation']:
                     self.chr_data[chr].loc[line_name, 'plus_orientation'] = 0
                 else:
-                    logging.warning('plus score equals minus score in line name '+str(line_name))
+                    logging.getLogger(__name__).warning('plus score equals minus score in line name '+str(line_name))
                     self.chr_data[chr].loc[line_name, 'minus_orientation'] = 0
                     self.chr_data[chr].loc[line_name, 'plus_orientation'] = 0
                     #print(self.chr_data[chr].loc[line_name, :])
@@ -302,3 +334,12 @@ class ChiPSeqReader(FileReader): #Class process files with ChipSeq peaks
         old_length = len(self.chr_data[interval.chr])
         self.chr_data[interval.chr].drop(data.index[st:en],inplace=True)
         assert len(self.chr_data[interval.chr]) + debug == old_length
+
+    def toXMLDict(self):
+        res = OrderedDict([("ProteinName",self.proteinName),
+                           ("fname",self.fname),
+                           ("orintation_set",self.orient_data_real),
+                           ("only_orient_peaks_kept",self.only_orient_peaks)
+                            ])
+        return res
+
