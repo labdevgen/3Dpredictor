@@ -16,7 +16,8 @@ import matplotlib.pyplot as plt
 from matrix_plotter import MatrixPlotter
 from collections import OrderedDict
 
-
+def ones_like(contacts,*args):
+    return [1]*len(contacts)
 
 class Predictor(object):
     def __setattr__(self, key, value):
@@ -35,8 +36,7 @@ class Predictor(object):
         result["predictors"] = ".".join(self.predictors)
         result["algrorithm"] = str(self.alg.__class__.__name__)
         result["apply_log"] = str(self.apply_log)
-        if str(self.weightsFunc.__name__) != str(np.ones_like.__name__):
-            result["weights_func"] = str(self.weightsFunc.__name__)
+        result["weights_func"] = str(self.weightsFunc.__name__)
         return result
 
     def __represent_validation__(self):
@@ -81,6 +81,15 @@ class Predictor(object):
             plt.grid(which='both',axis="x",ls=":")
             plt.xlabel("Feature")
             plt.ylabel("Importance")
+
+            # these are matplotlib.patch.Patch properties
+            props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
+            # place a text box in upper left in axes coords
+            xml = self.toXMLDict()
+            textstr = "\n".join(key + " " +val for key,val in xml.items() if key != "predictors" )
+            plt.gca().text(0.05, 0.95, textstr , transform=plt.gca().transAxes, fontsize=8,
+                    verticalalignment='top', bbox=props)
+
             plt.title("Features importance for model " + self.representation)
             plt.savefig(dump_path + ".FeatureImportance.png", dpi=300)
             if show_plot:
@@ -98,7 +107,7 @@ class Predictor(object):
     def train(self, alg = ensemble.GradientBoostingRegressor(n_estimators=500),
               shortcut = "model", apply_log = True,
               dump = True, out_dir = "out/models/",
-              weightsFunc = np.ones_like,
+              weightsFunc = ones_like,
               show_plot = True,
               *args, **kwargs):
 
@@ -140,7 +149,7 @@ class Predictor(object):
             if apply_log:
                 self.contacts = np.log(self.contacts)
             logging.getLogger(__name__).info("Fitting model")
-            alg.fit(self.input_data[self.predictors],self.contacts)
+            alg.fit(self.input_data[self.predictors],self.contacts,sample_weight=self.weightsFunc(self.contacts,self.input_data))
             self.trained_model = alg
             if dump:
                 logging.getLogger(__name__).info("Saving to file "+dump_path)
@@ -190,6 +199,14 @@ class Predictor(object):
         plt.xticks(tick_pos, tick_labels, rotation=45)
         plt.imshow(matrix, cmap="OrRd")
         plt.title(self.__represent_validation__())
+        # these are matplotlib.patch.Patch properties
+        props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
+        # place a text box in upper left in axes coords
+        xml = self.toXMLDict()
+        textstr = "\n".join(key + " " + val for key, val in xml.items() if key != "predictors")
+        plt.gca().text(0.05, 0.95, textstr, transform=plt.gca().transAxes, fontsize=6,
+                       verticalalignment='top', bbox=props)
+
         plt.imsave(os.path.join(out_dir,self.__represent_validation__()) + ".matrix.png", matrix,
                     cmap="OrRd", dpi=600)
         if not ("show_plot" in kwargs) or kwargs["show_plot"]:
