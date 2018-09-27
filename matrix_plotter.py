@@ -94,7 +94,7 @@ class MatrixPlotter(): #A class that plot fragments of heatmap
         pos = []
         labels = []
         curr_pos = 0
-        increment =  self.interval_size_bins // maxTicksNumber
+        increment = self.interval_size_bins // maxTicksNumber
         logging.getLogger(__name__).debug(str(increment))
         logging.getLogger(__name__).debug(str(self.interval_size_bins))
         while curr_pos <= self.interval_size_bins:

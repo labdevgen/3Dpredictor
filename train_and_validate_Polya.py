@@ -51,7 +51,7 @@ validation_files = [
 for contact_type,apply_log in zip(["contacts","oe"],[True,False]):
 #for contact_type,apply_log in zip(["contacts"],[False]):
     for (filter,keep),shortcut in zip(zip([".*","E1","'"
-                                                     ";."],[True,False,False]),
+                                                     ";.", ],[True,False,False]),
                                            ["all","no E1","no Loop"]):
         if contact_type == "oe":
             weightFuncs = [ones_like, array, abs_log, decorate_mult_abs_log(mult_abs_log,100),
