@@ -59,8 +59,7 @@ def contactWeitherFunction(contacts,threshold,power,coeff,abs,piecing,asymmetric
 	else:
 		if abs == True: sign **= 2
 		result = ((np.abs(log_con)/np.abs(np.log2(threshold)))**power)*sign
-		if piecing == True: 
-			result = np.sign(np.trunc(result))
+		if piecing == True: result = np.sign(np.trunc(result))
 		result *= coeff 
 		nulls = np.abs(np.sign(np.trunc(result)))
 		result *= nulls
