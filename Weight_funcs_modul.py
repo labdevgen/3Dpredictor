@@ -53,7 +53,6 @@ def contactWeitherFunction(contacts,threshold,power,coeff,abs,piecing,asymmetric
 	log_con = np.log2(contacts)
 	sign = np.sign(log_con)
 	if asymmetric != 0: sign = np.trunc(asymmetric*sign+1)/2
-	nulls = (sign + 1) % 2
 	if threshold == 1 or threshold <= 0:
 		print 'threshold = 1 or <= 0, returned contact weigths = 1'
 		return contacts*0+1
@@ -62,6 +61,10 @@ def contactWeitherFunction(contacts,threshold,power,coeff,abs,piecing,asymmetric
 		result = ((np.abs(log_con)/np.abs(np.log2(threshold)))**power)*sign
 		if piecing == True: 
 			result = np.sign(np.trunc(result))
-			nulls = (result + 1) % 2
-		result = result*coeff + nulls
+		result *= coeff 
+		nulls = np.abs(np.sign(np.trunc(result)))
+		result *= nulls
+		nulls = (nulls+1) % 2
+		result += nulls
 		return result
+
