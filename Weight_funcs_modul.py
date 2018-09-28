@@ -52,10 +52,8 @@ def contactWeither(contacts,treshold,**kwargs):
 def contactWeitherFunction(contacts,threshold,power,coeff,abs,piecing,asymmetric):
 	log_con = np.log2(contacts)
 	sign = np.sign(log_con)
-	nulls = sign*0
-	if asymmetric != 0: 
-		sign = np.trunc(asymmetric*sign+1)/2
-		nulls = (nulls + 1) % 2
+	if asymmetric != 0: sign = np.trunc(asymmetric*sign+1)/2
+	nulls = (sign + 1) % 2
 	if threshold == 1:
 		print 'threshold = 1, returned contact weigths = 1'
 		return contacts*0+1
@@ -63,7 +61,7 @@ def contactWeitherFunction(contacts,threshold,power,coeff,abs,piecing,asymmetric
 		print 'threshold <= 0 is VERY BAD!!!! Returned contact weigths = 1'
 		return contacts*0+1
 	else:
-		if abs == True: sign = sign**2
+		if abs == True: sign **= 2
 		result = ((np.abs(log_con)/np.abs(np.log2(threshold)))**power)*sign
 		if piecing == True: 
 			result = np.sign(np.trunc(result))
