@@ -20,14 +20,14 @@ if __name__ == '__main__': #Requered for parallization, at least on Windows
     #input_folder =  "input"
 
     params = Parameters()
-    params.window_size = 25000 #region around contact to be binned for predictors
+    params.window_size = 25000 #region around contact to be binned for predictorsF
     #params.small_window_size = 12500 #region  around contact ancors to be considered as cis
     params.mindist = 50001 #minimum distance between contacting regions
     #params.maxdist = params.window_size #max distance between contacting regions
     params.maxdist = 1000000
     #params.binsize = 20000 #when binning regions with predictors, use this binsize
     params.sample_size = 500000 #how many contacts write to file
-    params.conttype = "oe.gz"
+    params.conttype = "contacts.gz"
 
     trainChrName = "chr2"
     training_file_name = "2018-09-25-training.RandOn"+trainChrName+str(params)+".txt"
@@ -116,6 +116,7 @@ if __name__ == '__main__': #Requered for parallization, at least on Windows
         logging.getLogger(__name__).info("Generating validation dataset for interval "+str(interval))
         params.interval = interval
         params.out_file = output_folder + params.interval.toFileName() + validation_file_name
+        params.max_cpus = 3
         generate_data(params)
 
     # for object in [params.contacts_reader]+params.pgs:
