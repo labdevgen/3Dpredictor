@@ -10,6 +10,7 @@ import numpy as np
 from PredictorGenerators import PredictorGenerator, SitesOrientPredictorGenerator
 import pandas as pd
 import scipy.stats
+from Predictor import Predictor
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -186,6 +187,10 @@ def test_RNAseqReader():
         logging.info("------------------")
         logging.info(inteval2)
         logging.info(str(RNA.get_interval(inteval2)))
+
+def WeightFunc():
+    predictor = Predictor()
+    predictor.read_data_predictors()
 
 
 #correlation()

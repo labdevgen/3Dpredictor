@@ -18,8 +18,19 @@ def decorate_mult_abs_log(func,coeff):
     result.__name__ = str(coeff) + func.__name__
     return result
 
-def overweight_loops(contacts,predictors):
-    pass
+def overweight_loops(contacts,predictors,coeff): #contacts is np.array of contact_count, predictors
+    idx_loop= np.flatnonzero(predictors['isloop'])
+    result = np.array(contacts)
+    result[[idx_loop]] = result[[idx_loop]]*coeff
+
+    # idx = predictors.columns.get_loc("isloop")
+    # for i in range(len(contacts)):
+    #     if predictors.iloc[i, idx] == 1:
+    #         result[i] =
+def decorate_overweight_loops(func,coeff):
+    result = partial(func,coeff=coeff)
+    result.__name__ = str(coeff) + func.__name__
+    return result
 
 #threshold - threshold counts of contacts, by default threshold is symmetric
 #weigth = ((contacts/threshold)**power)*coeff
@@ -66,4 +77,3 @@ def contactWeitherFunction(contacts,threshold,power,coeff,abs,piecing,asymmetric
 		nulls = (nulls+1) % 2
 		result += nulls
 		return result
-

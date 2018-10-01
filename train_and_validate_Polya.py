@@ -1,37 +1,19 @@
 import logging
 from Predictor import Predictor
-from functools import partial
+from Weight_funcs_modul import *
 import numpy as np
 
 logging.basicConfig(format='%(asctime)s %(message)s', datefmt='%I:%M:%S', level=logging.DEBUG)
 
-def ones_like(contacts, *args):
-    return np.ones_like(contacts)
-
-def array(contacts,*args):
-    return np.array(contacts)
-
-def abs_log(contacts,predictors):
-    return np.abs(np.log(contacts))
-
-def mult_abs_log(contacts,predictors,coeff):
-    return np.abs(np.log(contacts))*coeff
-
-def decorate_mult_abs_log(func,coeff):
-    result = partial(func,coeff=coeff)
-    result.__name__ = str(coeff) + func.__name__
-    return result
-
-def overweight_loops(contacts,predictors):
-    pass
 
 contact_type = ["oe","contacts"]
 suffix = ".gz.1000000.50001.500000.25000.txt"
-training_file = "out/2018-09-25-training.RandOnchr2"
+training_file = "out/2018-09-25-training.RandOnchr1"
 validation_files = [
-    "out/Interval_chr10_36000000_41000000validatingOrient.",
+    "out/Interval_chr1_100000000_110000000validatingOrient.",
     "out/Interval_chr10_15000000_20000000validatingOrient.",
-    "out/Interval_chr10_47900000_53900000validatingOrient."
+    "out/Interval_chr10_47900000_53900000validatingOrient.",
+    "out/Interval_chr2_47900000_53900000validatingOrient."
            ]
 
 #training_file = "out/2018-09-23-trainingOrient.RandOnChr1."
@@ -50,12 +32,13 @@ validation_files = [
 
 for contact_type,apply_log in zip(["contacts","oe"],[True,False]):
 #for contact_type,apply_log in zip(["contacts"],[False]):
-    for (filter,keep),shortcut in zip(zip([".*","E1","'"
-                                                     ";."],[True,False,False]),
-                                           ["all","no E1","no Loop"]):
+    for (filter,keep),shortcut in zip(zip([".*","E1","Loop","Loop|E1|contact_dist","Loop|E1|contact_dist","Loop|E1|contact_dist|CTCF_L|CTCF_W|CTCF_R"] \
+            ,[True,False,False,False,True,True]),
+                                           ["all","no E1","no Loop", "no loop,no E1,no dist", \
+                                            "loop,E1,dist", "loop,E1,dist,LRW_CTCF,Nbl"]):
         if contact_type == "oe":
-            weightFuncs = [ones_like, array, abs_log, decorate_mult_abs_log(mult_abs_log,100),
-                           decorate_mult_abs_log(mult_abs_log,10000)]
+            weightFuncs = [ones_like, array, abs_log, decorate_mult_abs_log(mult_abs_log,100)]
+                           #decorate_mult_abs_log(mult_abs_log,10000)]
         else:
             weightFuncs = [ones_like]
         for weightFunc in weightFuncs:
