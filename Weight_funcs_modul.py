@@ -22,6 +22,7 @@ def overweight_loops(contacts,predictors,coeff): #contacts is np.array of contac
     idx_loop= np.flatnonzero(predictors['isloop'])
     result = np.array(contacts)
     result[[idx_loop]] = result[[idx_loop]]*coeff
+    return result
 
     # idx = predictors.columns.get_loc("isloop")
     # for i in range(len(contacts)):
@@ -40,40 +41,47 @@ def decorate_overweight_loops(func,coeff):
 #if 1 - only 'big' (observed/expected > treshold) contacts will be reweighted
 #if -1 - only 'small' (observed/expected < 1/treshold) contacts will be reweighted 
 #if 0 - all contacts will are reweighted
+def contactWeitherFunction(contacts,predictors, threshold,power,coeff,abs,piecing,asymmetric):
+    log_con = np.log2(contacts)
+    sign = np.sign(log_con)
+    if asymmetric != 0: sign = np.trunc(asymmetric*sign+1)/2
+    if threshold == 1 or threshold <= 0:
+        print ('threshold = 1 or <= 0, returned contact weigths = 1')
+        return contacts*0+1
+    else:
+        if abs == True: sign **= 2
+        result = ((np.abs(log_con)/np.abs(np.log2(threshold)))**power)*sign
+        if piecing == True: result = np.sign(np.trunc(result))
+        result *= coeff
+        nulls = np.abs(np.sign(np.trunc(result)))
+        result *= nulls
+        nulls = (nulls+1) % 2
+        result += nulls
+        return result
 
-def contactWeither(contacts,treshold,**kwargs):
-	try: kwargs['power']
-	except KeyError: power = 1.
-	else: power = kwargs['power']
-	try: kwargs['coeff']
-	except KeyError: coeff = 1.
-	else: coeff = kwargs['coeff']
-	try: kwargs['abs']
-	except KeyError: abs = False
-	else: abs = kwargs['abs']
-	try: kwargs['piecing']
-	except KeyError: piecing = False
-	else:piecing = kwargs['piecing']
-	try: kwargs['asymmetric']
-	except KeyError: asymmetric = 0
-	else: asymmetric = np.sign(kwargs['asymmetric'])
-	result = contactWeitherFunction(contacts,treshold,power=power,coeff=coeff,abs=abs,piecing=piecing,asymmetric=asymmetric)
-	return result
+def decorateContactWeither(func, **kwargs):
+    try:kwargs['threshold']
+    except KeyError: threshold = 2.
+    else: threshold = kwargs['threshold']
+    try: kwargs['power']
+    except KeyError: power = 1.
+    else: power = kwargs['power']
+    try: kwargs['coeff']
+    except KeyError: coeff = 1.
+    else: coeff = kwargs['coeff']
+    try: kwargs['abs']
+    except KeyError: abs = False
+    else: abs = kwargs['abs']
+    try: kwargs['piecing']
+    except KeyError: piecing = False
+    else:piecing = kwargs['piecing']
+    try: kwargs['symmetric']
+    except KeyError: symmetric = 0
+    else: symmetric = np.sign(kwargs['asymmetric'])
+    name = ''
+    for key in kwargs: name += ( key[:3]+str(kwargs[key]) )
+    #result = contactWeitherFunction(contacts,treshold=treshold,power=power,coeff=coeff,abs=abs,piecing=piecing,asymmetric=asymmetric)
+    result = partial(func,threshold=threshold,power=power,coeff=coeff,abs=abs,piecing=piecing,asymmetric=asymmetric)
+    result.__name__ = name + func.__name__
+    return result
 
-def contactWeitherFunction(contacts,threshold,power,coeff,abs,piecing,asymmetric):
-	log_con = np.log2(contacts)
-	sign = np.sign(log_con)
-	if asymmetric != 0: sign = np.trunc(asymmetric*sign+1)/2
-	if threshold == 1 or threshold <= 0:
-		print 'threshold = 1 or <= 0, returned contact weigths = 1'
-		return contacts*0+1
-	else:
-		if abs == True: sign **= 2
-		result = ((np.abs(log_con)/np.abs(np.log2(threshold)))**power)*sign
-		if piecing == True: result = np.sign(np.trunc(result))
-		result *= coeff 
-		nulls = np.abs(np.sign(np.trunc(result)))
-		result *= nulls
-		nulls = (nulls+1) % 2
-		result += nulls
-		return result
