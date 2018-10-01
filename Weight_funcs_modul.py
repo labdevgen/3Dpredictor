@@ -75,9 +75,9 @@ def decorateContactWeither(func, **kwargs):
     try: kwargs['piecing']
     except KeyError: piecing = False
     else:piecing = kwargs['piecing']
-    try: kwargs['symmetric']
-    except KeyError: symmetric = 0
-    else: symmetric = np.sign(kwargs['asymmetric'])
+    try: kwargs['asymmetric']
+    except KeyError: asymmetric = 0
+    else: asymmetric = np.sign(kwargs['asymmetric'])
     name = ''
     for key in kwargs: name += ( key[:3]+str(kwargs[key]) )
     #result = contactWeitherFunction(contacts,treshold=treshold,power=power,coeff=coeff,abs=abs,piecing=piecing,asymmetric=asymmetric)
