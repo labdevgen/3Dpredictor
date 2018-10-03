@@ -19,7 +19,7 @@ def decorate_mult_abs_log(func,coeff):
     return result
 
 def overweight_loops(contacts,predictors,coeff): #contacts is np.array of contact_count, predictors
-    idx_loop= np.flatnonzero(predictors['isloop'])
+    idx_loop= np.flatnonzero(predictors['IsLoop'])
     result = np.array(contacts)
     result[[idx_loop]] = result[[idx_loop]]*coeff
     return result

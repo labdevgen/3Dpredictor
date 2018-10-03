@@ -6,11 +6,11 @@ import numpy as np
 logging.basicConfig(format='%(asctime)s %(message)s', datefmt='%I:%M:%S', level=logging.DEBUG)
 
 
-contact_type = ["oe","contacts"]
+contact_type = ["oe"]#,"contacts"]
 suffix = ".gz.1000000.50001.500000.25000.txt"
-training_file = "out/2018-09-25-training.RandOnchr1"
+training_file = "out/2018-09-25-training.RandOnchr10"
 validation_files = [
-    "out/Interval_chr1_100000000_110000000validatingOrient.",
+    #"out/Interval_chr1_100000000_110000000validatingOrient.",
     "out/Interval_chr10_15000000_20000000validatingOrient.",
     "out/Interval_chr10_47900000_53900000validatingOrient.",
     "out/Interval_chr2_47900000_53900000validatingOrient."
@@ -32,13 +32,22 @@ validation_files = [
 
 for contact_type,apply_log in zip(["contacts","oe"],[True,False]):
 #for contact_type,apply_log in zip(["contacts"],[False]):
-    for (filter,keep),shortcut in zip(zip([".*","E1","Loop","Loop|E1|contact_dist","Loop|E1|contact_dist","Loop|E1|contact_dist|CTCF_L|CTCF_W|CTCF_R"] \
-            ,[True,False,False,False,True,True]),
-                                           ["all","no E1","no Loop", "no loop,no E1,no dist", \
-                                            "loop,E1,dist", "loop,E1,dist,LRW_CTCF,Nbl"]):
+    for (filter,keep),shortcut in zip(zip(["Loop"]#".*","Loop","Loop|E1"]#,"Loop|E1|contact_dist","Loop|E1|contact_dist","Loop|E1|contact_dist|CTCF_L|CTCF_W|CTCF_R"] \
+            ,[False]),#,False,True,True]),
+                                           ["no Loop"]):#, "no loop,no E1,no dist", \
+                                            #"loop,E1,dist", "loop,E1,dist,LRW_CTCF,Nbl"]):
         if contact_type == "oe":
-            weightFuncs = [ones_like, array, abs_log, decorate_mult_abs_log(mult_abs_log,100)]
-                           #decorate_mult_abs_log(mult_abs_log,10000)]
+            weightFuncs = [decorate_overweight_loops(overweight_loops,10), decorate_overweight_loops(overweight_loops,1000), \
+                           decorateContactWeither(contactWeitherFunction, coeff=5),decorateContactWeither(contactWeitherFunction, power=3), \
+                            decorateContactWeither(contactWeitherFunction, power=3, abs=True), decorateContactWeither(contactWeitherFunction, coeff=5, piecing=True), \
+                            decorateContactWeither(contactWeitherFunction, threshold=1.2, coeff=5, piecing=True, asymmetric=1), \
+                            decorateContactWeither(contactWeitherFunction, power=3,asymmetric=1)]
+                            # [ones_like, array, abs_log, decorate_mult_abs_log(mult_abs_log,100), decorate_overweight_loops(overweight_loops,100)] \
+                            # [decorateContactWeither(contactWeitherFunction, coeff=5),decorateContactWeither(contactWeitherFunction, power=3), \
+                            # decorateContactWeither(contactWeitherFunction, power=3, abs=True), decorateContactWeither(contactWeitherFunction, coeff=5, piecing=True), \
+                            # decorateContactWeither(contactWeitherFunction, threshold=1.2, coeff=5, piecing=True, asymmetric=1), \
+                            # decorateContactWeither(contactWeitherFunction, power=3,asymmetric=1)]
+                            # #decorate_mult_abs_log(mult_abs_log,10000)]
         else:
             weightFuncs = [ones_like]
         for weightFunc in weightFuncs:

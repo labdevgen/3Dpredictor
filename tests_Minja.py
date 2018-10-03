@@ -169,7 +169,7 @@ def correlation():
     print(res)
 
 def test_RNAseqReader():
-    RNA = RNAseqReader(fname="input/GSE95111_genes.fpkm_table.txt.pre.txt")
+    RNA = RNAseqReader(fname="input\Hepat\GSE95111_genes.fpkm_table.txt.pre.txt")
     RNA.read_file(rename={"Gene name":"gene",
                           "Gene start (bp)":"start",
                           "Gene end (bp)":"end",
@@ -261,7 +261,7 @@ def test_loops_pg():
 #test_ChipSeqRemoval()
 #test_ContactsRemoval() #TODO it doesn't throw errors, however the behaviour was not thoroughly tested
 #test_read_orient()
-#test_RNAseqReader() #TODO - intersect interval won't work for overlapping intervals
+test_RNAseqReader() #TODO - intersect interval won't work for overlapping intervals
 #test_E1_pg()
 #test_loops_reader()
-test_loops_pg()
+#test_loops_pg()
