@@ -54,6 +54,7 @@ for contact_type,apply_log in zip(["contacts","oe"],[True,False]):
             predictor = Predictor()
             predictor.read_data_predictors(training_file + contact_type + suffix)
             predictor.filter_predictors(filter, keep)
+            predictor.fillna(value=0, inplace=True)
             trained_predictor = predictor.train(shortcut=shortcut, apply_log = apply_log,
                                                 weightsFunc = weightFunc, show_plot=False)
             trained_predictor.out_dir = "out/models/"

@@ -1,4 +1,4 @@
-import logging
+import logging, colorlog
 from ChiPSeqReader import ChiPSeqReader
 from Contacts_reader import ContactsReader
 from RNASeqReader import RNAseqReader
@@ -11,9 +11,11 @@ from PredictorGenerators import E1PredictorGenerator,ChipSeqPredictorGenerator, 
 from VectPredictorGenerators import loopsPredictorGenerator
 from LoopReader import LoopReader
 import pandas as pd
+import os
+
 
 if __name__ == '__main__': #Requered for parallization, at least on Windows
-    for trainChrName in ["chr2","chr10", "chr1"]:
+    for trainChrName in ["chr2"]:#,"chr10", "chr1"]:
         for conttype in ["oe.gz"]:
             logging.basicConfig(format='%(asctime)s %(name)s: %(message)s', datefmt='%I:%M:%S', level=logging.DEBUG)
 
@@ -27,11 +29,12 @@ if __name__ == '__main__': #Requered for parallization, at least on Windows
             #params.small_window_size = 12500 #region  around contact ancors to be considered as cis
             params.mindist = 50001 #minimum distance between contacting regions
             #params.maxdist = params.window_size #max distance between contacting regions
-            params.maxdist = 1000000
+            params.maxdist = 1500000
             #params.binsize = 20000 #when binning regions with predictors, use this binsize
-            params.sample_size = 5 #how many contacts write to file
+            params.sample_size = 25000 #how many contacts write to file
             #params.conttype = "oe.gz"
             params.conttype = conttype
+            params.max_cpus = 3
 
             #trainChrName = "chr2"
             training_file_name = "2018-10-02-training.RandOn"+trainChrName+str(params)+".txt"
@@ -41,7 +44,7 @@ if __name__ == '__main__': #Requered for parallization, at least on Windows
 
             #Read contacts data
             params.contacts_reader = ContactsReader()
-            params.contacts_reader.read_files([input_folder + "chr1.5MB.GM12878."+params.conttype,
+            params.contacts_reader.read_files([input_folder + "chr20.5MB.GM12878."+params.conttype,
                                        input_folder + "chr2.5MB.GM12878."+params.conttype,
                                         input_folder + "chr10.5MB.GM12878."+params.conttype])
                                         #input_folder + "chr6.5MB.Hepat." + params.conttype])
@@ -53,6 +56,7 @@ if __name__ == '__main__': #Requered for parallization, at least on Windows
 
 
             # Read CTCF data
+            logging.info('create CTCF_PG')
             params.ctcf_reader = ChiPSeqReader(input_folder + "CTCF/wgEncodeAwgTfbsBroadGm12878CtcfUniPk.narrowPeak.gz",
                                                                 name="CTCF")
             params.ctcf_reader.read_file()
@@ -77,10 +81,36 @@ if __name__ == '__main__': #Requered for parallization, at least on Windows
                                                                  params.window_size)
 
             #Read other chip-seq data
-            filemanes_df = pd.read_csv(input_folder + "peaks/filenames.csv")
+            logging.info('create chipPG')
+            chipPG = []
+            filenames_df = pd.read_csv(input_folder + "peaks/filenames.csv")
+            assert len(os.listdir(input_folder + 'peaks/')) - 1 == len(filenames_df['name'])
+            # print(len(os.listdir(input_folder + 'peaks/')))
+            # print(len(filenames_df['name']))
+            for index, row in filenames_df.iterrows():
+                params.chip_reader = ChiPSeqReader(input_folder + 'peaks/' + row["filename"] + '.gz', name=row['name'])
+                params.chip_reader.read_file()
+                chipPG.append(SmallChipSeqPredictorGenerator(params.chip_reader,params.window_size,N_closest=4))
 
             #Read methylation data
-
+            logging.info('create metPG')
+            metPG = []
+            filemanes_df = pd.read_csv(input_folder + "methylation/filenames.csv")
+            assert len(os.listdir(input_folder + 'peaks/')) - 1 == len(filenames_df['name'])
+            for index, row in filemanes_df.iterrows():
+                #print(row["name"])
+                params.met_reader = ChiPSeqReader(input_folder + 'methylation/'+ row["filename"], name=row['name'])
+                params.met_reader.read_file(renamer={"0":"chr","1":"start","2":"end","4":"sigVal"})
+                metPG.append(SmallChipSeqPredictorGenerator(params.met_reader,params.window_size,N_closest=4))
+            #Read cage data
+            cagePG = []
+            filemanes_df = pd.read_csv(input_folder + "cage/filenames.csv")
+            assert len(os.listdir(input_folder + 'peaks/')) - 1 == len(filenames_df['name'])
+            for index, row in filemanes_df.iterrows():
+                #print(row["name"])
+                params.cage_reader = ChiPSeqReader(input_folder + 'cage/' + row["filename"], name=row['name'])
+                params.cage_reader.read_file(renamer={"0":"chr","1":"start","2":"end","4":"sigVal"})
+                cagePG.append(SmallChipSeqPredictorGenerator(params.cage_reader,params.window_size,N_closest=4))
             #Read RNA-Seq data
             params.RNAseqReader = RNAseqReader(fname=input_folder + "RNA-seq/rna-seqPolyA.tsvpre.txt",
                                                name="RNA")
@@ -104,26 +134,26 @@ if __name__ == '__main__': #Requered for parallization, at least on Windows
             #
             # e1pg = SmallE1PredictorGenerator(params.eig_reader,params.window_size)
             #
-            params.pgs = [OrientCtcfpg, NotOrientCTCFpg, OrientBlocksCTCFpg, RNAseqPG]
+            params.pgs = [OrientCtcfpg, NotOrientCTCFpg, OrientBlocksCTCFpg, RNAseqPG] + metPG + chipPG + cagePG
 
             #Generate train
             params.interval = Interval(trainChrName,
                                   params.contacts_reader.get_min_contact_position(trainChrName),
                                   params.contacts_reader.get_max_contact_position(trainChrName))
             params.out_file = output_folder + training_file_name
-            params.max_cpus = 3
             generate_data(params,saveFileDescription=True)
 
-            # #Generate test
-            # for interval in [# Interval("chr10", 59000000, 62000000)]:
-            #                  Interval("chr10", 47900000, 53900000),
-            #                  Interval("chr10", 15000000, 20000000),
-            #                  Interval("chr10",36000000,41000000),
-            #                  Interval("chr1", 100000000, 110000000)]:
-            #                  logging.getLogger(__name__).info("Generating validation dataset for interval "+str(interval))
-            #                  params.interval = interval
-            #                  params.out_file = output_folder + params.interval.toFileName() + validation_file_name
-            #                  generate_data(params)
+            #Generate test
+            for interval in [# Interval("chr10", 59000000, 62000000)]:
+                             Interval("chr10", 65000000, 70000000),
+                             Interval("chr20", 37000000, 40000000),
+                             Interval("chr10", 10000000, 60000000)]:
+                             # Interval("chr10",36000000,41000000),
+                             # Interval("chr1", 100000000, 110000000)]:
+                             logging.getLogger(__name__).info("Generating validation dataset for interval "+str(interval))
+                             params.interval = interval
+                             params.out_file = output_folder + params.interval.toFileName() + validation_file_name
+                             generate_data(params)
 
             # for object in [params.contacts_reader]+params.pgs:
             #     lostInterval = Interval("chr1",103842568,104979840)

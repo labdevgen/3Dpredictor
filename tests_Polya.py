@@ -231,6 +231,7 @@ def test_RNAseqReader():
     print(RNA.chr_data['chr1'])
 def test_nonchip_reader():
     # ctcfreader = ChiPSeqReader("input/GM12878/")
+
     reader = ChiPSeqReader("input/GM12878/cage/GSM849368_hg19_wgEncodeRikenCageGm12878CellPapClusters.bed")
     reader.read_file(renamer={"0":"chr","1":"start","2":"end","4":"sigVal"})
     print(reader.chr_data['chr1'])

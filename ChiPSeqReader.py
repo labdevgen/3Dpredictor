@@ -45,12 +45,9 @@ class ChiPSeqReader(FileReader): #Class process files with ChipSeq peaks
         print_example = True
         for data in sorted_data.values():
             data_shifted = data.shift()
-            print(data_shifted.head())
             a=(data["start"][1:] - data_shifted["start"][1:] > 0)
             b=(data["end"][1:] - data_shifted["end"][1:] < 0)
             c= (a & b)
-            print(len(a),len(b),len(c),len(data))
-            print(c)
             nested = [False] + list(c.values)
 
             #nested = [False] + (data["start"][1:] - data_shifted["start"][1:] > 0) & \
@@ -85,7 +82,6 @@ class ChiPSeqReader(FileReader): #Class process files with ChipSeq peaks
 
         # subset and rename
         data_fields = list(map(int,renamer.keys()))
-        print(data_fields)
         data = data.iloc[:,data_fields]
         data.rename(columns=renamer,
                         inplace=True)
@@ -154,7 +150,7 @@ class ChiPSeqReader(FileReader): #Class process files with ChipSeq peaks
             return None
 
         if not interval.chr in self.chr_data:
-            logging.error("Chromosome ",interval.chr,"not found in keys")
+            logging.error("Chromosome ",interval.chr,"not found in keys for reader ",self.proteinName)
             return pd.DataFrame()
 
         left = np.searchsorted(self.chr_data[interval.chr]["mids"].values,interval.start,"left")
