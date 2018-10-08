@@ -46,6 +46,9 @@ def MatPlot2HiC(matplot_obj, fname, out_folder):
         pre_file = open(pre_filename, 'w')
         data_rows = pandas_df.shape[0]
         
+        pandas_df.apply(lambda x: pre_file.write(('0 ' + x[0] + ' ' + str(x[1]) + ' ' + str(x[1]) + ' 0 ' + x[0] + ' ' + str(x[2]) + ' ' + str(x[2]) + '\n') * round(math.exp(x[3]))), axis=1)
+
+        '''
         for index, row in pandas_df.iterrows():
    
             chr_buf = row[0]
@@ -58,7 +61,8 @@ def MatPlot2HiC(matplot_obj, fname, out_folder):
                 pre_file.write(Text)
             
             print('Completed: {}%'.format(index * 100 // data_rows), end='\r')
-    
+        '''
+        
         pre_file.close()
     
     # make dirs
@@ -103,5 +107,5 @@ def MatPlot2HiC(matplot_obj, fname, out_folder):
     subprocess.call(['java', '-jar', './juicer_tools.jar', 'pre', pre_data_filename, hic_data_filename, chromsizes_filename])
     print(colored("[SUCCESS]", 'green') + ' DATA HiC file created.\n')
 
-    subprocess.call(['java', '-jar', '/juicer_tools.jar', 'pre', pre_control_filename, hic_control_filename, chromsizes_filename])    
+    subprocess.call(['java', '-jar', './juicer_tools.jar', 'pre', pre_control_filename, hic_control_filename, chromsizes_filename])    
     print(colored("[SUCCESS]", 'green') + ' CONTROL HiC file created.\n')
