@@ -103,5 +103,5 @@ def MatPlot2HiC(matplot_obj, fname, out_folder):
     subprocess.call(['java', '-jar', './juicer_tools.jar', 'pre', pre_data_filename, hic_data_filename, chromsizes_filename])
     print(colored("[SUCCESS]", 'green') + ' DATA HiC file created.\n')
 
-    subprocess.call(['java', '-jar', '/juicer_tools.jar', 'pre', pre_control_filename, hic_control_filename, chromsizes_filename])    
+    subprocess.call(['java', '-jar', './juicer_tools.jar', 'pre', pre_control_filename, hic_control_filename, chromsizes_filename])
     print(colored("[SUCCESS]", 'green') + ' CONTROL HiC file created.\n')

@@ -15,6 +15,7 @@ from shared import str2hash,Interval,write_XML
 import matplotlib.pyplot as plt
 from matrix_plotter import MatrixPlotter
 from collections import OrderedDict
+from matplot2hic import MatPlot2HiC
 
 def ones_like(contacts,*args):
     return [1]*len(contacts)
@@ -71,34 +72,38 @@ class Predictor(object):
             logging.getLogger(__name__).error("Please train model first")
             return
         dump_path = os.path.join(self.out_dir,self.representation)
-        # Draw and Save feature importances
         try:
-            plt.plot(range(len(self.trained_model.feature_importances_)),
-                     self.trained_model.feature_importances_, marker="o")
-            plt.xticks(range(len(self.trained_model.feature_importances_)),
-                       self.predictors, rotation='vertical')
-            plt.setp(plt.gca().get_xticklabels(), rotation='vertical', fontsize=7)
-            plt.grid(which='both',axis="x",ls=":")
-            plt.xlabel("Feature")
-            plt.ylabel("Importance")
-
-            # these are matplotlib.patch.Patch properties
-            props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
-            # place a text box in upper left in axes coords
-            xml = self.toXMLDict()
-            textstr = "\n".join(key + " " +val for key,val in xml.items() if key != "predictors" )
-            plt.gca().text(0.05, 0.95, textstr , transform=plt.gca().transAxes, fontsize=8,
-                    verticalalignment='top', bbox=props)
-
-            plt.title("Features importance for model " + self.representation)
-            plt.savefig(dump_path + ".FeatureImportance.png", dpi=300)
-            if show_plot:
-                plt.show()
-            plt.clf()
+            self.trained_model.feature_importances_
         except:
             logging.getLogger(__name__).warning(
                 "Features importance is not avaliable for the model " + str(self.trained_model.__class__.__name__))
+            return 0
+        # create file with feature importances
+        importances = pd.Series(self.trained_model.feature_importances_).sort_values(ascending=False)
+        #print(importances)
+        importances.to_csv(dump_path + ".featureImportance.txt", sep='\t')
+        plt.plot(range(len(self.trained_model.feature_importances_)),
+                 self.trained_model.feature_importances_, marker="o")
+        plt.xticks(range(len(self.trained_model.feature_importances_)),
+                   self.predictors, rotation='vertical')
+        plt.setp(plt.gca().get_xticklabels(), rotation='vertical', fontsize=7)
+        plt.grid(which='both',axis="x",ls=":")
+        plt.xlabel("Feature")
+        plt.ylabel("Importance")
 
+        # these are matplotlib.patch.Patch properties
+        props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
+        # place a text box in upper left in axes coords
+        xml = self.toXMLDict()
+        textstr = "\n".join(key + " " +val for key,val in xml.items() if key != "predictors" )
+        plt.gca().text(0.05, 0.95, textstr , transform=plt.gca().transAxes, fontsize=8,
+                verticalalignment='top', bbox=props)
+
+        plt.title("Features importance for model " + self.representation)
+        plt.savefig(dump_path + ".FeatureImportance.png", dpi=300)
+        if show_plot:
+            plt.show()
+        plt.clf()
 
     # Train model
     # if dump = True, save it to file dump_file
@@ -191,7 +196,6 @@ class Predictor(object):
         mp = MatrixPlotter()
         mp.set_data(validation_data)
         mp.set_control(predicted_data)
-        if 
         matrix = mp.getMatrix4plot(Interval(validation_data["chr"].iloc[0],
                                             min(validation_data["contact_st"].values),
                                             max(validation_data["contact_en"].values)))
@@ -215,6 +219,15 @@ class Predictor(object):
         if not ("show_plot" in kwargs) or kwargs["show_plot"]:
             plt.show()
         plt.clf()
+
+    def plot_juicebox(self,validation_data,predicted,out_dir,**kwargs):
+        out_dir="out/hic_files"
+        predicted_data = validation_data.copy(deep=True)
+        predicted_data["contact_count"] = predicted
+        mp = MatrixPlotter()
+        mp.set_data(validation_data)
+        mp.set_control(predicted_data)
+        MatPlot2HiC(mp, self.__represent_validation__(), out_dir)
 
     # Validate model
     def validate(self, validation_file,
