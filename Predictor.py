@@ -143,6 +143,7 @@ class Predictor(object):
         else:
             # read data
             self.input_data = self.read_file(self.input_file)
+            self.input_data.fillna(value=0, inplace=True)
             self.contacts = np.array(self.input_data["contact_count"].values)
 
             # fit new model
@@ -190,6 +191,7 @@ class Predictor(object):
         mp = MatrixPlotter()
         mp.set_data(validation_data)
         mp.set_control(predicted_data)
+        if 
         matrix = mp.getMatrix4plot(Interval(validation_data["chr"].iloc[0],
                                             min(validation_data["contact_st"].values),
                                             max(validation_data["contact_en"].values)))
@@ -222,6 +224,7 @@ class Predictor(object):
         validators = validators if validators is not None else [self.r2score,self.plot_matrix]
         self.validation_file = validation_file
         self.validation_data = self.read_file(validation_file)
+        self.validation_data.fillna(value=0, inplace=True)
         if self.apply_log:
             self.validation_data["contact_count"] = np.log(self.validation_data["contact_count"].values)
         self.predicted = self.trained_model.predict(self.validation_data[self.predictors])
