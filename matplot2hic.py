@@ -44,25 +44,15 @@ def MatPlot2HiC(matplot_obj, fname, out_folder):
            
     def Pandas2Pre(pre_filename, pandas_df): # This func makes pre-HiC file from the pandas object, control or data
         pre_file = open(pre_filename, 'w')
-        data_rows = pandas_df.shape[0]
+        data_rows = pandas_df.shape[0]        
         
-        pandas_df.apply(lambda x: pre_file.write(('0 ' + x[0] + ' ' + str(x[1]) + ' ' + str(x[1]) + ' 0 ' + x[0] + ' ' + str(x[2]) + ' ' + str(x[2]) + '\n') * round(math.exp(x[3]))), axis=1)
-
-        '''
-        for index, row in pandas_df.iterrows():
-   
-            chr_buf = row[0]
-            contact_st_buf = row[1]
-            contact_en_buf = row[2]
-            contact_count_exp_buf = round(math.exp(row[3]))
-            
-            Text = '0 ' + chr_buf + ' ' + str(contact_st_buf) + ' ' + str(contact_st_buf) + ' 0 ' + chr_buf + ' ' + str(contact_en_buf) + ' ' + str(contact_en_buf) + '\n'
-            for k in range(contact_count_exp_buf):
-                pre_file.write(Text)
-            
-            print('Completed: {}%'.format(index * 100 // data_rows), end='\r')
-        '''
         
+        pandas_df.columns = ["chr1","start","end","count"]
+        pandas_df['str1'] = 0
+        pandas_df['exp'] = np.exp(pandas_df['count'])
+        
+        pandas_df.to_csv(pre_file,sep=" ",columns=['str1','chr1','start','start', 'str1','chr1','end','end', 'exp'], header=False,index=False)
+      
         pre_file.close()
     
     # make dirs
