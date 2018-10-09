@@ -47,7 +47,7 @@ class LoopReader(FileReader):
         del chr_data
 
         # check for nested intervals
-        nested_intevals_count = 0
+        nested_intevals_count = 0 #TODO check how is it work
         print_example = True
         for data in sorted_data_l.values():
             data_shifted = data.shift()

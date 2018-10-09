@@ -2,13 +2,14 @@ from pybiomart import Dataset, Server
 import  pandas as pd
 import logging
 
-input_file = "input/GSE95111_genes.fpkm_table.txt"
+input_file = "D:/Users/Polina/3Dpredictor/input/GM12878/RNA-seq/rna-seqPolyA.tsv"
 inp_data = pd.read_csv(input_file,delimiter="\t")
-inp_data["Gene_ID"] = inp_data["tracking_id"].apply(lambda x: x.split(".")[0])
+gene_id_field = 'gene_id'
+inp_data["Gene_ID"] = inp_data[gene_id_field].apply(lambda x: x.split(".")[0])
 
-server = Server(host='http://www.ensembl.org')
+server = Server(host='http://grch37.ensembl.org')
 mart = server['ENSEMBL_MART_ENSEMBL']
-dataset = mart["mmusculus_gene_ensembl"]
+dataset = mart["hsapiens_gene_ensembl"]
 
 query = dataset.query(attributes=['ensembl_gene_id',
                           'start_position',
