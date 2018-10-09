@@ -20,6 +20,9 @@ from matplot2hic import MatPlot2HiC
 def ones_like(contacts,*args):
     return [1]*len(contacts)
 
+def equal(contacts,*args):
+    return contacts
+
 class Predictor(object):
     def __setattr__(self, key, value):
         if key == "predictors":
@@ -233,6 +236,7 @@ class Predictor(object):
     def validate(self, validation_file,
                  out_dir = "out/pics/",
                  validators = None,
+                 transformation = equal,
                  **kwargs):
         validators = validators if validators is not None else [self.r2score,self.plot_matrix]
         self.validation_file = validation_file
@@ -240,7 +244,8 @@ class Predictor(object):
         self.validation_data.fillna(value=0, inplace=True)
         if self.apply_log:
             self.validation_data["contact_count"] = np.log(self.validation_data["contact_count"].values)
-        self.predicted = self.trained_model.predict(self.validation_data[self.predictors])
+        self.predicted = transformation(self.trained_model.predict(self.validation_data[self.predictors]))
+        self.validation_data["contact_count"] = transformation(self.validation_data["contact_count"])
         for validataion_function in validators:
             validataion_function(self.validation_data,self.predicted,
                                  out_dir = out_dir, **kwargs)
