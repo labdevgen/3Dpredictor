@@ -20,7 +20,7 @@ from matplot2hic import MatPlot2HiC
 def ones_like(contacts,*args):
     return [1]*len(contacts)
 
-def equal(contacts,*args):
+def equal(contacts,**kwargs):
     return contacts
 
 class Predictor(object):
@@ -48,7 +48,8 @@ class Predictor(object):
             self.validation_file
         except:
             raise Exception("Please read validation data firts")
-        return "model"+str(self)+".validation."+str2hash(os.path.basename(self.validation_file))
+        return "model"+str(self)+".validation."+"."+str(self.transformation_for_validation_data)+"."+\
+                        str2hash(os.path.basename(self.validation_file))
 
     def __repr__(self): # Representation should reflect all paramteres
                         # so that 2 models having same repr are identical
@@ -248,14 +249,24 @@ class Predictor(object):
                  validators = None,
                  transformation = equal,
                  **kwargs):
+        # validation_file - file with validation data
+        # out_dir - directory to save output produced during validation
+        # validators - list of functions used to validate each region, i.e. funcs to calc r2score. scc and etc.
+        # transformation - function to apply to contact values before running validation funcs
+        # i.e. if using o/e values it can transform it back to contacts based on expected values
+        # kwargs will be passed to validation functions
+
         validators = validators if validators is not None else [self.r2score,self.plot_matrix,self.scc]
         self.validation_file = validation_file
         self.validation_data = self.read_file(validation_file)
         self.validation_data.fillna(value=0, inplace=True)
         if self.apply_log:
             self.validation_data["contact_count"] = np.log(self.validation_data["contact_count"].values)
-        self.predicted = transformation(self.trained_model.predict(self.validation_data[self.predictors]))
-        self.validation_data["contact_count"] = transformation(self.validation_data["contact_count"])
+        self.transformation_for_validation_data = transformation.__name__
+        self.predicted = transformation(self.trained_model.predict(self.validation_data[self.predictors]),
+                                        dist=self.validation_data["dist"].values)
+        self.validation_data["contact_count"] = transformation(self.validation_data["contact_count"].values,
+                                                               dist=self.validation_data["dist"].values)
         for validataion_function in validators:
             validataion_function(self.validation_data,self.predicted,
                                  out_dir = out_dir, **kwargs)
