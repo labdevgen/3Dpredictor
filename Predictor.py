@@ -104,7 +104,7 @@ class Predictor(object):
     # if dump = True, save it to file dump_file
     # show_plot = True/False show features importance plot
     # returns class instance with trained_model object
-    def train(self, alg = ensemble.GradientBoostingRegressor(n_estimators=500),
+    def train(self, alg = ensemble.GradientBoostingRegressor(n_estimators=100),
               shortcut = "model", apply_log = True,
               dump = True, out_dir = "out/models/",
               weightsFunc = ones_like,
@@ -149,7 +149,8 @@ class Predictor(object):
             if apply_log:
                 self.contacts = np.log(self.contacts)
             logging.getLogger(__name__).info("Fitting model")
-            alg.fit(self.input_data[self.predictors],self.contacts,sample_weight=self.weightsFunc(self.contacts,self.input_data))
+            alg.fit(self.input_data[self.predictors],self.contacts,
+                    sample_weight=self.weightsFunc(self.contacts,self.input_data))
             self.trained_model = alg
             if dump:
                 logging.getLogger(__name__).info("Saving to file "+dump_path)
@@ -212,13 +213,23 @@ class Predictor(object):
         if not ("show_plot" in kwargs) or kwargs["show_plot"]:
             plt.show()
         plt.clf()
+		
+    def scc(self,validation_data,predicted,out_dir,**kwargs):
+        #print(validation_data)
+        d = pd.concat([validation_data["contact_st"],validation_data["contact_en"],validation_data["contact_count"],pd.DataFrame(predicted)], axis=1)
+        pd.DataFrame.to_csv(d,"file_for_scc.txt", sep = " ")
+        out = subprocess.check_output(["Rscript", "scc.R"])
+        print(out)
+        #p = Popen(["Rscript", "test.R"], stdout=PIPE, stdin=PIPE, stderr=STDOUT)
+        #grep_stdout = p.communicate(input=b'file_for_scc.txt')[0]
+        #Popen.wait(timeout=None)
 
     # Validate model
     def validate(self, validation_file,
                  out_dir = "out/pics/",
                  validators = None,
                  **kwargs):
-        validators = validators if validators is not None else [self.r2score,self.plot_matrix]
+        validators = validators if validators is not None else [self.r2score,self.plot_matrix,self.scc]
         self.validation_file = validation_file
         self.validation_data = self.read_file(validation_file)
         if self.apply_log:
