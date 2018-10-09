@@ -22,8 +22,17 @@ def decorate_mult_abs_log(func,coeff):
     result.__name__ = str(coeff) + func.__name__
     return result
 
-def overweight_loops(contacts,predictors):
-    pass
+def oe2obs(contacts,expected_file,binsize,**kwargs):
+    # read expected file
+    # First number in this file is for diagonal elements, i.e. where distance = 0
+    expected = np.loadtxt(expected_file)
+    expected = np.nan_to_num(expected)
+    expected_dist = dict([(ind*binsize,val) for ind,val in enumerate(expected)]) # dictionary, distance --> expected
+    contacts_dist = kwargs["dist"] # array, element[i] --> distance between ancors of contact i
+    result = []
+    for ind,val in enumerate(contacts):
+        result.append(val*expected_dist[contacts_dist[ind]])
+    return result
 
 contact_type = ["oe","contacts"]
 suffix = ".gz.1000000.50001.500000.25000.txt"
