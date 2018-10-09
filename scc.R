@@ -1,0 +1,282 @@
+MatToVec <- function(dat){
+  
+  mat = as.matrix(dat)
+  
+  nc = ncol(mat)
+  rc = nrow(mat)
+  
+  test = matrix(0, nc*rc, 3)
+  test[,3] = as.vector(mat)
+  test[,2] = as.double(rep(rownames(mat), nc))
+  
+  tmp = rep(as.double(colnames(mat)), each=rc)
+  test[,1] = tmp
+  return(test)
+}
+
+
+vstran  <- function(d){
+  
+  x1r = rank(d[,1], ties.method = "random")
+  x2r = rank(d[,2], ties.method = "random")
+  x1.cdf.func = ecdf(x1r); x2.cdf.func = ecdf(x2r)
+  x1.cdf = x1.cdf.func(x1r)
+  x2.cdf = x2.cdf.func(x2r)
+  new_d = cbind(x1.cdf, x2.cdf)
+  
+  return(new_d)
+}
+
+
+
+depth.adj = function(d, size, resol, out = 0){
+  
+  cd = d[,-c(1,2,3)]
+  rownames(cd) = colnames(cd) = d[,3]-resol/2
+  
+  temp = MatToVec1(cd)
+  p1 = temp[,3]/sum(temp[,3])+.Machine$double.eps
+  
+  subrd = sample(nrow(temp), size, prob=p1, replace=TRUE)
+  freq = table(subrd)
+  idx = as.double(names(freq))
+  vec = as.vector(freq)
+  temp[,3] = 0
+  temp[idx,3] = vec
+  
+  ##turn it back to matrix
+  
+  ntemp = temp[which(temp[,3]!=0),]
+  ntemp[,1] = (ntemp[,1]+resol/2)/resol
+  ntemp[,2] = (ntemp[,2]+resol/2)/resol
+  cd[cd>0] = 0
+  cd[ntemp[,c(1,2)]] = ntemp[,3]
+  
+  cdm = cbind(d[,c(1,2,3)], cd)
+  colnames(cdm) = rownames(cdm) = NULL
+  if(out == 1){return(temp)}
+  else return(cdm)
+}
+
+
+
+
+htrain1 <- function(R1, R2, resol, max, range){
+  
+  corr = matrix(0, max(range)+1, 2)
+  corr[,1] = range
+  for (i in range){
+    message(c("smoothing:", i))
+    pre = prep1(R1, R2, resol, i)
+    s_cor = array()
+    for (j in 1:10){
+      idx = sample(1:nrow(pre), floor(nrow(pre)*0.1), replace=FALSE)
+      sub = pre[idx,]
+      s_cor[j] = get.scc1(sub, resol, max)[[3]]
+    }
+    corr[i+1, 2] = round(mean(s_cor),4)
+    if (i > 0){
+      if ((corr[i+1,2] - corr[i,2])<0.01){
+        break
+      }
+    }
+  }
+  if (i == max(range)){
+    warning("Note: It's likely that your searching range is too narrow. 
+                    Try to expand the range and rerun it")
+  }
+  return(corr[i,1])
+}
+
+
+get.scc1 <- function (dat, resol, max){
+  
+  ub <- floor(max/resol)
+  corr <- array(ub)
+  cov <- array(ub)
+  wei <- array(ub)
+  n <- array(ub)
+  
+  gdist = abs(dat[,2]-dat[,1])
+  #print("hire1")
+  est.scc = function(idx){
+    
+    if (length(idx) != 0){
+      
+      n = length(idx)
+      ffd = dat[idx,c(3,4)]
+      nd = vstran(ffd)
+      
+      if (length(unique(ffd[,1])) != 1 & length(unique(ffd[,2])) != 1) {
+        corr = cor(ffd[,1], ffd[,2])
+        wei = sqrt(var(nd[,1])*var(nd[,2]))*n
+      } else {
+        corr = NA
+        wei = NA
+      }
+    } else {
+      corr = NA 
+      wei = NA
+    }
+    
+    return(list(corr = corr, wei = wei))
+  }
+  grp <- match(gdist, seq_len(ub) * resol)
+  idx <- split(seq_len(length(gdist)), grp)
+
+  st = sapply(idx, est.scc)
+  corr0 = unlist(st[1,])
+  wei0 = unlist(st[2,])
+
+  corr = corr0[!is.na(corr0)]
+  wei = wei0[!is.na(wei0)]
+
+  scc = corr %*% wei/sum(wei)
+
+  std = sqrt(sum(wei^2*(1-corr^2)^2/(n-3))/(sum(wei))^2)
+  
+  return(list(corr = corr, wei = wei, scc = scc, std = std))
+}
+
+smoothMat1 <- function(dat, h){
+
+    matr = as.matrix(dat)
+
+    c = ncol(matr)
+    r = nrow(matr)
+
+    smd_matr = matrix(0,r,c)
+
+    i <- seq_len(r)
+    rlb <- ifelse(i - h > 0, i - h, 1)
+    rrb <- ifelse(i + h < r, i + h, r)
+
+    j <- seq_len(c)
+    clb <- ifelse(j - h > 0, j - h, 1)
+    crb <- ifelse(j + h < c, j +  h, c)
+
+    for (i in seq_len(r)){
+		#message(c("i:", i))
+        for (j in seq_len(c)){
+            smd_matr[i,j] = mean(matr[rlb[i]:rrb[i], clb[j]:crb[j]])
+        }
+    }
+
+    colnames(smd_matr)=colnames(dat)
+    rownames(smd_matr)=rownames(dat)
+
+    return(smd_matr)
+}
+
+prep1 <- function(R1, R2, resol, h, max){
+
+  pro_Rep1 = R1[,-c(1,2,3)]
+  rownames(pro_Rep1) = colnames(pro_Rep1) = R1[,3]-resol/2
+
+  pro_Rep2 = R2[,-c(1,2,3)]
+  rownames(pro_Rep2)=colnames(pro_Rep2)=R2[,3]-resol/2
+
+  if(h == 0){
+    vec_Rep1=MatToVec(pro_Rep1)
+
+    vec_Rep2=MatToVec(pro_Rep2)
+  } else {
+
+    smt_Rep1 = smoothMat1(pro_Rep1, h)
+    smt_Rep2 = smoothMat1(pro_Rep2, h)
+    vec_Rep1 = MatToVec(smt_Rep1)
+    vec_Rep2 = MatToVec(smt_Rep2)
+  }
+
+  comb = data.frame(vec_Rep1,vec_Rep2[,3])
+  colnames(comb) = c("V1", "V2", "V3", "V4")
+  eidx = which(comb[,3] == 0 & comb[,4] == 0)
+
+  if (length(eidx) == 0) {
+    filt = comb
+  } else {
+    filt = comb[-eidx,]
+  }
+  
+  return(filt)
+}
+message(c("start:", 0))
+
+binsize <- 25000
+message(c("start_read:", 0))
+M1 <- read.table("file_for_scc.txt",head=T)
+M1 <- as.matrix.data.frame(M1)
+M1 <- as.matrix.data.frame(M1)
+
+
+max1 <- max(M1[,2])
+min1 <- min(M1[,1])
+wide <- max(M1[,2] - M1[,1])
+maxdist = max1 - min1 - 2*binsize
+
+size <- max1 - min1
+Z2 <- seq(0,size - binsize,by = binsize)
+Z1 <- cbind(1:length(Z2))
+Z3 <- seq(binsize ,size,by = binsize)
+Z <- cbind(Z1,Z2,Z3)
+
+Z4 <- matrix(0, nrow = length(Z2), ncol = length(Z2))
+
+	
+min1 <- min(M1[ ,1])
+min2 <- min(M1[ ,2])
+for (t in 1:length(M1[,3])) { 
+
+  r = (M1[t,1]-min1)/25000
+  c = (M1[t,2]-min2)/25000
+  Z4[r,c] = M1[t,3]
+  Z4[c,r] = M1[t,3]
+}
+	
+
+H1 <- cbind(Z,Z4)
+
+
+min1 <- min(M1[ ,1])
+min2 <- min(M1[ ,2])
+Z5 <- matrix(0, nrow = length(Z2), ncol = length(Z2))
+for (t in 1:length(M1[,4])) {
+
+  r = (M1[t,1]-min1)/25000
+  c = (M1[t,2]-min2)/25000
+  Z5[r,c] = M1[t,4]
+  Z5[c,r] = M1[t,4]
+}
+	   
+
+k <- 0
+c <- 0
+for (t in 1:length(Z2)) {
+
+  m = cor(as.double(Z5[t,]),as.double(Z4[t,]))
+
+  if (!is.na(m)) {
+    c <- c + as.double(cor(as.double(Z5[t,]),as.double(Z4[t,])))
+
+    k <- k + 1
+  }
+}
+
+c = c/k
+
+H2 <- cbind(Z,Z5)
+#h_hat <- htrain1(H1, H2, binsize, maxdist, 0:10)
+
+processed <- prep1(H1, H2, binsize, 0, maxdist)
+#processed <- prep1(H1, H2, binsize, 0, maxdist)
+#processed <- prep1(HiCR1, HiCR2, 1000000, 1, 5000000)
+j = get.scc1(processed, binsize, maxdist)
+#f = read.table("scc_out.txt")
+#j.name <- scc
+#f <- cbind(f,j)
+#write.table(f,"scc_out.txt")
+#j = get.scc1(processed, 1000000, 5000000)
+#print("scc =")
+#print(j$scc)
+message(c("scc =:", j$scc))
+#print(c)
