@@ -6,20 +6,25 @@
 # 3. Train and validate models
 # 4. Perform estimation and visualization of results (TODO)
 
-import logging,os,re,pickle,sklearn
+import logging, os, re, pickle, sklearn
 import numpy as np
 import pandas as pd
-import subprocess
-from numpy import int64,float32
+from numpy import int64, float32
 from sklearn import ensemble
-from shared import str2hash,Interval,write_XML
-from subprocess import Popen, PIPE, STDOUT
+from shared import str2hash, Interval, write_XML
 import matplotlib.pyplot as plt
 from matrix_plotter import MatrixPlotter
 from collections import OrderedDict
+from matplot2hic import MatPlot2HiC
 
-def ones_like(contacts,*args):
-    return [1]*len(contacts)
+
+def ones_like(contacts, *args):
+    return [1] * len(contacts)
+
+
+def equal(contacts, **kwargs):
+    return contacts
+
 
 class Predictor(object):
     def __setattr__(self, key, value):
@@ -46,10 +51,11 @@ class Predictor(object):
             self.validation_file
         except:
             raise Exception("Please read validation data firts")
-        return "model"+str(self)+".validation."+str2hash(os.path.basename(self.validation_file))
+        return "model" + str(self) + ".validation." + "." + str(self.transformation_for_validation_data) + "." + \
+               str2hash(os.path.basename(self.validation_file))
 
-    def __repr__(self): # Representation should reflect all paramteres
-                        # so that 2 models having same repr are identical
+    def __repr__(self):  # Representation should reflect all paramteres
+        # so that 2 models having same repr are identical
         try:
             self.apply_log
         except:
@@ -72,45 +78,49 @@ class Predictor(object):
         if self.trained_model is None:
             logging.getLogger(__name__).error("Please train model first")
             return
-        dump_path = os.path.join(self.out_dir,self.representation)
-        # Draw and Save feature importances
+        dump_path = os.path.join(self.out_dir, self.representation)
         try:
-            plt.plot(range(len(self.trained_model.feature_importances_)),
-                     self.trained_model.feature_importances_, marker="o")
-            plt.xticks(range(len(self.trained_model.feature_importances_)),
-                       self.predictors, rotation='vertical')
-            plt.setp(plt.gca().get_xticklabels(), rotation='vertical', fontsize=7)
-            plt.grid(which='both',axis="x",ls=":")
-            plt.xlabel("Feature")
-            plt.ylabel("Importance")
-
-            # these are matplotlib.patch.Patch properties
-            props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
-            # place a text box in upper left in axes coords
-            xml = self.toXMLDict()
-            textstr = "\n".join(key + " " +val for key,val in xml.items() if key != "predictors" )
-            plt.gca().text(0.05, 0.95, textstr , transform=plt.gca().transAxes, fontsize=8,
-                    verticalalignment='top', bbox=props)
-
-            plt.title("Features importance for model " + self.representation)
-            plt.savefig(dump_path + ".FeatureImportance.png", dpi=300)
-            if show_plot:
-                plt.show()
-            plt.clf()
+            self.trained_model.feature_importances_
         except:
             logging.getLogger(__name__).warning(
                 "Features importance is not avaliable for the model " + str(self.trained_model.__class__.__name__))
+            return 0
+        # create file with feature importances
+        importances = pd.Series(self.trained_model.feature_importances_).sort_values(ascending=False)
+        # print(importances)
+        importances.to_csv(dump_path + ".featureImportance.txt", sep='\t')
+        plt.plot(range(len(self.trained_model.feature_importances_)),
+                 self.trained_model.feature_importances_, marker="o")
+        plt.xticks(range(len(self.trained_model.feature_importances_)),
+                   self.predictors, rotation='vertical')
+        plt.setp(plt.gca().get_xticklabels(), rotation='vertical', fontsize=7)
+        plt.grid(which='both', axis="x", ls=":")
+        plt.xlabel("Feature")
+        plt.ylabel("Importance")
 
+        # these are matplotlib.patch.Patch properties
+        props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
+        # place a text box in upper left in axes coords
+        xml = self.toXMLDict()
+        textstr = "\n".join(key + " " + val for key, val in xml.items() if key != "predictors")
+        plt.gca().text(0.05, 0.95, textstr, transform=plt.gca().transAxes, fontsize=8,
+                       verticalalignment='top', bbox=props)
+
+        plt.title("Features importance for model " + self.representation)
+        plt.savefig(dump_path + ".FeatureImportance.png", dpi=300)
+        if show_plot:
+            plt.show()
+        plt.clf()
 
     # Train model
     # if dump = True, save it to file dump_file
     # show_plot = True/False show features importance plot
     # returns class instance with trained_model object
-    def train(self, alg = ensemble.GradientBoostingRegressor(n_estimators=100),
-              shortcut = "model", apply_log = True,
-              dump = True, out_dir = "/home/evgeniy/asp/3Dpredictor/out/",
-              weightsFunc = ones_like,
-              show_plot = True,
+    def train(self, alg=ensemble.GradientBoostingRegressor(n_estimators=100),
+              shortcut="model", apply_log=True,
+              dump=True, out_dir="out/models/",
+              weightsFunc=ones_like,
+              show_plot=True,
               *args, **kwargs):
 
         # Check that we have got data file
@@ -138,35 +148,35 @@ class Predictor(object):
 
         # First try to load model dump
         self.representation = str(self)
-        dump_path = os.path.join(out_dir,self.representation)
+        dump_path = os.path.join(out_dir, self.representation)
         if os.path.exists(dump_path):
             logging.info("Found dump for model " + dump_path)
-            return pickle.load(open(dump_path,"rb"))
+            return pickle.load(open(dump_path, "rb"))
         else:
             # read data
             self.input_data = self.read_file(self.input_file)
+            self.input_data.fillna(value=0, inplace=True)
             self.contacts = np.array(self.input_data["contact_count"].values)
 
             # fit new model
             if apply_log:
                 self.contacts = np.log(self.contacts)
             logging.getLogger(__name__).info("Fitting model")
-            alg.fit(self.input_data[self.predictors],self.contacts,
-                    sample_weight=self.weightsFunc(self.contacts,self.input_data))
+            alg.fit(self.input_data[self.predictors], self.contacts,
+                    sample_weight=self.weightsFunc(self.contacts, self.input_data))
             self.trained_model = alg
             if dump:
-                logging.getLogger(__name__).info("Saving to file "+dump_path)
-                #Remove large variables before dump
+                logging.getLogger(__name__).info("Saving to file " + dump_path)
+                # Remove large variables before dump
                 del self.contacts
                 del self.input_data
-                pickle.dump(self,open(dump_path,"wb"))
-                write_XML(self.toXMLDict(),str(self),dump_path+".xml")
+                pickle.dump(self, open(dump_path, "wb"))
+                write_XML(self.toXMLDict(), str(self), dump_path + ".xml")
 
         logging.getLogger(__name__).info("Done")
         return self
 
-
-    def r2score(self,validation_data,predicted,out_dir,**kwargs):
+    def r2score(self, validation_data, predicted, out_dir, **kwargs):
         real = validation_data["contact_count"].values
         r2 = sklearn.metrics.r2_score(predicted, real)
 
@@ -180,13 +190,13 @@ class Predictor(object):
         plt.title("Test: Predicted vs real, r^2 score = " + str(r2) + "\n" + self.__represent_validation__())
         plt.xlabel("Predicted Contact")
         plt.ylabel("Real Contact")
-        print("Saving file " + os.path.join(out_dir,self.__represent_validation__()) + ".r2scatter.png")
-        plt.savefig(os.path.join(out_dir,self.__represent_validation__()) + ".r2scatter.png", dpi=300)
+        print("Saving file " + os.path.join(out_dir, self.__represent_validation__()) + ".r2scatter.png")
+        plt.savefig(os.path.join(out_dir, self.__represent_validation__()) + ".r2scatter.png", dpi=300)
         if not ("show_plot" in kwargs) or kwargs["show_plot"]:
             plt.show()
         plt.clf()
 
-    def plot_matrix(self,validation_data,predicted,out_dir,**kwargs):
+    def plot_matrix(self, validation_data, predicted, out_dir, **kwargs):
         predicted_data = validation_data.copy(deep=True)
         predicted_data["contact_count"] = predicted
         mp = MatrixPlotter()
@@ -210,39 +220,58 @@ class Predictor(object):
         plt.gca().text(0.05, 0.95, textstr, transform=plt.gca().transAxes, fontsize=6,
                        verticalalignment='top', bbox=props)
 
-        plt.imsave(os.path.join(out_dir,self.__represent_validation__()) + ".matrix.png", matrix,
-                    cmap="OrRd", dpi=600)
+        plt.imsave(os.path.join(out_dir, self.__represent_validation__()) + ".matrix.png", matrix,
+                   cmap="OrRd", dpi=600)
         if not ("show_plot" in kwargs) or kwargs["show_plot"]:
             plt.show()
         plt.clf()
-		
+
     def scc(self,validation_data,predicted,out_dir,**kwargs):
-        #print(validation_data)
         d = pd.concat([validation_data["contact_st"],validation_data["contact_en"],validation_data["contact_count"],pd.DataFrame(predicted)], axis=1)
         out_fname = os.path.join(out_dir,self.__represent_validation__()) + ".scc"
         pd.DataFrame.to_csv(d, out_fname, sep=" ")
         out = subprocess.check_output(["Rscript", "scc.R", out_fname])
-        print(out)
+
+    def plot_juicebox(self, validation_data, predicted, out_dir, **kwargs):
+        out_dir = "out/hic_files"
+        predicted_data = validation_data.copy(deep=True)
+        predicted_data["contact_count"] = predicted
+        mp = MatrixPlotter()
+        mp.set_data(validation_data)
+        mp.set_control(predicted_data)
+        MatPlot2HiC(mp, self.__represent_validation__(), out_dir)
 
     # Validate model
     def validate(self, validation_file,
-                 out_dir = "/home/evgeniy/asp/3Dpredictor/out/",
-                 validators = None,
+                 out_dir="out/pics/",
+                 validators=None,
+                 transformation=equal,
                  **kwargs):
-        validators = validators if validators is not None else [self.r2score,self.plot_matrix,self.scc]
+        # validation_file - file with validation data
+        # out_dir - directory to save output produced during validation
+        # validators - list of functions used to validate each region, i.e. funcs to calc r2score. scc and etc.
+        # transformation - function to apply to contact values before running validation funcs
+        # i.e. if using o/e values it can transform it back to contacts based on expected values
+        # kwargs will be passed to validation functions
+
+        validators = validators if validators is not None else [self.r2score, self.plot_matrix, self.scc]
         self.validation_file = validation_file
         self.validation_data = self.read_file(validation_file)
+        self.validation_data.fillna(value=0, inplace=True)
         if self.apply_log:
             self.validation_data["contact_count"] = np.log(self.validation_data["contact_count"].values)
-        self.predicted = self.trained_model.predict(self.validation_data[self.predictors])
+        self.transformation_for_validation_data = transformation.__name__
+        self.predicted = transformation(self.trained_model.predict(self.validation_data[self.predictors]),
+                                        dist=self.validation_data["dist"].values)
+        self.validation_data["contact_count"] = transformation(self.validation_data["contact_count"].values,
+                                                               dist=self.validation_data["dist"].values)
         for validataion_function in validators:
-            validataion_function(self.validation_data,self.predicted,
-                                 out_dir = out_dir, **kwargs)
-
+            validataion_function(self.validation_data, self.predicted,
+                                 out_dir=out_dir, **kwargs)
 
     # Read header of predictors file, get list of avaliable predictors
     # Returns list of predictors
-    def get_avaliable_predictors(self,fname):
+    def get_avaliable_predictors(self, fname):
         predictors = open(fname).readline().strip().split("\t")  # read avaliable features
         return predictors
 
@@ -254,11 +283,10 @@ class Predictor(object):
         except:
             raise Exception("Please read data first")
         expression = re.compile(rule)
-        self.predictors = sorted([p for p in self.predictors if (expression.search(p) != None) == keep ])
-        logging.info("Using following predictors: "+" ".join(self.predictors))
+        self.predictors = sorted([p for p in self.predictors if (expression.search(p) != None) == keep])
+        logging.info("Using following predictors: " + " ".join(self.predictors))
 
-
-    def read_file(self,inp_file):
+    def read_file(self, inp_file):
         # Pandas reads file much faster if it knows datatypes
         # Actually, we know that all predictors are float except chr (str)
         # and contact start/end/dist, which is int
@@ -270,15 +298,17 @@ class Predictor(object):
         for i in header[fixed_dtypes_count:]:
             dtypes[i] = float32
 
-        logging.getLogger(__name__).info("Reading file "+inp_file)
+        logging.getLogger(__name__).info("Reading file " + inp_file)
         input_data = pd.read_csv(inp_file, delimiter="\t", dtype=dtypes,
                                  header=1, names=header)
-        input_data.fillna(value=0, inplace=True) # Filling N/A values TODO check why N/A appear
+        input_data.fillna(value=0, inplace=True)  # Filling N/A values TODO check why N/A appear
         return input_data
 
     # Read available predictors, drop non-predictors
     # Fill self.predictors
-    def read_data_predictors(self,inp_file):
+    def read_data_predictors(self, inp_file):
         header = self.get_avaliable_predictors(inp_file)
         self.predictors = [h for h in header if not h in self.constant_nonpredictors]
-        self.input_file = inp_file
+
+
+self.input_file = inp_file
