@@ -270,9 +270,9 @@ class Predictor(object):
             self.validation_data["contact_count"] = np.log(self.validation_data["contact_count"].values)
         self.transformation_for_validation_data = transformation.__name__
         self.predicted = transformation(self.trained_model.predict(self.validation_data[self.predictors]),
-                                        dist=self.validation_data["dist"].values)
+                                        data=self.validation_data)
         self.validation_data["contact_count"] = transformation(self.validation_data["contact_count"].values,
-                                                               dist=self.validation_data["dist"].values)
+                                                               data=self.validation_data)
         for validataion_function in validators:
             validataion_function(self.validation_data,self.predicted,
                                  out_dir = out_dir, **kwargs)
