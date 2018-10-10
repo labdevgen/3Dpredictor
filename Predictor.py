@@ -223,16 +223,21 @@ class Predictor(object):
         if not ("show_plot" in kwargs) or kwargs["show_plot"]:
             plt.show()
         plt.clf()
-		
+
     def scc(self,validation_data,predicted,out_dir,**kwargs):
-        #print(validation_data)
         d = pd.concat([validation_data["contact_st"],validation_data["contact_en"],validation_data["contact_count"],pd.DataFrame(predicted)], axis=1)
-        pd.DataFrame.to_csv(d,"file_for_scc.txt", sep = " ")
-        out = subprocess.check_output(["Rscript", "scc.R"])
-        print(out)
-        #p = Popen(["Rscript", "test.R"], stdout=PIPE, stdin=PIPE, stderr=STDOUT)
-        #grep_stdout = p.communicate(input=b'file_for_scc.txt')[0]
-        #Popen.wait(timeout=None)
+        out_fname = os.path.join(out_dir,self.__represent_validation__()) + ".scc"
+        pd.DataFrame.to_csv(d, out_fname, sep=" ")
+        out = subprocess.check_output(["Rscript", "scc.R", out_fname])
+
+    def plot_juicebox(self, validation_data, predicted, out_dir, **kwargs):
+        out_dir = "out/hic_files"
+        predicted_data = validation_data.copy(deep=True)
+        predicted_data["contact_count"] = predicted
+        mp = MatrixPlotter()
+        mp.set_data(validation_data)
+        mp.set_control(predicted_data)
+        MatPlot2HiC(mp, self.__represent_validation__(), out_dir)
 
     def plot_juicebox(self,validation_data,predicted,out_dir,**kwargs):
         out_dir="out/hic_files"
