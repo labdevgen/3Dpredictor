@@ -16,6 +16,7 @@ import matplotlib.pyplot as plt
 from matrix_plotter import MatrixPlotter
 from collections import OrderedDict
 from matplot2hic import MatPlot2HiC
+import subprocess
 
 def ones_like(contacts,*args):
     return [1]*len(contacts)
@@ -309,7 +310,7 @@ class Predictor(object):
 
         logging.getLogger(__name__).info("Reading file "+inp_file)
         input_data = pd.read_csv(inp_file, delimiter="\t", dtype=dtypes,
-                                 header=1, names=header)
+                                 header=0, names=header)
         input_data.fillna(value=0, inplace=True) # Filling N/A values TODO check why N/A appear
         return input_data
 
