@@ -9,9 +9,11 @@
 import logging,os,re,pickle,sklearn
 import numpy as np
 import pandas as pd
+import subprocess
 from numpy import int64,float32
 from sklearn import ensemble
 from shared import str2hash,Interval,write_XML
+from subprocess import Popen, PIPE, STDOUT
 import matplotlib.pyplot as plt
 from matrix_plotter import MatrixPlotter
 from collections import OrderedDict
@@ -106,7 +108,7 @@ class Predictor(object):
     # returns class instance with trained_model object
     def train(self, alg = ensemble.GradientBoostingRegressor(n_estimators=100),
               shortcut = "model", apply_log = True,
-              dump = True, out_dir = "out/models/",
+              dump = True, out_dir = "/home/evgeniy/asp/3Dpredictor/out/",
               weightsFunc = ones_like,
               show_plot = True,
               *args, **kwargs):
@@ -217,16 +219,14 @@ class Predictor(object):
     def scc(self,validation_data,predicted,out_dir,**kwargs):
         #print(validation_data)
         d = pd.concat([validation_data["contact_st"],validation_data["contact_en"],validation_data["contact_count"],pd.DataFrame(predicted)], axis=1)
-        pd.DataFrame.to_csv(d,"file_for_scc.txt", sep = " ")
-        out = subprocess.check_output(["Rscript", "scc.R"])
+        out_fname = os.path.join(out_dir,self.__represent_validation__()) + ".scc"
+        pd.DataFrame.to_csv(d, out_fname, sep=" ")
+        out = subprocess.check_output(["Rscript", "scc.R", out_fname])
         print(out)
-        #p = Popen(["Rscript", "test.R"], stdout=PIPE, stdin=PIPE, stderr=STDOUT)
-        #grep_stdout = p.communicate(input=b'file_for_scc.txt')[0]
-        #Popen.wait(timeout=None)
 
     # Validate model
     def validate(self, validation_file,
-                 out_dir = "out/pics/",
+                 out_dir = "/home/evgeniy/asp/3Dpredictor/out/",
                  validators = None,
                  **kwargs):
         validators = validators if validators is not None else [self.r2score,self.plot_matrix,self.scc]

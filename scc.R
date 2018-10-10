@@ -200,11 +200,18 @@ prep1 <- function(R1, R2, resol, h, max){
   
   return(filt)
 }
-message(c("start:", 0))
 
+#line <- readLines('stdin', n=1, warn=FALSE)
+#message(c("scc =:", typeof(line)))
+#input1 = read.table(line)
+#message(c("scc =:", input1[1,1]))
+#input <- as.character(input1[1,1])
+args = commandArgs(trailingOnly=TRUE)
+in_fname = args[1]
+message(c("in_fname =:", in_fname))
+#print (paste(in_fname,"here",sep=" "))
 binsize <- 25000
-message(c("start_read:", 0))
-M1 <- read.table("file_for_scc.txt",head=T)
+M1 <- read.table(in_fname,head=T)
 M1 <- as.matrix.data.frame(M1)
 M1 <- as.matrix.data.frame(M1)
 
@@ -272,11 +279,13 @@ processed <- prep1(H1, H2, binsize, 0, maxdist)
 #processed <- prep1(HiCR1, HiCR2, 1000000, 1, 5000000)
 j = get.scc1(processed, binsize, maxdist)
 #f = read.table("scc_out.txt")
-#j.name <- scc
+j.name <- "scc"
 #f <- cbind(f,j)
-#write.table(f,"scc_out.txt")
+#write.table(j$scc,input + ".scc")
 #j = get.scc1(processed, 1000000, 5000000)
 #print("scc =")
 #print(j$scc)
 message(c("scc =:", j$scc))
+out_fname = paste(in_fname,"out",sep=".")
+write.table(j$scc,out_fname)
 #print(c)
