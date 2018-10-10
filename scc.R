@@ -200,11 +200,13 @@ prep1 <- function(R1, R2, resol, h, max){
   
   return(filt)
 }
-message(c("start:", 0))
 
+
+args = commandArgs(trailingOnly=TRUE)
+in_fname = args[1]
+message(c("in_fname =:", in_fname))
 binsize <- 25000
-message(c("start_read:", 0))
-M1 <- read.table("file_for_scc.txt",head=T)
+M1 <- read.table(in_fname,head=T)
 M1 <- as.matrix.data.frame(M1)
 M1 <- as.matrix.data.frame(M1)
 
@@ -268,15 +270,10 @@ H2 <- cbind(Z,Z5)
 #h_hat <- htrain1(H1, H2, binsize, maxdist, 0:10)
 
 processed <- prep1(H1, H2, binsize, 0, maxdist)
-#processed <- prep1(H1, H2, binsize, 0, maxdist)
-#processed <- prep1(HiCR1, HiCR2, 1000000, 1, 5000000)
+
 j = get.scc1(processed, binsize, maxdist)
-#f = read.table("scc_out.txt")
-#j.name <- scc
-#f <- cbind(f,j)
-#write.table(f,"scc_out.txt")
-#j = get.scc1(processed, 1000000, 5000000)
-#print("scc =")
-#print(j$scc)
+
 message(c("scc =:", j$scc))
-#print(c)
+message(c("cor =:", c))
+out_fname = paste(in_fname,"out",sep=".")
+write.table(j$scc,out_fname)
