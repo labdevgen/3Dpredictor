@@ -7,6 +7,7 @@ import pandas as pd
 import dicttoxml
 from xml.dom.minidom import parseString
 from collections import OrderedDict
+from functools import partial
 
 class Interval:
     def __init__(self,chr,start,end=None,strand=0):
@@ -174,4 +175,38 @@ def write_XML(XML_report, header,fname="files_description.xml"):
     f = open(fname,"w")
     f.write(to_write)
     f.close()
+
+def oe2obs(contacts, expected_folder, cell_type, **kwargs): # dists is array, element[i] --> distance between ancors of contact i
+    # read expected file
+    # First number in this file is for diagonal elements, i.e. where distance = 0
+    input_data = kwargs["data"]
+    expected_file = expected_folder + input_data.iloc[0, input_data.columns.get_loc("chr")] + "." + cell_type + ".expected.txt"
+    expected = np.loadtxt(expected_file)
+    expected = np.nan_to_num(expected)
+    dists = np.array(input_data["contact_dist"])
+    #get binsize
+    dist = pd.unique(input_data["contact_en"] - input_data["contact_st"])
+    sorted_starts = np.sort(input_data["contact_st"].values[:min(1000, len(input_data))])
+    dist2 = np.unique(np.subtract(sorted_starts[1:], sorted_starts[:-1]))
+    assert (dist2 >= 0).all()
+    dist = np.unique(np.concatenate((dist, dist2)))
+    dist = dist[np.nonzero(dist)]
+    assert len(dist) > 0
+    binsize = min(dist)
+
+    for ind, val in enumerate(expected):
+        expected_dist = dict([(ind*binsize,val) for ind,val in enumerate(expected)]) # dictionary, distance --> expected
+    result = []
+    for ind,val in enumerate(contacts):
+        result.append(val*expected_dist[dists[ind]])
+    assert len(result) == len(contacts)
+    print(contacts)
+    print(result)
+    return result
+
+def decorate_oe2obs(func,expected_folder, cell_type):
+    result = partial(func,expected_folder=expected_folder, cell_type=cell_type)
+    result.__name__ = str(cell_type) + func.__name__
+    return result
+
 

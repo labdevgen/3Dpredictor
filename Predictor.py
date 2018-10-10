@@ -16,6 +16,7 @@ import matplotlib.pyplot as plt
 from matrix_plotter import MatrixPlotter
 from collections import OrderedDict
 from matplot2hic import MatPlot2HiC
+import subprocess
 
 def ones_like(contacts,*args):
     return [1]*len(contacts)
@@ -228,8 +229,8 @@ class Predictor(object):
         #print(validation_data)
         d = pd.concat([validation_data["contact_st"],validation_data["contact_en"],validation_data["contact_count"],pd.DataFrame(predicted)], axis=1)
         pd.DataFrame.to_csv(d,"file_for_scc.txt", sep = " ")
-        out = subprocess.check_output(["Rscript", "scc.R"])
-        print(out)
+        #out = subprocess.check_output(["Rscript", "scc.R"])
+        #print(out)
         #p = Popen(["Rscript", "test.R"], stdout=PIPE, stdin=PIPE, stderr=STDOUT)
         #grep_stdout = p.communicate(input=b'file_for_scc.txt')[0]
         #Popen.wait(timeout=None)
@@ -264,9 +265,9 @@ class Predictor(object):
             self.validation_data["contact_count"] = np.log(self.validation_data["contact_count"].values)
         self.transformation_for_validation_data = transformation.__name__
         self.predicted = transformation(self.trained_model.predict(self.validation_data[self.predictors]),
-                                        dist=self.validation_data["dist"].values)
+                                        data=self.validation_data)
         self.validation_data["contact_count"] = transformation(self.validation_data["contact_count"].values,
-                                                               dist=self.validation_data["dist"].values)
+                                                               data=self.validation_data)
         for validataion_function in validators:
             validataion_function(self.validation_data,self.predicted,
                                  out_dir = out_dir, **kwargs)
@@ -304,7 +305,7 @@ class Predictor(object):
 
         logging.getLogger(__name__).info("Reading file "+inp_file)
         input_data = pd.read_csv(inp_file, delimiter="\t", dtype=dtypes,
-                                 header=1, names=header)
+                                 header=0, names=header)
         input_data.fillna(value=0, inplace=True) # Filling N/A values TODO check why N/A appear
         return input_data
 

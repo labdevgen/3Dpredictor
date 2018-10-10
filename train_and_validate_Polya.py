@@ -3,10 +3,12 @@ from Predictor import Predictor
 from Weight_funcs_modul import *
 import numpy as np
 from functools import partial
+from shared import decorate_oe2obs, oe2obs
 
 logging.basicConfig(format='%(asctime)s %(message)s', datefmt='%I:%M:%S', level=logging.DEBUG)
 
-
+expected_folder = "input/expected/GM12878/comb/"
+cell_type = 'GM12878'
 contact_type = ["oe"]#,"contacts"]
 suffix = ".gz.3.1500000.50001.25000.25000.txt"
 training_file = "out/GM12878/2018-10-02-training.RandOnchr2"
@@ -61,10 +63,11 @@ for contact_type,apply_log in zip(["oe"],[False]):
             trained_predictor.out_dir = "out/models/"
             trained_predictor.draw_Feature_importances(show_plot=False)
             for validation_file in validation_files:
-                trained_predictor.validate(validation_file + contact_type + suffix,
-                                           show_plot=False)
-                # trained_predictor.validate(validation_file + contact_type + suffix,
-                #                            show_plot = False, validators=[trained_predictor.r2score, trained_predictor.plot_juicebox])
+                trained_predictor.validate(validation_file + contact_type + suffix, show_plot=False,
+                                           transformation=decorate_oe2obs(oe2obs, expected_folder=expected_folder, cell_type=cell_type))
+                                           #transformation=xxxx)
+                #trained_predictor.validate(validation_file + contact_type + suffix, show_plot = False)
+                                           #validators=[trained_predictor.r2score, trained_predictor.plot_juicebox])
                 #my_plot_matrix = partial(trained_predictor.plot_matrix,juicebox=True)
 
 

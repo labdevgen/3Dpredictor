@@ -22,7 +22,7 @@ def decorate_mult_abs_log(func,coeff):
     result.__name__ = str(coeff) + func.__name__
     return result
 
-def oe2obs(contacts,expected_file,binsize,**kwargs):
+def oe2obs(contacts,dists,expected_file,binsize,**kwargs): # dists is array, element[i] --> distance between ancors of contact i
     # read expected file
     # First number in this file is for diagonal elements, i.e. where distance = 0
     expected = np.loadtxt(expected_file)
@@ -31,8 +31,16 @@ def oe2obs(contacts,expected_file,binsize,**kwargs):
     contacts_dist = kwargs["dist"] # array, element[i] --> distance between ancors of contact i
     result = []
     for ind,val in enumerate(contacts):
-        result.append(val*expected_dist[contacts_dist[ind]])
+        result.append(val*expected_dist[dists[ind]])
     return result
+
+def decorate_oe2obs(func,input_data, expected_folder, cell_type):
+    expected_file= expected_folder+ input_data.iloc[0, input_data.columns.get_loc("chr")]+"."+cell_type+".expected.txt"
+    dists = np.array(input_data["contact_dist"])
+    binsize = input_data.iloc[1,input_data.columns.get_loc("contact_start")] - input_data.iloc[0,input_data.columns.get_loc("contact_start")]
+    result = partial(func, dists=dists, expected_file=expected_file, binsize=binsize)
+    return result
+
 
 contact_type = ["oe","contacts"]
 suffix = ".gz.1000000.50001.500000.25000.txt"
