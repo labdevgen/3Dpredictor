@@ -229,7 +229,7 @@ class Predictor(object):
         d = pd.concat([validation_data["contact_st"],validation_data["contact_en"],validation_data["contact_count"],pd.DataFrame(predicted)], axis=1)
         out_fname = os.path.join(out_dir,self.__represent_validation__()) + ".scc"
         pd.DataFrame.to_csv(d, out_fname, sep=" ")
-        out = subprocess.check_output(["Rscript", "scc.R", out_fname])
+        out = subprocess.check_output(["Rscript", "scc.R", out_fname, str(kwargs["h"])])
 
     def plot_juicebox(self, validation_data, predicted, out_dir, **kwargs):
         out_dir = "out/hic_files"

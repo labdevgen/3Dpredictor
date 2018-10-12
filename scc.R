@@ -158,7 +158,8 @@ smoothMat1 <- function(dat, h){
     for (i in seq_len(r)){
 		#message(c("i:", i))
         for (j in seq_len(c)){
-            smd_matr[i,j] = mean(matr[rlb[i]:rrb[i], clb[j]:crb[j]])
+            if(abs(r-c)<60 - h){
+            smd_matr[i,j] = mean(matr[rlb[i]:rrb[i], clb[j]:crb[j]])}
         }
     }
 
@@ -204,6 +205,7 @@ prep1 <- function(R1, R2, resol, h, max){
 
 args = commandArgs(trailingOnly=TRUE)
 in_fname = args[1]
+h = as.numeric(args[2])
 message(c("in_fname =:", in_fname))
 binsize <- 25000
 M1 <- read.table(in_fname,head=T)
@@ -231,8 +233,9 @@ for (t in 1:length(M1[,3])) {
 
   r = (M1[t,1]-min1)/25000
   c = (M1[t,2]-min2)/25000
-  Z4[r,c] = M1[t,3]
-  Z4[c,r] = M1[t,3]
+  if(abs(r-c)<60){
+  Z5[r,c] = M2[t,3]
+  Z5[c,r] = M2[t,3]}
 }
 	
 
@@ -246,8 +249,9 @@ for (t in 1:length(M1[,4])) {
 
   r = (M1[t,1]-min1)/25000
   c = (M1[t,2]-min2)/25000
-  Z5[r,c] = M1[t,4]
-  Z5[c,r] = M1[t,4]
+  if(abs(r-c)<60){
+  Z5[r,c] = M2[t,3]
+  Z5[c,r] = M2[t,3]}
 }
 	   
 
@@ -269,7 +273,7 @@ c = c/k
 H2 <- cbind(Z,Z5)
 #h_hat <- htrain1(H1, H2, binsize, maxdist, 0:10)
 
-processed <- prep1(H1, H2, binsize, 0, maxdist)
+processed <- prep1(H1, H2, binsize, h, maxdist)
 
 j = get.scc1(processed, binsize, maxdist)
 
