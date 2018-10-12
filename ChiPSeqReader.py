@@ -45,13 +45,18 @@ class ChiPSeqReader(FileReader): #Class process files with ChipSeq peaks
         print_example = True
         for data in sorted_data.values():
             data_shifted = data.shift()
-            nested = [False] + (data["start"][1:] - data_shifted["start"][1:] > 0) & \
-                (data["end"][1:] - data_shifted["end"][1:] < 0)
+            a=(data["start"][1:] - data_shifted["start"][1:] > 0)
+            b=(data["end"][1:] - data_shifted["end"][1:] < 0)
+            c= (a & b)
+            nested = [False] + list(c.values)
+
+            #nested = [False] + (data["start"][1:] - data_shifted["start"][1:] > 0) & \
+            #    (data["end"][1:] - data_shifted["end"][1:] < 0)
 
             nested_intevals_count += sum(nested)
             if print_example and sum(nested) > 0:
                 logging.getLogger(__name__).debug("Nested intervals found. Examples: ")
-                logging.getLogger(__name__).debug(data[1:][nested].head(1))
+                logging.getLogger(__name__).debug(data[nested].head(1))
                 print_example = False
         if nested_intevals_count > 0:
             logging.getLogger(__name__).warning("Number of nested intervals: "+str(nested_intevals_count))
@@ -59,7 +64,8 @@ class ChiPSeqReader(FileReader): #Class process files with ChipSeq peaks
 
         return sorted_data
 
-    def read_file(self): # store CTCF peaks as sorted pandas dataframe
+    def read_file(self,
+                  renamer = {"0":"chr","1":"start","2":"end","6":"sigVal"}): # store CTCF peaks as sorted pandas dataframe
         logging.getLogger(__name__).info(msg="Reading ChipSeq file "+self.fname)
 
         # set random temporary labels
@@ -75,9 +81,10 @@ class ChiPSeqReader(FileReader): #Class process files with ChipSeq peaks
         data = pd.read_csv(self.fname,sep="\t",header=None,names=names)
 
         # subset and rename
-        data = data.iloc[:,[0,1,2,6]]
-        data.rename(columns={"0":"chr","1":"start","2":"end","6":"sigVal"},
-                    inplace=True)
+        data_fields = list(map(int,renamer.keys()))
+        data = data.iloc[:,data_fields]
+        data.rename(columns=renamer,
+                        inplace=True)
 
         chr_data = self.process_data(data)
         del data
@@ -143,7 +150,7 @@ class ChiPSeqReader(FileReader): #Class process files with ChipSeq peaks
             return None
 
         if not interval.chr in self.chr_data:
-            logging.error("Chromosome ",interval.chr,"not found in keys")
+            logging.error("Chromosome ",interval.chr,"not found in keys for reader ",self.proteinName)
             return pd.DataFrame()
 
         left = np.searchsorted(self.chr_data[interval.chr]["mids"].values,interval.start,"left")

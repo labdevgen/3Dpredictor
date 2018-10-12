@@ -62,6 +62,7 @@ def contact2file(contact,DataGeneratorObj,report = 5000):
 
         line=[]
         for pg in DataGeneratorObj.not_vect_predictor_generators:
+            #print(pg)
             line += pg.get_predictors(contact)
         if len(line) != DataGeneratorObj.N_notVect_fields:
             logging.error(str(len(line))+" "+str(DataGeneratorObj.N_notVect_fields))

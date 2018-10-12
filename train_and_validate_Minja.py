@@ -22,12 +22,25 @@ def decorate_mult_abs_log(func,coeff):
     result.__name__ = str(coeff) + func.__name__
     return result
 
-def overweight_loops(loopfile):
-    from LoopReader import LoopReader
-    from VectPredictorGenerators import VectPredictorGenerator
-    loopsReader = LoopReader("input/Hepat.merged.loops")
-    loopsReader.read_loops()
-    loopsPg = VectPredictorGenerator(loopsReader, window_size = 25000)
+def oe2obs(contacts,dists,expected_file,binsize,**kwargs): # dists is array, element[i] --> distance between ancors of contact i
+    # read expected file
+    # First number in this file is for diagonal elements, i.e. where distance = 0
+    expected = np.loadtxt(expected_file)
+    expected = np.nan_to_num(expected)
+    expected_dist = dict([(ind*binsize,val) for ind,val in enumerate(expected)]) # dictionary, distance --> expected
+    contacts_dist = kwargs["dist"] # array, element[i] --> distance between ancors of contact i
+    result = []
+    for ind,val in enumerate(contacts):
+        result.append(val*expected_dist[dists[ind]])
+    return result
+
+def decorate_oe2obs(func,input_data, expected_folder, cell_type):
+    expected_file= expected_folder+ input_data.iloc[0, input_data.columns.get_loc("chr")]+"."+cell_type+".expected.txt"
+    dists = np.array(input_data["contact_dist"])
+    binsize = input_data.iloc[1,input_data.columns.get_loc("contact_start")] - input_data.iloc[0,input_data.columns.get_loc("contact_start")]
+    result = partial(func, dists=dists, expected_file=expected_file, binsize=binsize)
+    return result
+
 
 contact_type = ["oe","contacts"]
 suffix = ".gz.1000000.50001.500000.25000.txt"
@@ -54,7 +67,8 @@ validation_files = [
 
 for contact_type,apply_log in zip(["contacts","oe"],[True,False]):
 #for contact_type,apply_log in zip(["contacts"],[False]):
-    for (filter,keep),shortcut in zip(zip([".*","E1","Loop"],[True,False,False]),
+    for (filter,keep),shortcut in zip(zip([".*","E1","'"
+                                                     ";."],[True,False,False]),
                                            ["all","no E1","no Loop"]):
         if contact_type == "oe":
             weightFuncs = [ones_like, array, abs_log, decorate_mult_abs_log(mult_abs_log,100),
