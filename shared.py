@@ -200,8 +200,6 @@ def oe2obs(contacts, expected_folder, cell_type, **kwargs): # dists is array, el
     for ind,val in enumerate(contacts):
         result.append(val*expected_dist[dists[ind]])
     assert len(result) == len(contacts)
-    print(contacts)
-    print(result)
     return result
 
 def decorate_oe2obs(func,expected_folder, cell_type):

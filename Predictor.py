@@ -17,6 +17,7 @@ from matrix_plotter import MatrixPlotter
 from collections import OrderedDict
 from matplot2hic import MatPlot2HiC
 import subprocess
+from functools import partial
 
 def ones_like(contacts,*args):
     return [1]*len(contacts)
@@ -84,7 +85,7 @@ class Predictor(object):
                 "Features importance is not avaliable for the model " + str(self.trained_model.__class__.__name__))
             return 0
         # create file with feature importances
-        importances = pd.Series(self.trained_model.feature_importances_).sort_values(ascending=False)
+        importances = pd.Series(self.trained_model.feature_importances_, index = self.predictors ).sort_values(ascending=False)
         #print(importances)
         importances.to_csv(dump_path + ".featureImportance.txt", sep='\t')
         plt.plot(range(len(self.trained_model.feature_importances_)),
@@ -226,10 +227,19 @@ class Predictor(object):
         plt.clf()
 
     def scc(self,validation_data,predicted,out_dir,**kwargs):
+        if "h" not in kwargs:
+            kwargs["h"] = 2
+        else:
+            logging.info("get scc using h = " + kwargs["h"])
         d = pd.concat([validation_data["contact_st"],validation_data["contact_en"],validation_data["contact_count"],pd.DataFrame(predicted)], axis=1)
         out_fname = os.path.join(out_dir,self.__represent_validation__()) + ".scc"
         pd.DataFrame.to_csv(d, out_fname, sep=" ")
         out = subprocess.check_output(["Rscript", "scc.R", out_fname, str(kwargs["h"])])
+
+    def decorate_scc(self, func, coeff):
+        result = partial(func, h=coeff)
+        result.__name__ = str(coeff) + func.__name__
+        return result
 
     def plot_juicebox(self, validation_data, predicted, out_dir, **kwargs):
         out_dir = "out/hic_files"
