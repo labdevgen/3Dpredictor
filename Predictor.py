@@ -241,18 +241,19 @@ class Predictor(object):
         result.__name__ = str(coeff) + func.__name__
         return result
 
-    def plot_juicebox(self, validation_data, predicted, out_dir, **kwargs):
-        out_dir = "out/hic_files"
-        predicted_data = validation_data.copy(deep=True)
-        predicted_data["contact_count"] = predicted
-        mp = MatrixPlotter()
-        mp.set_data(validation_data)
-        mp.set_control(predicted_data)
-        MatPlot2HiC(mp, self.__represent_validation__(), out_dir)
+    # def plot_juicebox(self, validation_data, predicted, out_dir, **kwargs):
+    #     out_dir = "out/hic_files"
+    #     predicted_data = validation_data.copy(deep=True)
+    #     predicted_data["contact_count"] = predicted
+    #     mp = MatrixPlotter()
+    #     mp.set_data(validation_data)
+    #     mp.set_control(predicted_data)
+    #     MatPlot2HiC(mp, self.__represent_validation__(), out_dir)
 
     def plot_juicebox(self,validation_data,predicted,out_dir,**kwargs):
         out_dir="out/hic_files"
         predicted_data = validation_data.copy(deep=True)
+        print(predicted_data.keys())
         predicted_data["contact_count"] = predicted
         mp = MatrixPlotter()
         mp.set_data(validation_data)
