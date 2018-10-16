@@ -229,14 +229,7 @@ class Predictor(object):
         d = pd.concat([validation_data["contact_st"],validation_data["contact_en"],validation_data["contact_count"],pd.DataFrame(predicted)], axis=1)
         out_fname = os.path.join(out_dir,self.__represent_validation__()) + ".scc"
         pd.DataFrame.to_csv(d, out_fname, sep=" ")
-        is_we_use_different_h = False
-        for key in kwargs:
-            if (key == "h"):
-                is_we_use_different_h = True
-        if (is_we_use_different_h):
-            out = subprocess.check_output(["Rscript", "scc.R", out_fname, str(kwargs["h"])])
-        else:
-            out = subprocess.check_output(["Rscript", "scc.R", out_fname, str(kwargs["2"])])
+        out = subprocess.check_output(["Rscript", "scc.R", out_fname, str(kwargs["h"])])
         
         
 
