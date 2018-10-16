@@ -226,34 +226,28 @@ Z <- cbind(Z1,Z2,Z3)
 
 Z4 <- matrix(0, nrow = length(Z2), ncol = length(Z2))
 
-	
 min1 <- min(M1[ ,1])
 min2 <- min(M1[ ,2])
 for (t in 1:length(M1[,3])) { 
-
   r = (M1[t,1]-min1)/25000
   c = (M1[t,2]-min2)/25000
   if(abs(r-c)<60){
-  Z5[r,c] = M2[t,3]
-  Z5[c,r] = M2[t,3]}
+  Z4[r,c] = M1[t,3]
+  Z4[c,r] = M1[t,3]}
 }
-	
+
 
 H1 <- cbind(Z,Z4)
 
-
-min1 <- min(M1[ ,1])
-min2 <- min(M1[ ,2])
 Z5 <- matrix(0, nrow = length(Z2), ncol = length(Z2))
 for (t in 1:length(M1[,4])) {
-
   r = (M1[t,1]-min1)/25000
   c = (M1[t,2]-min2)/25000
   if(abs(r-c)<60){
-  Z5[r,c] = M2[t,3]
-  Z5[c,r] = M2[t,3]}
+  Z5[r,c] = M1[t,4]
+  Z5[c,r] = M1[t,4]}
 }
-	   
+
 
 k <- 0
 c <- 0

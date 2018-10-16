@@ -235,6 +235,8 @@ class Predictor(object):
         out_fname = os.path.join(out_dir,self.__represent_validation__()) + ".scc"
         pd.DataFrame.to_csv(d, out_fname, sep=" ")
         out = subprocess.check_output(["Rscript", "scc.R", out_fname, str(kwargs["h"])])
+        
+        
 
     def decorate_scc(self, func, coeff):
         result = partial(func, h=coeff)
