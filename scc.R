@@ -234,8 +234,8 @@ for (t in 1:length(M1[,3])) {
   r = (M1[t,1]-min1)/25000
   c = (M1[t,2]-min2)/25000
   if(abs(r-c)<60){
-  Z5[r,c] = M2[t,3]
-  Z5[c,r] = M2[t,3]}
+  Z5[r,c] = M1[t,3]
+  Z5[c,r] = M1[t,3]}
 }
 	
 
@@ -250,8 +250,8 @@ for (t in 1:length(M1[,4])) {
   r = (M1[t,1]-min1)/25000
   c = (M1[t,2]-min2)/25000
   if(abs(r-c)<60){
-  Z5[r,c] = M2[t,3]
-  Z5[c,r] = M2[t,3]}
+  Z5[r,c] = M1[t,4]
+  Z5[c,r] = M1[t,4]}
 }
 	   
 
