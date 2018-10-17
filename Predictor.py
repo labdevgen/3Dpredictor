@@ -235,8 +235,6 @@ class Predictor(object):
         out_fname = os.path.join(out_dir,self.__represent_validation__()) + ".scc"
         pd.DataFrame.to_csv(d, out_fname, sep=" ")
         out = subprocess.check_output(["Rscript", "scc.R", out_fname, str(kwargs["h"])])
-        
-        
 
     def decorate_scc(self, func, coeff):
         result = partial(func, h=coeff)
@@ -255,11 +253,14 @@ class Predictor(object):
     def plot_juicebox(self,validation_data,predicted,out_dir,**kwargs):
         out_dir="out/hic_files"
         predicted_data = validation_data.copy(deep=True)
-        print(predicted_data.keys())
+        # print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+        # print(predicted_data.keys())
         predicted_data["contact_count"] = predicted
+        # print(predicted_data.query("contact_count >10000")['contact_count'])
         mp = MatrixPlotter()
-        mp.set_data(validation_data)
-        mp.set_control(predicted_data)
+        mp.set_data(predicted_data)
+        mp.set_control(validation_data)
+        mp.set_apply_log(self.apply_log)
         MatPlot2HiC(mp, self.__represent_validation__(), out_dir)
 
     # Validate model

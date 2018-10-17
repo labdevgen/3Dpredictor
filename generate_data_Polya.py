@@ -132,7 +132,7 @@ if __name__ == '__main__': #Requered for parallization, at least on Windows
         params.pgs = [OrientCtcfpg, NotOrientCTCFpg, OrientBlocksCTCFpg, RNAseqPG] + metPG + chipPG + cagePG
 
         #Generate train
-        for trainChrName in ["chr1", "chr19"]:
+        for trainChrName in ["chr19"]:
             training_file_name = "2018-10-11-training.RandOn" + trainChrName + str(params) + ".txt"
             params.interval = Interval(trainChrName,
                                   params.contacts_reader.get_min_contact_position(trainChrName),
@@ -149,9 +149,11 @@ if __name__ == '__main__': #Requered for parallization, at least on Windows
         #                  # Interval("chr10",36000000,41000000),
         #                  # Interval("chr1", 100000000, 110000000)]:
         # params.interval = interval
-        validate_chrs=["chr" + str(i) for i in range(1,23)]
-        validate_chrs.append("chrX")
+        validate_chrs=["chr" + str(i) for i in range(2,3)]
+        #validate_chrs.append("chrX")
         for validateChrName in validate_chrs:
+            params.sample_size = len(params.contacts_reader.data[validateChrName])
+            #print(params.sample_size)
             validation_file_name = "validatingOrient." + str(params) + ".txt"
             params.interval = Interval(validateChrName,
                                        params.contacts_reader.get_min_contact_position(validateChrName),
