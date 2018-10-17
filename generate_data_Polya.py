@@ -34,7 +34,7 @@ if __name__ == '__main__': #Requered for parallization, at least on Windows
         params.sample_size = 25000 #how many contacts write to file
         #params.conttype = "oe.gz"
         params.conttype = conttype
-        params.max_cpus = 3
+        params.max_cpus = 12
 
         logging.getLogger(__name__).debug("Using input folder "+input_folder)
 
@@ -132,14 +132,14 @@ if __name__ == '__main__': #Requered for parallization, at least on Windows
         params.pgs = [OrientCtcfpg, NotOrientCTCFpg, OrientBlocksCTCFpg, RNAseqPG] + metPG + chipPG + cagePG
 
         #Generate train
-        for trainChrName in ["chr19"]:
-            training_file_name = "2018-10-11-training.RandOn" + trainChrName + str(params) + ".txt"
-            params.interval = Interval(trainChrName,
-                                  params.contacts_reader.get_min_contact_position(trainChrName),
-                                  params.contacts_reader.get_max_contact_position(trainChrName))
-            params.out_file = output_folder + training_file_name
-            generate_data(params,saveFileDescription=True)
-            del(params.out_file)
+        # for trainChrName in ["chr19"]:
+        #     training_file_name = "2018-10-11-training.RandOn" + trainChrName + str(params) + ".txt"
+        #     params.interval = Interval(trainChrName,
+        #                           params.contacts_reader.get_min_contact_position(trainChrName),
+        #                           params.contacts_reader.get_max_contact_position(trainChrName))
+        #     params.out_file = output_folder + training_file_name
+        #     generate_data(params,saveFileDescription=True)
+        #     del(params.out_file)
 
         #Generate test
         # for interval in [# Interval("chr10", 59000000, 62000000)]:
@@ -149,7 +149,7 @@ if __name__ == '__main__': #Requered for parallization, at least on Windows
         #                  # Interval("chr10",36000000,41000000),
         #                  # Interval("chr1", 100000000, 110000000)]:
         # params.interval = interval
-        validate_chrs=["chr" + str(i) for i in range(2,3)]
+        validate_chrs=["chr" + str(i) for i in range(18,20)]
         #validate_chrs.append("chrX")
         for validateChrName in validate_chrs:
             params.sample_size = len(params.contacts_reader.data[validateChrName])
@@ -162,6 +162,7 @@ if __name__ == '__main__': #Requered for parallization, at least on Windows
             params.out_file = output_folder + params.interval.toFileName() + validation_file_name
             generate_data(params)
             del(params.out_file)
+            del (params.sample_size)
 
         # for object in [params.contacts_reader]+params.pgs:
         #     lostInterval = Interval("chr1",103842568,104979840)

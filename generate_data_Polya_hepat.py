@@ -16,9 +16,9 @@ if __name__ == '__main__': #Requered for parallization, at least on Windows
         for conttype in ["oe.gz","contacts.gz"]:
             logging.basicConfig(format='%(asctime)s %(name)s: %(message)s', datefmt='%I:%M:%S', level=logging.DEBUG)
 
-            input_folder ="input/Hepat"
+            input_folder ="input/Hepat/"
             #output_folder = "D:/Users/Polina/3Dpredictor/"
-            output_folder = "out/"
+            output_folder = "out/Hepat/"
             #input_folder =  "input"
 
             params = Parameters()
@@ -31,6 +31,7 @@ if __name__ == '__main__': #Requered for parallization, at least on Windows
             params.sample_size = 500000 #how many contacts write to file
             #params.conttype = "oe.gz"
             params.conttype = conttype
+            params.max_cpus = 12
 
             #trainChrName = "chr2"
             training_file_name = "2018-09-25-training.RandOn"+trainChrName+str(params)+".txt"
@@ -46,7 +47,7 @@ if __name__ == '__main__': #Requered for parallization, at least on Windows
                                         #input_folder + "chr6.5MB.Hepat." + params.conttype])
 
             #Loops predictor
-            loopsReader = LoopReader("input/Hepat.merged.loops")
+            loopsReader = LoopReader("input/Hepat/Hepat.merged.loops")
             loopsReader.read_loops()
             loopspg = loopsPredictorGenerator(loopsReader, params.window_size)
 
@@ -76,7 +77,7 @@ if __name__ == '__main__': #Requered for parallization, at least on Windows
                                                                  params.window_size)
 
             #Read RNA-Seq data
-            params.RNAseqReader = RNAseqReader(fname="input/GSE95111_genes.fpkm_table.txt.pre.txt",
+            params.RNAseqReader = RNAseqReader(fname="input/Hepat/GSE95111_genes.fpkm_table.txt.pre.txt",
                                                name="RNA")
             params.RNAseqReader.read_file(rename={"Gene name": "gene",
                                   "Gene start (bp)": "start",
@@ -100,15 +101,27 @@ if __name__ == '__main__': #Requered for parallization, at least on Windows
 
             params.pgs = [e1pg, OrientCtcfpg, NotOrientCTCFpg, OrientBlocksCTCFpg, loopspg, RNAseqPG]
 
-            #Generate train
-            params.interval = Interval(trainChrName,
-                                  params.contacts_reader.get_min_contact_position(trainChrName),
-                                  params.contacts_reader.get_max_contact_position(trainChrName))
-            params.out_file = output_folder + training_file_name
-            params.max_cpus = 6
-            generate_data(params,saveFileDescription=True)
+            # #Generate train
+            # params.interval = Interval(trainChrName,
+            #                       params.contacts_reader.get_min_contact_position(trainChrName),
+            #                       params.contacts_reader.get_max_contact_position(trainChrName))
+            # params.out_file = output_folder + training_file_name
+            # params.max_cpus = 6
+            # generate_data(params,saveFileDescription=True)
 
             #Generate test
+            validate_chrs = ["chr2"]
+            for validateChrName in validate_chrs:
+                params.sample_size = len(params.contacts_reader.data[validateChrName])
+                # print(params.sample_size)
+                validation_file_name = "validatingOrient." + str(params) + ".txt"
+                params.interval = Interval(validateChrName,
+                                           params.contacts_reader.get_min_contact_position(validateChrName),
+                                           params.contacts_reader.get_max_contact_position(validateChrName))
+                logging.getLogger(__name__).info("Generating validation dataset for interval " + str(params.interval))
+                params.out_file = output_folder + params.interval.toFileName() + validation_file_name
+                generate_data(params)
+                del (params.out_file)
             #for interval in [# Interval("chr10", 59000000, 62000000)]:
             #                  Interval("chr10", 47900000, 53900000),
             #                  Interval("chr10", 15000000, 20000000),
