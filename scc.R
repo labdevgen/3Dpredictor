@@ -202,6 +202,38 @@ prep1 <- function(R1, R2, resol, h, max){
   return(filt)
 }
 
+prep1_half_smoof <- function(R1, R2, resol, h, max){
+
+  pro_Rep1 = R1[,-c(1,2,3)]
+  rownames(pro_Rep1) = colnames(pro_Rep1) = R1[,3]-resol/2
+
+  pro_Rep2 = R2[,-c(1,2,3)]
+  rownames(pro_Rep2)=colnames(pro_Rep2)=R2[,3]-resol/2
+
+  if(h == 0){
+    vec_Rep1=MatToVec(pro_Rep1)
+
+    vec_Rep2=MatToVec(pro_Rep2)
+  } else {
+
+    smt_Rep1 = smoothMat1(pro_Rep1, h)
+    smt_Rep2 = pro_Rep2
+    vec_Rep1 = MatToVec(smt_Rep1)
+    vec_Rep2 = MatToVec(smt_Rep2)
+  }
+
+  comb = data.frame(vec_Rep1,vec_Rep2[,3])
+  colnames(comb) = c("V1", "V2", "V3", "V4")
+  eidx = which(comb[,3] == 0 & comb[,4] == 0)
+
+  if (length(eidx) == 0) {
+    filt = comb
+  } else {
+    filt = comb[-eidx,]
+  }
+  
+  return(filt)
+}
 
 args = commandArgs(trailingOnly=TRUE)
 in_fname = args[1]
@@ -268,10 +300,13 @@ H2 <- cbind(Z,Z5)
 #h_hat <- htrain1(H1, H2, binsize, maxdist, 0:10)
 
 processed <- prep1(H1, H2, binsize, h, maxdist)
+processed_half <- prep1_half_smoof(H1, H2, binsize, h, maxdist)
 
 j = get.scc1(processed, binsize, maxdist)
+j_half = get.scc1(processed_half, binsize, maxdist)
 
 message(c("scc =:", j$scc))
+message(c("scc_half_smoof =:", j_half$scc))
 message(c("cor =:", c))
 out_fname = paste(in_fname,"out",sep=".")
-write.table(j$scc,out_fname)
+write.table(paste("scc = ",as.numeric(j$scc)," scc_half_smoof = ",as.numeric(j_half$scc),sep=" "),out_fname)
