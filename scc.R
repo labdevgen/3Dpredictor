@@ -235,6 +235,40 @@ prep1_half_smoof <- function(R1, R2, resol, h, max){
   return(filt)
 }
 
+loop_calc <- function(M1){
+  max1 <- max(M1[,2])
+  min1 <- min(M1[ ,1])
+  min2 <- min(M1[ ,2])
+  wide <- max(M1[,2] - M1[,1])
+  maxdist = max1 - min1 - 2*binsize
+  size <- max1 - min1
+  Z2 <- seq(0,size - binsize,by = binsize)
+  Z1 <- cbind(1:length(Z2))
+  Z3 <- seq(binsize ,size,by = binsize)
+  Z <- cbind(Z1,Z2,Z3)
+  Z4 <- matrix(0, nrow = length(Z2), ncol = length(Z2))
+  for (t in 1:length(M1[,3])) { 
+    r = (M1[t,1]-min1)/25000
+    c = (M1[t,2]-min2)/25000
+    if(abs(r-c)<60 && M1[t,5] == 1){
+      Z4[r,c] = M1[t,3]
+      Z4[c,r] = M1[t,3]}}
+  H1_loop	<- cbind(Z,Z4)
+  
+	Z5 <- matrix(0, nrow = length(Z2), ncol = length(Z2))
+	for (t in 1:length(M1[,4])) {
+	  r = (M1[t,1]-min1)/25000
+	  c = (M1[t,2]-min2)/25000
+	  if(abs(r-c)<60 && M1[t,5] == 1){
+	  Z5[r,c] = M1[t,4]
+	  Z5[c,r] = M1[t,4]}
+	}
+	H2_loop <- cbind(Z,Z5)
+  H <- prep1(H1_loop, H2_loop, binsize, 0, maxdist)
+  corr_loop <- cor(as.double(H[,3]),as.double(H[,4]))
+  j_loop = get.scc1(H, binsize, maxdist)
+  return(paste(" scc_loop_only = ",as.numeric(j_loop$scc)," corr_loop_only = ",corr_loop,sep = " "))
+}
 args = commandArgs(trailingOnly=TRUE)
 in_fname = args[1]
 h = as.numeric(args[2])
@@ -243,7 +277,6 @@ binsize <- 25000
 M1 <- read.table(in_fname,head=T)
 M1 <- as.matrix.data.frame(M1)
 M1 <- as.matrix.data.frame(M1)
-
 
 max1 <- max(M1[,2])
 min1 <- min(M1[,1])
@@ -255,9 +288,9 @@ Z2 <- seq(0,size - binsize,by = binsize)
 Z1 <- cbind(1:length(Z2))
 Z3 <- seq(binsize ,size,by = binsize)
 Z <- cbind(Z1,Z2,Z3)
-
+if (length(M1[1,])>4){loop <- loop_calc(M1)} else loop = ""
+message(c("loop = ",loop))
 Z4 <- matrix(0, nrow = length(Z2), ncol = length(Z2))
-
 min1 <- min(M1[ ,1])
 min2 <- min(M1[ ,2])
 for (t in 1:length(M1[,3])) { 
@@ -267,8 +300,6 @@ for (t in 1:length(M1[,3])) {
   Z4[r,c] = M1[t,3]
   Z4[c,r] = M1[t,3]}
 }
-
-
 H1 <- cbind(Z,Z4)
 
 Z5 <- matrix(0, nrow = length(Z2), ncol = length(Z2))
@@ -279,8 +310,7 @@ for (t in 1:length(M1[,4])) {
   Z5[r,c] = M1[t,4]
   Z5[c,r] = M1[t,4]}
 }
-
-
+H2 <- cbind(Z,Z5)
 k <- 0
 c <- 0
 for (t in 1:length(Z2)) {
@@ -296,17 +326,14 @@ for (t in 1:length(Z2)) {
 
 c = c/k
 
-H2 <- cbind(Z,Z5)
+
+
 #h_hat <- htrain1(H1, H2, binsize, maxdist, 0:10)
-
 processed <- prep1(H1, H2, binsize, h, maxdist)
-processed_half <- prep1_half_smoof(H1, H2, binsize, h, maxdist)
-
 j = get.scc1(processed, binsize, maxdist)
-j_half = get.scc1(processed_half, binsize, maxdist)
 
 message(c("scc =:", j$scc))
-message(c("scc_half_smoof =:", j_half$scc))
 message(c("cor =:", c))
 out_fname = paste(in_fname,"out",sep=".")
-write.table(paste("scc = ",as.numeric(j$scc)," scc_half_smoof = ",as.numeric(j_half$scc),sep=" "),out_fname)
+message(c("loop = ", loop))
+write.table(paste("corr = ",c,"scc = ",as.numeric(j$scc),loop, sep=" "),out_fname)
