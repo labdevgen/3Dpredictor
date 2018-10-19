@@ -11,7 +11,7 @@ import numpy as np
 import pandas as pd
 from numpy import int64,float32
 from sklearn import ensemble
-from shared import str2hash,Interval,write_XML,add_loop
+from shared import str2hash,Interval,write_XML
 import matplotlib.pyplot as plt
 from matrix_plotter import MatrixPlotter
 from collections import OrderedDict
@@ -236,7 +236,7 @@ class Predictor(object):
             pass
         else:
             add_loop(validation_data, kwargs["loop_file"])
-            
+
         d = pd.concat([validation_data["contact_st"],validation_data["contact_en"],validation_data["contact_count"],pd.DataFrame(predicted)],validation_data["IsLoop"], axis=1)
         out_fname = os.path.join(out_dir,self.__represent_validation__()) + ".scc"
         pd.DataFrame.to_csv(d, out_fname, sep=" ")

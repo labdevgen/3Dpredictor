@@ -2,7 +2,7 @@ import logging
 from ChiPSeqReader import ChiPSeqReader
 from RNASeqReader import RNAseqReader
 from Contacts_reader import ContactsReader
-from shared import Interval,intersect_intervals,add_loop
+from shared import Interval,intersect_intervals
 from matrix_plotter import MatrixPlotter
 from E1_Reader import E1Reader, fileName2binsize
 import matplotlib.pyplot as plt
@@ -12,6 +12,7 @@ import pandas as pd
 import scipy.stats
 from Predictor import Predictor
 from Weight_funcs_modul import *
+from add_loop import add_loop
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -235,13 +236,14 @@ def test_nonchip_reader():
     reader = ChiPSeqReader("input/GM12878/cage/GSM849368_hg19_wgEncodeRikenCageGm12878CellPapClusters.bed")
     reader.read_file(renamer={"0":"chr","1":"start","2":"end","4":"sigVal"})
     print(reader.chr_data['chr1'])
-test_nonchip_reader()
+#test_nonchip_reader()
 
 def test_add_loop():
     predictor = Predictor()
-    validation_data= predictor.read_file("")
-    add_loop(validation_data, "")
-
+    validation_data= predictor.read_file("D:/Users/Polina/3Dpredictor/out/GM12878/2018-10-11-training.RandOnchr1oe.gz.12.1500000.50001.25000.25000.txt")
+    add_loop(validation_data, "D:/Users/Polina/3Dpredictor/input/Loops/GM12878/GM12878.25000.loops")
+    print(validation_data.query('IsLoop!=0'))
+test_add_loop()
 #test_RNAseqReader()
 #test_WeightFunc()
 #correlation()

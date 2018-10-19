@@ -8,8 +8,7 @@ import dicttoxml
 from xml.dom.minidom import parseString
 from collections import OrderedDict
 from functools import partial
-from LoopReader import LoopReader
-from VectPredictorGenerators import loopsPredictorGenerator
+
 
 class Interval:
     def __init__(self,chr,start,end=None,strand=0):
@@ -209,13 +208,5 @@ def decorate_oe2obs(func,expected_folder, cell_type):
     result.__name__ = str(cell_type) + func.__name__
     return result
 
-def add_loop(validation_data,loop_file):
-    window_size = 25000
-    loopsReader = LoopReader("input/Hepat.merged.loops")
-    loopsReader.read_loops()
-    loopspg = loopsPredictorGenerator(loopsReader, window_size)
-    contacts = validation_data[["chr", "contact_st", "contact_en", "contact_count"]].copy()
-    isLoop_df = loopspg.get_predictors(contacts)
-    validation_data["IsLoop"] = isLoop_df["IsLoop"].values
 
 
