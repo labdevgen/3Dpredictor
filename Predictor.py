@@ -19,6 +19,7 @@ from matplot2hic import MatPlot2HiC
 import subprocess
 from functools import partial
 
+
 def ones_like(contacts,*args):
     return [1]*len(contacts)
 
@@ -231,6 +232,11 @@ class Predictor(object):
             kwargs["h"] = 2
         else:
             logging.info("get scc using h = " + kwargs["h"])
+        if "loop_file" not in kwargs:
+            pass
+        else:
+            add_loop(validation_data, kwargs["loop_file"])
+
         d = pd.concat([validation_data["contact_st"],validation_data["contact_en"],validation_data["contact_count"],pd.DataFrame(predicted)],validation_data["IsLoop"], axis=1)
         out_fname = os.path.join(out_dir,self.__represent_validation__()) + ".scc"
         pd.DataFrame.to_csv(d, out_fname, sep=" ")
@@ -240,6 +246,8 @@ class Predictor(object):
         result = partial(func, h=coeff)
         result.__name__ = str(coeff) + func.__name__
         return result
+
+
 
     # def plot_juicebox(self, validation_data, predicted, out_dir, **kwargs):
     #     out_dir = "out/hic_files"

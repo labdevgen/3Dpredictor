@@ -9,6 +9,7 @@ from xml.dom.minidom import parseString
 from collections import OrderedDict
 from functools import partial
 
+
 class Interval:
     def __init__(self,chr,start,end=None,strand=0):
         self.chr = chr
@@ -206,5 +207,6 @@ def decorate_oe2obs(func,expected_folder, cell_type):
     result = partial(func,expected_folder=expected_folder, cell_type=cell_type)
     result.__name__ = str(cell_type) + func.__name__
     return result
+
 
 
