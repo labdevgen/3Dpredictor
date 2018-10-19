@@ -2,7 +2,7 @@ import logging
 from ChiPSeqReader import ChiPSeqReader
 from RNASeqReader import RNAseqReader
 from Contacts_reader import ContactsReader
-from shared import Interval,intersect_intervals
+from shared import Interval,intersect_intervals,add_loop
 from matrix_plotter import MatrixPlotter
 from E1_Reader import E1Reader, fileName2binsize
 import matplotlib.pyplot as plt
@@ -236,6 +236,12 @@ def test_nonchip_reader():
     reader.read_file(renamer={"0":"chr","1":"start","2":"end","4":"sigVal"})
     print(reader.chr_data['chr1'])
 test_nonchip_reader()
+
+def test_add_loop():
+    predictor = Predictor()
+    validation_data= predictor.read_file("")
+    add_loop(validation_data, "")
+
 #test_RNAseqReader()
 #test_WeightFunc()
 #correlation()
