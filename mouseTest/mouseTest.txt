@@ -1,3 +1,4 @@
+http://genedev.bionet.nsc.ru/site/hic_out/3Dpredict/
 25 kb, KR, 5MB
 CMyo - mouse Cardio Myocytes
 proB - mouse pro-B-limphocites
