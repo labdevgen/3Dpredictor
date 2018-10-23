@@ -17,6 +17,9 @@ from matrix_plotter import MatrixPlotter
 from collections import OrderedDict
 from matplot2hic import MatPlot2HiC
 import subprocess
+from functools import partial
+from add_loop import add_loop
+
 
 def ones_like(contacts,*args):
     return [1]*len(contacts)
@@ -84,7 +87,7 @@ class Predictor(object):
                 "Features importance is not avaliable for the model " + str(self.trained_model.__class__.__name__))
             return 0
         # create file with feature importances
-        importances = pd.Series(self.trained_model.feature_importances_).sort_values(ascending=False)
+        importances = pd.Series(self.trained_model.feature_importances_, index = self.predictors ).sort_values(ascending=False)
         #print(importances)
         importances.to_csv(dump_path + ".featureImportance.txt", sep='\t')
         plt.plot(range(len(self.trained_model.feature_importances_)),
@@ -226,29 +229,46 @@ class Predictor(object):
         plt.clf()
 
     def scc(self,validation_data,predicted,out_dir,**kwargs):
-        d = pd.concat([validation_data["contact_st"],validation_data["contact_en"],validation_data["contact_count"],pd.DataFrame(predicted)], axis=1)
+        if "h" not in kwargs:
+            kwargs["h"] = 2
+        else:
+            logging.info("get scc using h = " + kwargs["h"])
+        if "loop_file" not in kwargs:
+            d = pd.concat([validation_data["contact_st"],validation_data["contact_en"],validation_data["contact_count"],pd.DataFrame(predicted)], axis=1)
+        else:
+            add_loop(validation_data, kwargs["loop_file"])
+            d = pd.concat([validation_data["contact_st"],validation_data["contact_en"],validation_data["contact_count"],pd.DataFrame(predicted),validation_data["IsLoop"]], axis=1)
         out_fname = os.path.join(out_dir,self.__represent_validation__()) + ".scc"
         pd.DataFrame.to_csv(d, out_fname, sep=" ")
         out = subprocess.check_output(["Rscript", "scc.R", out_fname, str(kwargs["h"])])
-        
-        
 
-    def plot_juicebox(self, validation_data, predicted, out_dir, **kwargs):
-        out_dir = "out/hic_files"
-        predicted_data = validation_data.copy(deep=True)
-        predicted_data["contact_count"] = predicted
-        mp = MatrixPlotter()
-        mp.set_data(validation_data)
-        mp.set_control(predicted_data)
-        MatPlot2HiC(mp, self.__represent_validation__(), out_dir)
+    def decorate_scc(self, func, coeff):
+        result = partial(func, h=coeff)
+        result.__name__ = str(coeff) + func.__name__
+        return result
+
+
+
+    # def plot_juicebox(self, validation_data, predicted, out_dir, **kwargs):
+    #     out_dir = "out/hic_files"
+    #     predicted_data = validation_data.copy(deep=True)
+    #     predicted_data["contact_count"] = predicted
+    #     mp = MatrixPlotter()
+    #     mp.set_data(validation_data)
+    #     mp.set_control(predicted_data)
+    #     MatPlot2HiC(mp, self.__represent_validation__(), out_dir)
 
     def plot_juicebox(self,validation_data,predicted,out_dir,**kwargs):
         out_dir="out/hic_files"
         predicted_data = validation_data.copy(deep=True)
+        # print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+        # print(predicted_data.keys())
         predicted_data["contact_count"] = predicted
+        # print(predicted_data.query("contact_count >10000")['contact_count'])
         mp = MatrixPlotter()
-        mp.set_data(validation_data)
-        mp.set_control(predicted_data)
+        mp.set_data(predicted_data)
+        mp.set_control(validation_data)
+        mp.set_apply_log(self.apply_log)
         MatPlot2HiC(mp, self.__represent_validation__(), out_dir)
 
     # Validate model
