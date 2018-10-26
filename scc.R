@@ -314,7 +314,7 @@ for (t in 1:length(M1[,3])) {
   }
 }
 euc_sq = sqrt(euc_sq)
-euc_sq_avr = sqrt(euc_sq/k)
+euc_sq_avr = sqrt(euc_sq)/k
 euc_mod_avr = euc_mod_avr/k
 H1 <- cbind(Z,Z4)
 H2 <- cbind(Z,Z5)
