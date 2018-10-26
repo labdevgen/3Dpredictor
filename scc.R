@@ -269,6 +269,9 @@ loop_calc <- function(M1){
   j_loop = get.scc1(H, binsize, maxdist)
   return(paste(" scc_loop_only = ",as.numeric(j_loop$scc)," corr_loop_only = ",corr_loop,sep = " "))
 }
+
+
+
 args = commandArgs(trailingOnly=TRUE)
 in_fname = args[1]
 h = as.numeric(args[2])
@@ -291,25 +294,30 @@ Z <- cbind(Z1,Z2,Z3)
 if (length(M1[1,])>4){loop <- loop_calc(M1)} else loop = ""
 message(c("loop = ",loop))
 Z4 <- matrix(0, nrow = length(Z2), ncol = length(Z2))
+Z5 <- matrix(0, nrow = length(Z2), ncol = length(Z2))
 min1 <- min(M1[ ,1])
 min2 <- min(M1[ ,2])
+k = 0
+euc_sq = 0
+euc_mod_avr = 0
 for (t in 1:length(M1[,3])) { 
   r = (M1[t,1]-min1)/25000
   c = (M1[t,2]-min2)/25000
   if(abs(r-c)<60){
+  message(c("loop = ",t))
   Z4[r,c] = M1[t,3]
-  Z4[c,r] = M1[t,3]}
-}
-H1 <- cbind(Z,Z4)
-
-Z5 <- matrix(0, nrow = length(Z2), ncol = length(Z2))
-for (t in 1:length(M1[,4])) {
-  r = (M1[t,1]-min1)/25000
-  c = (M1[t,2]-min2)/25000
-  if(abs(r-c)<60){
+  Z4[c,r] = M1[t,3]
   Z5[r,c] = M1[t,4]
-  Z5[c,r] = M1[t,4]}
+  Z5[c,r] = M1[t,4]
+  euc_sq = euc_sq + (M1[t,3] - M1[t,4])*(M1[t,3] - M1[t,4])
+  euc_mod_avr = euc_mod_avr + abs(M1[t,3] - M1[t,4])
+  k = k + 1
+  }
 }
+euc_sq = sqrt(euc_sq)
+euc_sq_avr = sqrt(euc_sq/k)
+euc_mod_avr = euc_mod_avr/k
+H1 <- cbind(Z,Z4)
 H2 <- cbind(Z,Z5)
 k <- 0
 c <- 0
@@ -336,4 +344,4 @@ message(c("scc =:", j$scc))
 message(c("cor =:", c))
 out_fname = paste(in_fname,"out",sep=".")
 message(c("loop = ", loop))
-write.table(paste("corr = ",c,"scc = ",as.numeric(j$scc),loop, sep=" "),out_fname)
+write.table(paste("corr = ",c,"scc = ",as.numeric(j$scc),loop, " euc_sq = ", euc_sq," euc_sq_avr = ",euc_sq_avr, " euc_mod_avr = ", euc_mod_avr, sep=" "),out_fname)
