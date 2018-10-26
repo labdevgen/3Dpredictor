@@ -304,7 +304,6 @@ for (t in 1:length(M1[,3])) {
   r = (M1[t,1]-min1)/25000
   c = (M1[t,2]-min2)/25000
   if(abs(r-c)<60){
-  message(c("loop = ",t))
   Z4[r,c] = M1[t,3]
   Z4[c,r] = M1[t,3]
   Z5[r,c] = M1[t,4]
