@@ -1,3 +1,5 @@
+# import sys
+# sys.path = ["/mnt/storage/home/vsfishman/.local/lib/python3.5/site-packages"] + sys.path
 import logging
 from ChiPSeqReader import ChiPSeqReader
 from Contacts_reader import ContactsReader
@@ -31,7 +33,7 @@ if __name__ == '__main__': #Requered for parallization, at least on Windows
         #params.maxdist = params.window_size #max distance between contacting regions
         params.maxdist = 1500000
         #params.binsize = 20000 #when binning regions with predictors, use this binsize
-        params.sample_size = 25000 #how many contacts write to file
+        params.sample_size = 50000 #how many contacts write to file
         #params.conttype = "oe.gz"
         params.conttype = conttype
         params.max_cpus = 12
@@ -131,7 +133,7 @@ if __name__ == '__main__': #Requered for parallization, at least on Windows
         #
         params.pgs = [OrientCtcfpg, NotOrientCTCFpg, OrientBlocksCTCFpg, RNAseqPG] + metPG + chipPG + cagePG
 
-        #Generate train
+        # # Generate train
         # for trainChrName in ["chr19"]:
         #     training_file_name = "2018-10-11-training.RandOn" + trainChrName + str(params) + ".txt"
         #     params.interval = Interval(trainChrName,
@@ -142,27 +144,31 @@ if __name__ == '__main__': #Requered for parallization, at least on Windows
         #     del(params.out_file)
 
         #Generate test
-        # for interval in [# Interval("chr10", 59000000, 62000000)]:
-        #                  Interval("chr10", 65000000, 70000000),
-        #                  Interval("chr20", 37000000, 40000000),
-        #                  Interval("chr10", 10000000, 60000000)]:
-        #                  # Interval("chr10",36000000,41000000),
-        #                  # Interval("chr1", 100000000, 110000000)]:
-        # params.interval = interval
-        validate_chrs=["chr" + str(i) for i in range(18,20)]
-        #validate_chrs.append("chrX")
-        for validateChrName in validate_chrs:
-            params.sample_size = len(params.contacts_reader.data[validateChrName])
-            #print(params.sample_size)
-            validation_file_name = "validatingOrient." + str(params) + ".txt"
-            params.interval = Interval(validateChrName,
-                                       params.contacts_reader.get_min_contact_position(validateChrName),
-                                       params.contacts_reader.get_max_contact_position(validateChrName))
-            logging.getLogger(__name__).info("Generating validation dataset for interval "+str(params.interval))
-            params.out_file = output_folder + params.interval.toFileName() + validation_file_name
-            generate_data(params)
-            del(params.out_file)
-            del (params.sample_size)
+        # validate_chrs=["chr16", "chr17", "chrX"]
+        # #validate_chrs.append("chrX")
+        # for validateChrName in validate_chrs:
+        #     params.sample_size = len(params.contacts_reader.data[validateChrName])
+        #     #print(params.sample_size)
+        #     validation_file_name = "validatingOrient." + str(params) + ".txt"
+        #     params.interval = Interval(validateChrName,
+        #                                params.contacts_reader.get_min_contact_position(validateChrName),
+        #                                params.contacts_reader.get_max_contact_position(validateChrName))
+        #     logging.getLogger(__name__).info("Generating validation dataset for interval "+str(params.interval))
+        #     params.out_file = output_folder + params.interval.toFileName() + validation_file_name
+        #     generate_data(params)
+        #     del(params.out_file)
+        #     del (params.sample_size)
+
+        for interval in [Interval("chr5", 11500000, 17500000)]:
+        #                  Interval("chr10", 47900000, 53900000),
+        #                  Interval("chr10", 15000000, 20000000),
+        #                  Interval("chr10",36000000,41000000)]:
+        # Interval("chr1", 100000000, 110000000)]:
+           logging.getLogger(__name__).info("Generating validation dataset for interval "+str(interval))
+           validation_file_name = "validatingOrient." + str(params) + ".txt"
+           params.interval = interval
+           params.out_file = output_folder + params.interval.toFileName() + validation_file_name
+           generate_data(params)
 
         # for object in [params.contacts_reader]+params.pgs:
         #     lostInterval = Interval("chr1",103842568,104979840)

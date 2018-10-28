@@ -25,8 +25,8 @@ class MatrixPlotter(): #A class that plot fragments of heatmap
         data["contact_en_bin"] = data["contact_en"].apply(lambda x: (x - interval.start) // binsize)
         return data
 
-    def set_apply_log(self, apply_log):
-        self.apply_log = apply_log
+    # def set_apply_log(self, apply_log):
+    #     self.apply_log = apply_log
 
     def getMatrix4plot(self, interval, binsize = None):
         def appendSeries2matrix(x,matrix,triangle = "both"):
