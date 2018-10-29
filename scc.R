@@ -308,11 +308,39 @@ for (t in 1:length(M1[,3])) {
   Z4[c,r] = M1[t,3]
   Z5[r,c] = M1[t,4]
   Z5[c,r] = M1[t,4]
-  euc_sq = euc_sq + (M1[t,3] - M1[t,4])*(M1[t,3] - M1[t,4])
-  euc_mod_avr = euc_mod_avr + abs(M1[t,3] - M1[t,4])
-  k = k + 1
   }
 }
+
+#norm
+s= 0
+k= 0
+for (t in 1:length(Z4[,1])) { 
+  s= s + sum(as.numeric(Z4[t,]))
+  k = k + 1
+}
+s = s/k/10000
+Z4 <- Z4[,]/s
+#norm
+s= 0
+k= 0
+for (t in 1:length(Z5[,1])) { 
+  s= s + sum(as.numeric(Z5[t,]))
+  k = k + 1
+}
+s = s/k/10000
+Z5 <- Z5[,]/s
+
+
+for (t in 1:length(M1[,3])) { 
+  r = (M1[t,1]-min1)/25000
+  c = (M1[t,2]-min2)/25000
+  if(abs(r-c)<60){
+    euc_sq = euc_sq + (M1[t,3] - M1[t,4])*(M1[t,3] - M1[t,4])
+    euc_mod_avr = euc_mod_avr + abs(M1[t,3] - M1[t,4])
+    k = k + 1
+  }
+}
+
 euc_sq = sqrt(euc_sq)
 euc_sq_avr = sqrt(euc_sq)/k
 euc_mod_avr = euc_mod_avr/k
