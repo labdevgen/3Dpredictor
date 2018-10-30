@@ -156,7 +156,6 @@ smoothMat1 <- function(dat, h){
     crb <- ifelse(j + h < c, j +  h, c)
 
     for (i in seq_len(r)){
-#message(c("i:", i))
         for (j in seq_len(c)){
             if(abs(r-c)<60 - h){
             smd_matr[i,j] = mean(matr[rlb[i]:rrb[i], clb[j]:crb[j]])}
@@ -253,17 +252,17 @@ loop_calc <- function(M1){
     if(abs(r-c)<60 && M1[t,5] == 1){
       Z4[r,c] = M1[t,3]
       Z4[c,r] = M1[t,3]}}
-  H1_loop<- cbind(Z,Z4)
+  H1_loop <- cbind(Z,Z4)
   
-Z5 <- matrix(0, nrow = length(Z2), ncol = length(Z2))
-for (t in 1:length(M1[,4])) {
-  r = (M1[t,1]-min1)/25000
-  c = (M1[t,2]-min2)/25000
-  if(abs(r-c)<60 && M1[t,5] == 1){
-  Z5[r,c] = M1[t,4]
-  Z5[c,r] = M1[t,4]}
-}
-H2_loop <- cbind(Z,Z5)
+  Z5 <- matrix(0, nrow = length(Z2), ncol = length(Z2))
+  for (t in 1:length(M1[,4])) {
+    r = (M1[t,1]-min1)/25000
+    c = (M1[t,2]-min2)/25000
+    if(abs(r-c)<60 && M1[t,5] == 1){
+    Z5[r,c] = M1[t,4]
+    Z5[c,r] = M1[t,4]}
+  }
+  H2_loop <- cbind(Z,Z5)
   H <- prep1(H1_loop, H2_loop, binsize, 0, maxdist)
   corr_loop <- cor(as.double(H[,3]),as.double(H[,4]))
   j_loop = get.scc1(H, binsize, maxdist)
@@ -348,9 +347,12 @@ H2 <- cbind(Z,Z5)
 k <- 0
 c <- 0
 for (t in 1:length(Z2)) {
+
   m = cor(as.double(Z5[t,]),as.double(Z4[t,]))
+
   if (!is.na(m)) {
     c <- c + as.double(cor(as.double(Z5[t,]),as.double(Z4[t,])))
+
     k <- k + 1
   }
 }
