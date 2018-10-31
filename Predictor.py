@@ -19,7 +19,9 @@ from matplot2hic import MatPlot2HiC
 import subprocess
 from functools import partial
 from add_loop import add_loop
-
+import numpy as np
+import math
+import xgboost
 
 def ones_like(contacts,*args):
     return [1]*len(contacts)
@@ -52,7 +54,7 @@ class Predictor(object):
             self.validation_file
         except:
             raise Exception("Please read validation data firts")
-        return "model"+str(self)+".validation."+"."+str(self.transformation_for_validation_data)+"."+\
+        return "model"+str(self)+".validation."+"."+str(self.transformation_for_validation_data)+"." +"."+\
                         str2hash(os.path.basename(self.validation_file))
 
     def __repr__(self): # Representation should reflect all paramteres
@@ -117,7 +119,7 @@ class Predictor(object):
     # if dump = True, save it to file dump_file
     # show_plot = True/False show features importance plot
     # returns class instance with trained_model object
-    def train(self, alg = ensemble.GradientBoostingRegressor(n_estimators=100),
+    def train(self, alg = xgboost.XGBRegressor(n_estimators=100),
               shortcut = "model", apply_log = True,
               dump = True, out_dir = "out/models/",
               weightsFunc = ones_like,
@@ -180,7 +182,7 @@ class Predictor(object):
 
     def r2score(self,validation_data,predicted,out_dir,**kwargs):
         real = validation_data["contact_count"].values
-        r2 = sklearn.metrics.r2_score(predicted, real)
+        r2 = xgboost.cv.metrics.r2_score(predicted, real)
 
         # Plot r2
         subset = max(len(predicted) // 5000, 1)
@@ -207,8 +209,8 @@ class Predictor(object):
         matrix = mp.getMatrix4plot(Interval(validation_data["chr"].iloc[0],
                                             min(validation_data["contact_st"].values),
                                             max(validation_data["contact_en"].values)))
-        if not self.apply_log:
-            matrix = np.log(matrix)
+        #if not self.apply_log:
+        matrix = np.log(matrix)
 
         tick_pos, tick_labels = mp.get_bins_strart_labels(maxTicksNumber=15)
         plt.xticks(tick_pos, tick_labels, rotation=45)
@@ -229,22 +231,30 @@ class Predictor(object):
         plt.clf()
 
     def scc(self,validation_data,predicted,out_dir,**kwargs):
+        # if self.apply_log:
+        #     print(validation_data["contact_count"])
+        #     print(predicted)
+        #     validation_data["contact_count"] = validation_data["contact_count"].apply(lambda x: math.exp(x))
+        #     predicted = np.exp(np.array(predicted))
+        #     print(validation_data["contact_count"])
+        #     print(predicted)
         if "h" not in kwargs:
             kwargs["h"] = 2
         else:
-            logging.info("get scc using h = " + kwargs["h"])
+            logging.info("for scc using h = " + str(kwargs["h"]))
         if "loop_file" not in kwargs:
             d = pd.concat([validation_data["contact_st"],validation_data["contact_en"],validation_data["contact_count"],pd.DataFrame(predicted)], axis=1)
         else:
             add_loop(validation_data, kwargs["loop_file"])
             d = pd.concat([validation_data["contact_st"],validation_data["contact_en"],validation_data["contact_count"],pd.DataFrame(predicted),validation_data["IsLoop"]], axis=1)
-        out_fname = os.path.join(out_dir,self.__represent_validation__()) + ".scc"
-        pd.DataFrame.to_csv(d, out_fname, sep=" ")
+        out_fname = os.path.join(out_dir+"scc/",self.__represent_validation__()) + ".scc"
+        pd.DataFrame.to_csv(d, out_fname, sep=" ", index=False)
         out = subprocess.check_output(["Rscript", "scc.R", out_fname, str(kwargs["h"])])
 
-    def decorate_scc(self, func, coeff):
-        result = partial(func, h=coeff)
-        result.__name__ = str(coeff) + func.__name__
+    def decorate_scc(self, func, h, chr, loop_file):
+        result = partial(func, h=h, loop_file=loop_file, chr=chr)
+        self.h_for_scc = "h="+str(h)
+        result.__name__ = str(h) + func.__name__
         return result
 
 
@@ -268,7 +278,7 @@ class Predictor(object):
         mp = MatrixPlotter()
         mp.set_data(predicted_data)
         mp.set_control(validation_data)
-        mp.set_apply_log(self.apply_log)
+        #mp.set_apply_log(self.apply_log)
         MatPlot2HiC(mp, self.__represent_validation__(), out_dir)
 
     # Validate model
@@ -288,15 +298,16 @@ class Predictor(object):
         self.validation_file = validation_file
         self.validation_data = self.read_file(validation_file)
         self.validation_data.fillna(value=0, inplace=True)
-        if self.apply_log:
-            self.validation_data["contact_count"] = np.log(self.validation_data["contact_count"].values)
         self.transformation_for_validation_data = transformation.__name__
         self.predicted = transformation(self.trained_model.predict(self.validation_data[self.predictors]),
                                         data=self.validation_data)
+        if self.apply_log:
+            #self.validation_data["contact_count"] = np.log(self.validation_data["contact_count"].values)
+            self.predicted = np.exp(self.predicted)
         self.validation_data["contact_count"] = transformation(self.validation_data["contact_count"].values,
                                                                data=self.validation_data)
         for validataion_function in validators:
-            validataion_function(self.validation_data,self.predicted,
+            validataion_function(self.validation_data.copy(),self.predicted.copy(),
                                  out_dir = out_dir, **kwargs)
 
 

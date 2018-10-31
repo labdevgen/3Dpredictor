@@ -11,9 +11,9 @@ def fileName2binsize(name):
     elif last.lower() == "m":
         multiply = 1000000
     if multiply != 1:
-        return int(os.path.basename(name.split(".")[-1][:-1]))*multiply
+        return int(os.path.basename(name.split(".")[-2][:-1]))*multiply
     else:
-        return int(os.path.basename(name.split(".")[-1]))
+        return int(os.path.basename(name.split(".")[-2]))
 
 
 class E1Reader():
