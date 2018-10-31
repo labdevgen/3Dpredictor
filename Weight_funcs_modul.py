@@ -1,6 +1,5 @@
 import numpy as np
 from functools import partial
-from add_loop import add_loop
 
 def ones_like(contacts, *args):
     return np.ones_like(contacts)
@@ -19,8 +18,7 @@ def decorate_mult_abs_log(func,coeff):
     result.__name__ = str(coeff) + func.__name__
     return result
 
-def overweight_loops(contacts,predictors,coeff, loop_file): #contacts is np.array of contact_count, predictors
-    add_loop(predictors, loop_file)
+def overweight_loops(contacts,predictors,coeff): #contacts is np.array of contact_count, predictors
     idx_loop= np.flatnonzero(predictors['IsLoop'])
     result = np.array(contacts)
     result[[idx_loop]] = result[[idx_loop]]*coeff
@@ -30,8 +28,8 @@ def overweight_loops(contacts,predictors,coeff, loop_file): #contacts is np.arra
     # for i in range(len(contacts)):
     #     if predictors.iloc[i, idx] == 1:
     #         result[i] =
-def decorate_overweight_loops(func,coeff, loop_file):
-    result = partial(func,coeff=coeff, loop_file=loop_file)
+def decorate_overweight_loops(func,coeff):
+    result = partial(func,coeff=coeff)
     result.__name__ = str(coeff) + func.__name__
     return result
 
