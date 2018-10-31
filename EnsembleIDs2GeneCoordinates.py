@@ -2,7 +2,7 @@ from pybiomart import Dataset, Server
 import  pandas as pd
 import logging
 
-input_file = "D:/Users/Polina/3Dpredictor/input/GM12878/RNA-seq/rna-seqPolyA.tsv"
+input_file = "D:/Users/Polina/3Dpredictor/input/K562/RNA-seq/rna-seqPolyA.tsv"
 inp_data = pd.read_csv(input_file,delimiter="\t")
 gene_id_field = 'gene_id'
 inp_data["Gene_ID"] = inp_data[gene_id_field].apply(lambda x: x.split(".")[0])

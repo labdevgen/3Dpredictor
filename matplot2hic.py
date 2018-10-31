@@ -48,10 +48,11 @@ def MatPlot2HiC(matplot_obj, fname, out_folder):
 
         pandas_df.columns = ["chr1", "start", "end", "count"]
         pandas_df['str1'] = 0
-        if matplot_obj.apply_log:
-            pandas_df['exp'] = round(np.exp(pandas_df['count'])).astype(int)
-        else:
-            pandas_df['exp'] = round(pandas_df['count']).astype(int)
+        # if matplot_obj.apply_log:
+        #     print(pandas_df['count'])
+        #     pandas_df['exp'] = round(np.exp(pandas_df['count'])).astype(int)
+        # else:
+        pandas_df['exp'] = round(pandas_df['count']).astype(int)
 
         pandas_df.to_csv(pre_file, sep=" ",
                          columns=['str1', 'chr1', 'start', 'start', 'str1', 'chr1', 'end', 'end', 'exp'], header=False,
