@@ -156,7 +156,6 @@ smoothMat1 <- function(dat, h){
     crb <- ifelse(j + h < c, j +  h, c)
 
     for (i in seq_len(r)){
-		#message(c("i:", i))
         for (j in seq_len(c)){
             if(abs(r-c)<60 - h){
             smd_matr[i,j] = mean(matr[rlb[i]:rrb[i], clb[j]:crb[j]])}
@@ -253,22 +252,25 @@ loop_calc <- function(M1){
     if(abs(r-c)<60 && M1[t,5] == 1){
       Z4[r,c] = M1[t,3]
       Z4[c,r] = M1[t,3]}}
-  H1_loop	<- cbind(Z,Z4)
-  
-	Z5 <- matrix(0, nrow = length(Z2), ncol = length(Z2))
-	for (t in 1:length(M1[,4])) {
-	  r = (M1[t,1]-min1)/25000
-	  c = (M1[t,2]-min2)/25000
-	  if(abs(r-c)<60 && M1[t,5] == 1){
-	  Z5[r,c] = M1[t,4]
-	  Z5[c,r] = M1[t,4]}
-	}
-	H2_loop <- cbind(Z,Z5)
+  H1_loop <- cbind(Z,Z4)
+	
+  Z5 <- matrix(0, nrow = length(Z2), ncol = length(Z2))
+  for (t in 1:length(M1[,4])) {
+    r = (M1[t,1]-min1)/25000
+    c = (M1[t,2]-min2)/25000
+    if(abs(r-c)<60 && M1[t,5] == 1){
+    Z5[r,c] = M1[t,4]
+    Z5[c,r] = M1[t,4]}
+  }
+  H2_loop <- cbind(Z,Z5)
   H <- prep1(H1_loop, H2_loop, binsize, 0, maxdist)
   corr_loop <- cor(as.double(H[,3]),as.double(H[,4]))
   j_loop = get.scc1(H, binsize, maxdist)
-  return(paste(" scc_loop_only = ",as.numeric(j_loop$scc)," corr_loop_only = ",corr_loop,sep = " "))
+  return(paste(as.numeric(j_loop$scc),corr_loop,sep = "	"))
 }
+
+
+
 args = commandArgs(trailingOnly=TRUE)
 in_fname = args[1]
 h = as.numeric(args[2])
@@ -289,27 +291,57 @@ Z1 <- cbind(1:length(Z2))
 Z3 <- seq(binsize ,size,by = binsize)
 Z <- cbind(Z1,Z2,Z3)
 if (length(M1[1,])>4){loop <- loop_calc(M1)} else loop = ""
-message(c("loop = ",loop))
 Z4 <- matrix(0, nrow = length(Z2), ncol = length(Z2))
+Z5 <- matrix(0, nrow = length(Z2), ncol = length(Z2))
 min1 <- min(M1[ ,1])
 min2 <- min(M1[ ,2])
+k = 0
+euc_sq = 0
+euc_mod_avr = 0
 for (t in 1:length(M1[,3])) { 
   r = (M1[t,1]-min1)/25000
   c = (M1[t,2]-min2)/25000
   if(abs(r-c)<60){
   Z4[r,c] = M1[t,3]
-  Z4[c,r] = M1[t,3]}
-}
-H1 <- cbind(Z,Z4)
-
-Z5 <- matrix(0, nrow = length(Z2), ncol = length(Z2))
-for (t in 1:length(M1[,4])) {
-  r = (M1[t,1]-min1)/25000
-  c = (M1[t,2]-min2)/25000
-  if(abs(r-c)<60){
+  Z4[c,r] = M1[t,3]
   Z5[r,c] = M1[t,4]
-  Z5[c,r] = M1[t,4]}
+  Z5[c,r] = M1[t,4]
+  }
 }
+
+#norm
+s= 0
+k= 0
+for (t in 1:length(Z4[,1])) { 
+  s= s + sum(as.numeric(Z4[t,]))
+  k = k + 1
+}
+s = s/k/10000
+Z4 <- Z4[,]/s
+#norm
+s= 0
+k= 0
+for (t in 1:length(Z5[,1])) { 
+  s= s + sum(as.numeric(Z5[t,]))
+  k = k + 1
+}
+s = s/k/10000
+Z5 <- Z5[,]/s
+
+
+for (r in 1:length(Z5[,1])) { 
+  for(c in 1:length(Z5[,1])){
+    if(abs(r-c)<60){
+      euc_sq = euc_sq + (Z4[r,c] - Z5[r,c])*(Z4[r,c] - Z5[r,c])
+      euc_mod_avr = euc_mod_avr + abs(Z4[r,c] - Z5[r,c])
+      if((Z4[r,c] - Z5[r,c])>0){k = k + 1}
+  }}
+}
+euc_mod_avr = euc_mod_avr/k
+ke = 61*60/2 + (size/binsize - 120)*60
+euc_sq = sqrt(euc_sq)
+euc_sq_avr = sqrt(euc_sq/ke)
+H1 <- cbind(Z,Z4)
 H2 <- cbind(Z,Z5)
 k <- 0
 c <- 0
@@ -326,7 +358,7 @@ for (t in 1:length(Z2)) {
 
 c = c/k
 
-
+	
 
 #h_hat <- htrain1(H1, H2, binsize, maxdist, 0:10)
 processed <- prep1(H1, H2, binsize, h, maxdist)
@@ -335,5 +367,7 @@ j = get.scc1(processed, binsize, maxdist)
 message(c("scc =:", j$scc))
 message(c("cor =:", c))
 out_fname = paste(in_fname,"out",sep=".")
-message(c("loop = ", loop))
-write.table(paste("corr = ",c,"scc = ",as.numeric(j$scc),loop, sep=" "),out_fname)
+out1 = paste("corr","scc","scc_loop_only","corr_loop_only","Euclidean_dist","MSE","Mean_deviation",sep = "	")
+out2 = paste(c,as.numeric(j$scc),loop, euc_sq,euc_sq_avr, euc_mod_avr, sep =  "	")
+out = paste(out1,"\n",out2,sep = "")
+write(out,out_fname,sep = " ")
