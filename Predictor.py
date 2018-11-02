@@ -119,10 +119,12 @@ class Predictor(object):
     # if dump = True, save it to file dump_file
     # show_plot = True/False show features importance plot
     # returns class instance with trained_model object
+    # classes_ratio - a dict, used for classifier
     def train(self, alg = xgboost.XGBRegressor(n_estimators=100),
               shortcut = "model", apply_log = True,
               dump = True, out_dir = "out/models/",
               weightsFunc = ones_like,
+              classes_ratio = None,
               show_plot = True,
               *args, **kwargs):
 
@@ -158,6 +160,8 @@ class Predictor(object):
         else:
             # read data
             self.input_data = self.read_file(self.input_file)
+            if self.classes_ratio is not None:
+                self.input_data = self.equalize_classes(self.input_data)
             self.input_data.fillna(value=0, inplace=True)
             self.contacts = np.array(self.input_data["contact_count"].values)
 
