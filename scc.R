@@ -329,19 +329,18 @@ s = s/k/10000
 Z5 <- Z5[,]/s
 
 
-for (t in 1:length(M1[,3])) { 
-  r = (M1[t,1]-min1)/25000
-  c = (M1[t,2]-min2)/25000
-  if(abs(r-c)<60){
-    euc_sq = euc_sq + (M1[t,3] - M1[t,4])*(M1[t,3] - M1[t,4])
-    euc_mod_avr = euc_mod_avr + abs(M1[t,3] - M1[t,4])
-    k = k + 1
-  }
+for (r in 1:length(Z5[,1])) { 
+  for(c in 1:length(Z5[,1])){
+    if(abs(r-c)<60){
+      euc_sq = euc_sq + (Z4[r,c] - Z5[r,c])*(Z4[r,c] - Z5[r,c])
+      euc_mod_avr = euc_mod_avr + abs(Z4[r,c] - Z5[r,c])
+      if((Z4[r,c] - Z5[r,c])>0){k = k + 1}
+  }}
 }
-
-euc_sq = sqrt(euc_sq)
-euc_sq_avr = sqrt(euc_sq)/k
 euc_mod_avr = euc_mod_avr/k
+ke = 61*60/2 + (size/binsize - 120)*60
+euc_sq = sqrt(euc_sq)
+euc_sq_avr = sqrt(euc_sq/ke)
 H1 <- cbind(Z,Z4)
 H2 <- cbind(Z,Z5)
 k <- 0
@@ -368,7 +367,7 @@ j = get.scc1(processed, binsize, maxdist)
 message(c("scc =:", j$scc))
 message(c("cor =:", c))
 out_fname = paste(in_fname,"out",sep=".")
-out1 = paste("corr","scc","scc_loop_only","corr_loop_only","euc_sq","euc_sq_avr","euc_mod_avr",sep = "	")
+out1 = paste("corr","scc","scc_loop_only","corr_loop_only","Euclidean_dist","MSE","Mean_deviation",sep = "	")
 out2 = paste(c,as.numeric(j$scc),loop, euc_sq,euc_sq_avr, euc_mod_avr, sep =  "	")
 out = paste(out1,"\n",out2,sep = "")
 write(out,out_fname,sep = " ")
