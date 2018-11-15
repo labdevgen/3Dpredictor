@@ -1,8 +1,6 @@
 import numpy as np
 from functools import partial
 from add_loop import add_loop
-from Predictor import Predictor
-import  logging
 
 def ones_like(contacts, *args):
     return np.ones_like(contacts)
@@ -36,15 +34,6 @@ def decorate_overweight_loops(func,coeff, loop_file):
     result = partial(func,coeff=coeff, loop_file=loop_file)
     result.__name__ = str(coeff) + func.__name__
     return result
-
-def overweight_loops_for_classifier(contacts,predictors,coeff):
-    return contacts*coeff + 1
-
-def decorate_overweight_loops_for_classifier(coeff):
-    result = partial(overweight_loops_for_classifier,coeff=coeff)
-    result.__name__ = str(coeff) + overweight_loops_for_classifier.__name__
-    return result
-
 
 #threshold - threshold counts of contacts, by default threshold is symmetric
 #weigth = ((contacts/threshold)**power)*coeff

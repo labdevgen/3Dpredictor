@@ -22,6 +22,7 @@ from add_loop import add_loop
 import numpy as np
 import math
 import xgboost
+from catboost import CatBoostRegressor
 
 def ones_like(contacts,*args):
     return [1]*len(contacts)
@@ -54,7 +55,7 @@ class Predictor(object):
             self.validation_file
         except:
             raise Exception("Please read validation data firts")
-        return "model"+str(self)+".validation."+"."+str(self.transformation_for_validation_data)+"." +"."+\
+        return "model"+str(self)+".validation."+"."+str(self.transformation_for_validation_data)+"." +str(self.h_for_scc)+"."+\
                         str2hash(os.path.basename(self.validation_file))
 
     def __repr__(self): # Representation should reflect all paramteres
@@ -119,12 +120,10 @@ class Predictor(object):
     # if dump = True, save it to file dump_file
     # show_plot = True/False show features importance plot
     # returns class instance with trained_model object
-    # classes_ratio - a dict, used for classifier
-    def train(self, alg = xgboost.XGBRegressor(n_estimators=100),
+    def train(self, alg = xgboost.XGBRegressor(n_estimators=100,max_depth=5),
               shortcut = "model", apply_log = True,
               dump = True, out_dir = "out/models/",
               weightsFunc = ones_like,
-              classes_ratio = None,
               show_plot = True,
               *args, **kwargs):
 
@@ -160,8 +159,6 @@ class Predictor(object):
         else:
             # read data
             self.input_data = self.read_file(self.input_file)
-            if self.classes_ratio is not None:
-                self.input_data = self.equalize_classes(self.input_data)
             self.input_data.fillna(value=0, inplace=True)
             self.contacts = np.array(self.input_data["contact_count"].values)
 
@@ -186,7 +183,7 @@ class Predictor(object):
 
     def r2score(self,validation_data,predicted,out_dir,**kwargs):
         real = validation_data["contact_count"].values
-        r2 = xgboost.cv.metrics.r2_score(predicted, real)
+        r2 = sklearn.metrics.r2_score(predicted, real)
 
         # Plot r2
         subset = max(len(predicted) // 5000, 1)
@@ -255,8 +252,8 @@ class Predictor(object):
         pd.DataFrame.to_csv(d, out_fname, sep=" ", index=False)
         out = subprocess.check_output(["Rscript", "scc.R", out_fname, str(kwargs["h"])])
 
-    def decorate_scc(self, func, h, loop_file, chr):
-        result = partial(func, h=h, loop_file=loop_file, chr=chr)
+    def decorate_scc(self, func, h, loop_file):
+        result = partial(func, h=h, loop_file=loop_file)
         self.h_for_scc = "h="+str(h)
         result.__name__ = str(h) + func.__name__
         return result

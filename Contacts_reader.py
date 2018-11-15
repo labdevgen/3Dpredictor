@@ -2,6 +2,7 @@ import logging, os
 import pandas as pd
 import numpy as np
 from shared import Interval
+import datetime
 
 MAX_CHR_DIST = 3000000000
 
@@ -10,13 +11,24 @@ class ContactsReader():
         self.data = {}
         self.binsize = -1
 
-    def read_file(self,chr,fname):
+    def read_file(self,chr,fname,coeff_fname):
         logging.getLogger(__name__).info("Reading file "+fname)
         if chr in self.data:
             logging.getLogger(__name__).warning("Chromosome "+chr+" will be rewritten")
 
+        coeff_data = pd.read_csv(coeff_fname, delimiter="\t")
+        # print(coeff_data.keys())
+        coeff=coeff_data["coeff"]
+        # print(coeff)
         data = pd.read_csv(fname, delimiter="\t", names=["contact_st", "contact_en", "contact_count"])
         data.dropna(inplace=True)
+        # print(data["contact_count"])
+        logging.info("get normalized contacts")
+        print(datetime.datetime.now())
+        data["contact_count"] = data["contact_count"].apply(lambda x: x/coeff)
+        # print("!!!!")
+        print(datetime.datetime.now())
+        # print(data["contact_count"])
         data["chr"] = [chr] * len(data)
         data["dist"] = data["contact_en"] - data["contact_st"]
         assert np.all(data["dist"]) >= 0
@@ -32,9 +44,9 @@ class ContactsReader():
         #data.sort_values(by=["st","en"],inplace=True)
         self.data[chr] = data
 
-    def read_files(self,fnames):
+    def read_files(self,fnames, coeff_fname):
         for f in fnames:
-            self.read_file(os.path.basename(f).split(".")[0],f)
+            self.read_file(os.path.basename(f).split(".")[0],f, coeff_fname=coeff_fname)
 
     def get_contacts(self,interval,mindist=0,maxdist=MAX_CHR_DIST):
         return self.data[interval.chr].query(
