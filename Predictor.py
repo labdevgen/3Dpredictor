@@ -48,6 +48,7 @@ class Predictor(object):
         result["algrorithm"] = str(self.alg.__class__.__name__)
         result["apply_log"] = str(self.apply_log)
         result["weights_func"] = str(self.weightsFunc.__name__)
+        result["algorithm_params"] = str(self.alg.get_params)
         return result
 
     def __represent_validation__(self):
