@@ -120,7 +120,7 @@ class Predictor(object):
     # if dump = True, save it to file dump_file
     # show_plot = True/False show features importance plot
     # returns class instance with trained_model object
-    def train(self, alg = xgboost.XGBRegressor(n_estimators=100,max_depth=5),
+    def train(self, alg = sklearn.G(n_estimators=100,max_depth=5),
               shortcut = "model", apply_log = True,
               dump = True, out_dir = "out/models/",
               weightsFunc = ones_like,
@@ -239,6 +239,9 @@ class Predictor(object):
         #     predicted = np.exp(np.array(predicted))
         #     print(validation_data["contact_count"])
         #     print(predicted)
+        chr_column_index= validation_data.columns.get_loc("chr")
+        chromosome = str(validation_data.iloc[chr_column_index:0])
+        print(chromosome)
         if "h" not in kwargs:
             kwargs["h"] = 2
         else:
@@ -250,7 +253,7 @@ class Predictor(object):
             d = pd.concat([validation_data["contact_st"],validation_data["contact_en"],validation_data["contact_count"],pd.DataFrame(predicted),validation_data["IsLoop"]], axis=1)
         out_fname = os.path.join(out_dir+"scc/",self.__represent_validation__()) + ".scc"
         pd.DataFrame.to_csv(d, out_fname, sep=" ", index=False)
-        out = subprocess.check_output(["Rscript", "scc.R", out_fname, str(kwargs["h"])])
+        out = subprocess.check_output(["Rscript", "scc.R", out_fname, str(kwargs["h"])])#, chromosome])
 
     def decorate_scc(self, func, h, loop_file):
         result = partial(func, h=h, loop_file=loop_file)
