@@ -6,12 +6,15 @@ import matplotlib.pyplot as plt
 import sys
 sys.path.append(os.path.dirname(os.getcwd()))
 from matrix_plotter import MatrixPlotter
+from test_ds_creators import *
 from shared import Interval
 
 # Here comes torch
+import torch
 import torch.nn as nn
 import torch.nn.functional as F
-
+import torch.optim as optim
+from torch.utils.data import Dataset, DataLoader
 
 
 # Generate test sample
@@ -58,10 +61,6 @@ def sample2vector(data):
     dense = torch.sparse.FloatTensor(i, v, torch.Size([l,l])).to_dense()
     print (dense)
 
-
-def generate_batch(size = 50):
-
-
 # Helper fn to draw maps
 def draw_matrix(real,predicted):
     mp = MatrixPlotter()
@@ -73,32 +72,129 @@ def draw_matrix(real,predicted):
     plt.imshow(matrix, cmap="OrRd")
     plt.show()
 
+def draw_dataset(dataset,net,subset = 1, title=""):
+    def _draw_dataset(dataset,net,title):
+        N = len(dataset)
+        mi = np.finfo(np.float64).max
+        ma = 0
+        for i in range(len(dataset)):
+            p,r = dataset[i]
+            mi = min(mi,np.min(p.detach().numpy()),np.min(r.detach().numpy()))
+            ma = max(ma, np.max(p.detach().numpy()), np.max(r.detach().numpy()))
+        total_min, total_max = mi, ma
+        N += 1 # one more line for major title
+        plt.subplot(N,3,2)
+        plt.title(title)
+        plt.axis('off')
 
-class SimplestNet(nn.Module):
-    # Lets make a simple Net, 1
-    def __init__(self):
-        super(Net, self).__init__()
-        self.conv1 = nn.Conv2d(3, 6, 5)
-        self.pool = nn.MaxPool2d(2, 2)
-        self.conv2 = nn.Conv2d(6, 16, 5)
-        self.fc1 = nn.Linear(16 * 5 * 5, 120)
-        self.fc2 = nn.Linear(120, 84)
-        self.fc3 = nn.Linear(84, 10)
+        for i in range(N-1):
+            p,r = dataset[i]
+            p_reduced = p.reshape(p.shape[-2],p.shape[-1]).detach().numpy()
+            r_reduced = r.reshape(r.shape[-2],r.shape[-1]).detach().numpy()
+            plt.subplot(N, 3,(i+1)*3 + 1)
+            plt.imshow(r_reduced,vmin=total_min,vmax=total_max)
+            plt.axis('off')
+            if i==0: plt.title("Real")
+            plt.subplot(N, 3, (i+1)*3 + 2)
+            plt.imshow(p_reduced,vmin=total_min,vmax=total_max)
+            plt.axis('off')
+            if i == 0: plt.title("Predicted")
+            plt.subplot(N, 3, (i+1)*3 + 3)
+            p = torch.reshape(p,tuple([1]+list(p.shape))) # make +one dimension to imitate batch
+            nn_p = net(p)
+            nn_p = nn_p.reshape(nn_p.shape[-2], nn_p.shape[-1]).detach().numpy()
+            plt.imshow(nn_p,vmin=total_min,vmax=total_max)
+            plt.axis('off')
+            if i == 0: plt.title("Predicted + NN")
+        plt.show()
 
-    def forward(self, x):
-        x = self.pool(F.relu(self.conv1(x)))
-        x = self.pool(F.relu(self.conv2(x)))
-        x = x.view(-1, 16 * 5 * 5)
-        x = F.relu(self.fc1(x))
-        x = F.relu(self.fc2(x))
-        x = self.fc3(x)
-        return x
+    if subset > 1:
+        subset = min(1,subset / len(dataset))
+    elif subset <= 0:
+        raise Exception("Wrong value for subset")
+
+    N = int(len(dataset)*subset)
+    subset_of_dataset = torch.utils.data.Subset(dataset,np.random.choice(len(dataset),size=N))
+    print (subset, " Subsetting to ",len(subset_of_dataset))
+    _draw_dataset(subset_of_dataset, net, title=title)
+
+def plot_matrixes(arrs,showFig=True,**kwargs):
+    if "titles" in kwargs:
+        titles = kwargs["titles"]
+    else:
+        titles = list(map(str,range(arrs)))
+
+    total_min = min(map(np.min,arrs))
+    total_max = max(map(np.max,arrs))
+    for ind,val in enumerate(arrs):
+        plt.subplot(len(arrs),1,ind+1)
+        plt.imshow(val,vmin=total_min,vmax=total_max)
+        plt.title(titles[ind])
+    if showFig:
+        plt.show()
+        plt.clf()
+
+def train_and_show(dataset, dataloader,net,num_epochs,title="", subset = 1):
+    optimizer = optim.SGD(net.parameters(), lr=0.001)
+    criterion = nn.MSELoss()
+
+    for epoch in range(num_epochs):
+        losses = []
+        for i_batch, (p,r) in enumerate(dataloader):
+            optimizer.zero_grad()
+            net_out = net(p)
+            loss = criterion(net_out, r)
+            loss.backward()
+            optimizer.step()
+            losses.append(loss.item())
+        if (epoch % 100 == 0 and epoch > 100):
+                print (epoch, " loss = ", np.average(losses))
+    draw_dataset(dataset,net,title=title + " num epochs = "+str(num_epochs), subset=subset)
+
+def fixed_placed_triangle():
+    size = (10,10)
+    dataset = DatasetMaker(numSamples=4,size=size,st=2,en=5,TAD=2)
+    dataloader = DataLoader(dataset,batch_size=2)
+    net = SimplestNet(input_size=size,output_size=size)
+    train_and_show(dataset,dataloader=dataloader,net=net,num_epochs=1000,
+                   title="Fixed place triangle")
+
+def fixed_placed_triangle_with_random_noize():
+    size = (10,10)
+    dataset = DatasetMaker_normalNoize(numSamples=4,size=size,st=2,en=5,TAD=3)
+    dataloader = DataLoader(dataset,batch_size=2)
+    net = SimplestNet(input_size=size,output_size=size)
+    train_and_show(dataset,dataloader=dataloader,net=net,num_epochs=1000,
+                   title="Fixed place triangle with noize")
+
+def fixed_placed_triangle_with_random_noize_and_loop():
+    size = (20,20)
+    dataset = DatasetMaker_normalNoize_withLoop(numSamples=8,size=size,st=2,en=14,TAD=3)
+    dataloader = DataLoader(dataset,batch_size=2)
+    net = SimplestNet(input_size=size,output_size=size)
+    train_and_show(dataset,dataloader=dataloader,net=net,num_epochs=1000,
+                   title="Fixed place triangle with noize and loop",subset = 5)
 
 
-net = Net()
+def moving_triangle_with_random_noize_and_loop():
+    size = (40,40)
+    dataset = DatasetMaker_moving_TAD(numSamples=40,size=size,st=2,en=38,maxlen=15,TAD=3)
+    dataloader = DataLoader(dataset,batch_size=2)
+    net = SimplestNet(input_size=size,output_size=size)
+    train_and_show(dataset,dataloader=dataloader,net=net,num_epochs=1000,
+                   title="Moving triangle with noize and loop",subset = 5)
 
-real,predicted = list(generate_sample())
-draw_matrix(real,predicted)
-#print (real.head())
-#print (predicted.head())
+def moving_triangle_with_random_noize_and_loop_convNet():
+    size = (40,40)
+    dataset = DatasetMaker_moving_TAD(numSamples=40,size=size,st=2,en=38,maxlen=15,TAD=3)
+    dataloader = DataLoader(dataset,batch_size=2)
+    net = SimpleConvNet(input_size=size,output_size=size)
+    train_and_show(dataset,dataloader=dataloader,net=net,num_epochs=1000,
+                   title="Moving triangle with noize and loop",subset = 5)
 
+
+#fixed_placed_triangle()
+#fixed_placed_triangle_with_random_noize()
+#fixed_placed_triangle_with_random_noize_and_loop()
+#moving_triangle_with_random_noize_and_loop()
+moving_triangle_with_random_noize_and_loop_convNet()
