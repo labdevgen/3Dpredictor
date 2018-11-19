@@ -52,7 +52,10 @@ def MatPlot2HiC(matplot_obj, fname, out_folder):
         #     print(pandas_df['count'])
         #     pandas_df['exp'] = round(np.exp(pandas_df['count'])).astype(int)
         # else:
-        pandas_df['exp'] = round(pandas_df['count']).astype(int)
+        # print(pandas_df["count"])
+        assert sum(pandas_df['count'].values < 0.000001) < (len(pandas_df['count']) / 10.)
+        pandas_df['exp'] = pandas_df['count'] * ( 1000000 )
+        pandas_df['exp'] = round(pandas_df['exp']).astype(int)
 
         pandas_df.to_csv(pre_file, sep=" ",
                          columns=['str1', 'chr1', 'start', 'start', 'str1', 'chr1', 'end', 'end', 'exp'], header=False,
