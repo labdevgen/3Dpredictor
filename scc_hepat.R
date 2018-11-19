@@ -298,8 +298,8 @@ min1 <- min(M1[ ,1])
 min2 <- min(M1[ ,2])
 
 #pr_en
-Pr <- read.table("Pr_en_GM12878/promoters.bed.txt",head=T)
-En <- read.table("Pr_en_GM12878/enhancers.bed.txt",head=T)
+Pr <- read.table("Pr_en_Hepat/mm10.promoter.liver.bed",head=T)
+En <- read.table("Pr_en_Hepat/mm10.enhancer.liver.bed",head=T)
 Pr_size = length(which(Pr[,1]==chr))
 En_size = length(which(En[,1]==chr))
 for(t in 1:(En_size - 1)) {
