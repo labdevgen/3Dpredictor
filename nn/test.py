@@ -197,6 +197,72 @@ def moving_triangle_and_loop_convOnlyNet():
     train_and_show(validation_dataset = validation_dataset,train_dataloader=dataloader,net=net,num_epochs=2000,
                    title=str(net) + "\nMoving triangle with or w/o loop",subset = 5)
 
+def test2():
+    a = np.zeros(shape=(10,10))
+    i,j = np.triu_indices(3)
+    st = 5
+    i += st
+    j += st
+    a[i,j] = 3
+    a[j,i] = 3
+    a[st-3,st-2] = 5
+    a[st-2,st-3] = 5
+    a = torch.from_numpy(a).float()
+    a = a.unsqueeze(0).unsqueeze(0)
+    print(a)
+
+    net = test_conv(nfilters = 1, inshape=10)
+
+    row = 1
+    column = 4
+    plt.subplot(row,column,1)
+    plt.imshow(a[0][0])
+
+    filter_size = 5
+    weights = np.zeros(shape=(filter_size,filter_size))
+    #weights[:,0] = 1
+    #weights[:,1] = -1
+    #weights[-1,:] = 1
+    #weights[-2,1:] = -1
+    #weights[:,0] = 1
+    #weights[2, 3] = 1
+    #weights[2, 1] = -1
+    #weights[2, 2] = -1
+    #weights[1, 3] = -1
+    #weights[0,0] = 1
+    #weights[-2,:] = -1
+    weights[:,-1] = +1
+   # weights[:,-2] = -1
+    weights[-1,:] = 1
+
+    weights2 = np.zeros(shape=tuple(net.linear.weight.data.size()))
+    weights2[np.diag_indices(len(weights2))] = 1
+    net.linear.weight.data = torch.from_numpy(weights2).float()
+    net.linear.bias.data = torch.from_numpy(np.zeros(shape=tuple(net.linear.bias.size()))).float()
+
+
+    plt.subplot(row,column,2)
+    plt.imshow(weights)
+    plt.title("weights")
+    net.conv1.weight.data[0] = torch.from_numpy(weights).float().unsqueeze(0)
+    net.conv1.bias.data[0] = torch.from_numpy(np.array([-14])).float().unsqueeze(0)
+
+    b = net.forward(a).detach()
+    plt.subplot(row,column,3)
+    plt.title("result")
+    plt.imshow(b[0][0])
+
+    import torch.nn.functional as F
+    c = F.relu(b)
+    plt.subplot(row,column,4)
+    plt.title("result + relu")
+    plt.imshow(c[0][0])
+
+
+    plt.gca().grid(which='minor', color='w', linestyle='-', linewidth=2)
+
+    plt.show()
+
 if __name__ == "__main__":
     #freeze_support()
     #fixed_placed_triangle()
@@ -204,4 +270,5 @@ if __name__ == "__main__":
     #fixed_placed_triangle_with_random_noize_and_loop()
     #moving_triangle_with_random_noize_and_loop()
     #moving_triangle_with_random_noize_and_loop_convNet()
-    moving_triangle_and_loop_convOnlyNet()
+    #moving_triangle_and_loop_convOnlyNet()
+    test2()
