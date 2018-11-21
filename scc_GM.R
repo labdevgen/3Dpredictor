@@ -285,7 +285,6 @@ max1 <- max(M1[,2])
 min1 <- min(M1[,1])
 wide <- max(M1[,2] - M1[,1])
 maxdist = max1 - binsize
-message(c("scc =:", max1 - min1 - 2*binsize))
 size <- max1
 Z2 <- seq(0,size,by = binsize)
 Z1 <- cbind(1:length(Z2))
@@ -305,7 +304,6 @@ En_size = length(which(En[,1]==chr))
 mx = max1/25000
 mn = min1/25000
 k = 0
-message(c("scc =:", 0))
 for(t in 1:(En_size - 1)) {
   for(l in 1:(Pr_size - 1)) {
     r = Pr[l,2]%/%25000 + 1
@@ -314,7 +312,6 @@ for(t in 1:(En_size - 1)) {
       Z4[r,c] = 1
       Z4[c,r] = 1}
   }}
-message(c("scc =:", 1))
 mse = 0
 mod_avr = 0
 k = 0
@@ -334,7 +331,6 @@ for (t in 1:length(M1[,3])) {
 mse = sqrt(mse/k)
 mod_avr = mod_avr/k
 
-message(c("scc =:", 2))
 #scc
 Z4 <- matrix(0, nrow = length(Z2), ncol = length(Z2))
 Z5 <- matrix(0, nrow = length(Z2), ncol = length(Z2))
@@ -352,7 +348,6 @@ for (t in 1:length(M1[,3])) {
   }
 }
 
-message(c("scc =:", 3))
 k = 0
 for (t in 1:length(M1[,3])) { 
   r = M1[t,1]/25000 + 1
@@ -370,7 +365,6 @@ H1 <- cbind(Z,Z4)
 H2 <- cbind(Z,Z5)
 k <- 0
 c <- 0
-message(c("scc =:", 4))
 for (t in 1:length(Z5[,1])) {
   m = cor(as.double(Z5[t,]),as.double(Z4[t,]))
 
@@ -382,11 +376,9 @@ for (t in 1:length(Z5[,1])) {
 }
 
 c = c/k
-message(c("scc =:", 5))
 
 #h_hat <- htrain1(H1, H2, binsize, maxdist, 0:10)
 processed <- prep1(H1, H2, binsize, h, maxdist)
-message(c("scc =:", 6))
 j = get.scc1(processed, binsize, maxdist)
 
 message(c("scc =:", j$scc))
