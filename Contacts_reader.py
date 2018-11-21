@@ -15,10 +15,12 @@ class ContactsReader():
         logging.getLogger(__name__).info("Reading file "+fname)
         if chr in self.data:
             logging.getLogger(__name__).warning("Chromosome "+chr+" will be rewritten")
-
-        coeff_data = pd.read_csv(coeff_fname, delimiter="\t")
         # print(coeff_data.keys())
-        coeff=coeff_data["coeff"]
+        if fname.split(".")[-2]=="oe":
+            coeff = 1
+        elif fname.split(".")[-2]=="contacts":
+            coeff_data = pd.read_csv(coeff_fname, delimiter="\t")
+            coeff=coeff_data["coeff"]
         # print(coeff)
         data = pd.read_csv(fname, delimiter="\t", names=["contact_st", "contact_en", "contact_count"])
         data.dropna(inplace=True)
@@ -32,6 +34,7 @@ class ContactsReader():
         data["chr"] = [chr] * len(data)
         data["dist"] = data["contact_en"] - data["contact_st"]
         assert np.all(data["dist"]) >= 0
+        assert 0 <= np.all(data["contact_count"]) <= 1
         binsize = min(data["dist"][data["dist"] > 0])
         if self.binsize != -1 and binsize != self.binsize:
             logging.error("Binsize in file "+str(fname)
