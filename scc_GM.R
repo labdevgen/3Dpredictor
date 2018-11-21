@@ -297,14 +297,13 @@ min1 <- min(M1[ ,1])
 min2 <- min(M1[ ,2])
 
 #pr_en
-Pr <- read.table("Pr_en_Hepat/mm10.promoter.liver.bed",head=T)
-En <- read.table("Pr_en_Hepat/mm10.enhancer.liver.bed",head=T)
+Pr <- read.table("Pr_en_GM12878/promoters.bed.txt",head=T)
+En <- read.table("Pr_en_GM12878/enhancers.bed.txt",head=T)
 Pr_size = length(which(Pr[,1]==chr))
 En_size = length(which(En[,1]==chr))
 mx = max1/25000
 mn = min1/25000
 k = 0
-message(c("scc =:", 0))
 for(t in 1:(En_size - 1)) {
   for(l in 1:(Pr_size - 1)) {
     r = Pr[l,2]%/%25000 + 1
