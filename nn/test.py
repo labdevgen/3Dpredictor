@@ -16,6 +16,7 @@ from multiprocessing import  freeze_support
 import torch
 import torch.nn as nn
 import torch.optim as optim
+import torch.nn.functional as F
 from torch.utils.data import Dataset, DataLoader
 
 
@@ -137,20 +138,25 @@ def plot_matrixes(arrs,showFig=True,**kwargs):
         plt.clf()
 
 def train_and_show(validation_dataset, train_dataloader,net,num_epochs,title="", subset = 1):
-    lr = 0.005
-    optimizer = optim.SGD(net.parameters(), lr=lr)
+    lr = 0.05
+    #optimizer = optim.SGD(net.parameters(), lr=lr)
+    optimizer = optim.Adagrad(net.parameters(),lr=lr)
     criterion = nn.MSELoss()
 
     for epoch in range(num_epochs):
+        raw_losses = []
         losses = []
         for i_batch, (p,r) in enumerate(train_dataloader):
             optimizer.zero_grad()
             net_out = net(p)
+            raw_losses = criterion(p, r)
             loss = criterion(net_out, r)
             loss.backward()
             optimizer.step()
             losses.append(loss.item())
         if (epoch % 100 == 0 and epoch >= 100):
+                if epoch == 100:
+                    print("Raw loss = ",np.average(raw_losses))
                 print (datetime.datetime.now()," ", epoch, " loss = ", np.average(losses))
     print(datetime.datetime.now(), " ", epoch, " loss = ", np.average(losses))
     draw_dataset(validation_dataset,net,title=title + " num epochs = "+str(num_epochs) + " lr = " + str(lr), subset=subset)
@@ -190,12 +196,138 @@ def moving_triangle_with_random_noize_and_loop():
 
 def moving_triangle_and_loop_convOnlyNet():
     size = (40,40)
-    dataset = DatasetMaker_moving_TAD(numSamples=20,size=size,st=2,en=38,maxlen=15,TAD=3)
-    validation_dataset = DatasetMaker_moving_TAD(numSamples=10, size=size, st=2, en=38, maxlen=15, TAD=3)
+    dataset = DatasetMaker_moving_TAD(numSamples=80,size=size,st=1,en=25,maxlen=12,TAD=3)
+    validation_dataset = DatasetMaker_moving_TAD(numSamples=10, size=size, st=25, en=35, maxlen=15, TAD=3)
     dataloader = DataLoader(dataset,batch_size=4)
     net = SimpleConvOnlyNet(input_size=size,output_size=size)
-    train_and_show(validation_dataset = validation_dataset,train_dataloader=dataloader,net=net,num_epochs=2000,
+    train_and_show(validation_dataset = validation_dataset,train_dataloader=dataloader,net=net,num_epochs=600,
                    title=str(net) + "\nMoving triangle with or w/o loop",subset = 5)
+
+    p,r = validation_dataset.__getitem__(0)
+    print (p)
+    print (p.size())
+    plt.clf()
+    plt.subplot(5,3,1)
+    plt.imshow(p[0].detach().numpy()) # predicted figure
+    p = p.unsqueeze(0)
+    print (p)
+    print(p.size())
+    plt.subplot(5,3,2)
+    plt.imshow(r[0].detach().numpy()) # original figure
+    pnn = net(p)
+    plt.subplot(5,3,3)
+    plt.imshow(pnn[0][0].detach().numpy()) # original figure
+
+    c1 = net.conv1(p)
+    print (c1.size())
+    c2 = F.relu(c1)
+    for i in range(c1.size()[1]):
+        plt.subplot(5, 3, 4 + 3*i)
+        plt.imshow(c1.detach().numpy()[0][i])
+        plt.subplot(5, 3, 5 + 3*i)
+        plt.imshow(c2.detach().numpy()[0][i])
+        plt.subplot(5,3, 6 + 3*i,)
+        plt.imshow(net.conv1.weight.data[i][0].numpy())
+    plt.show()
+    #print(net.conv1.weight.data[0][0])
+    #plt.imshow(net.conv1.weight.data.numpy()[0,0])
+    #plt.show()
+
+def moving_triangle_and_flying_loop_convOnlyNet():
+    size = (40,40)
+    dataset = DatasetMaker_moving_TAD_with_flying_Loop(numSamples=80,size=size,st=1,en=20,maxlen=12,TAD=3)
+    validation_dataset = DatasetMaker_moving_TAD_with_flying_Loop(numSamples=10, size=size, st=19, en=34, maxlen=13, TAD=3)
+    dataloader = DataLoader(dataset,batch_size=4)
+    net = SimpleConvOnlyNet(input_size=size,output_size=size)
+    train_and_show(validation_dataset = validation_dataset,train_dataloader=dataloader,net=net,num_epochs=600,
+                   title=str(net) + "\nMoving triangle with or w/o loop",subset = 5)
+
+    p,r = validation_dataset.__getitem__(0)
+    print (p)
+    print (p.size())
+    plt.clf()
+    nrows = (len(net.conv1.weight.data)+2)
+    ncols = 3
+
+    plt.subplot(nrows, ncols,1)
+    plt.imshow(p[0].detach().numpy()) # predicted figure
+    p = p.unsqueeze(0)
+    print (p)
+    print(p.size())
+    plt.subplot(nrows, ncols,2)
+    plt.imshow(r[0].detach().numpy()) # original figure
+    pnn = net(p)
+    plt.subplot(nrows, ncols,3)
+    plt.imshow(pnn[0][0].detach().numpy()) # original figure
+
+    c1 = net.conv1(p)
+    print (c1.size())
+    c2 = F.relu(c1)
+    for i in range(c1.size()[1]):
+        plt.subplot(nrows, ncols, 4 + 3*i)
+        plt.imshow(c1.detach().numpy()[0][i])
+        plt.subplot(nrows, ncols, 5 + 3*i)
+        plt.imshow(c2.detach().numpy()[0][i])
+        plt.subplot(nrows, ncols, 6 + 3*i,)
+        plt.imshow(net.conv1.weight.data[i][0].numpy())
+    plt.show()
+    #print(net.conv1.weight.data[0][0])
+    #plt.imshow(net.conv1.weight.data.numpy()[0,0])
+    #plt.show()
+
+
+def test():
+    size = (40,40)
+    dataset = DatasetMaker_moving_TAD_with_flying_Loop(numSamples=80,size=size,st=1,en=20,maxlen=12,TAD=3)
+    validation_dataset = DatasetMaker_moving_TAD_with_flying_Loop(numSamples=10, size=size, st=19, en=34, maxlen=13, TAD=3)
+    dataloader = DataLoader(dataset,batch_size=4)
+    net = SimpleConvOnlyNet(input_size=size,output_size=size)
+
+    p,r = validation_dataset.__getitem__(0)
+    print (p)
+    print (p.size())
+    plt.clf()
+    nrows = (len(net.conv1.weight.data)+2)
+    ncols = 3
+
+    plt.subplot(nrows, ncols,1)
+    plt.imshow(p[0].detach().numpy()) # predicted figure
+    p = p.unsqueeze(0)
+    print (p)
+    print(p.size())
+    plt.subplot(nrows, ncols,2)
+    plt.imshow(r[0].detach().numpy()) # original figure
+
+    weight = np.zeros(shape=(5,5))
+    weight[4,4] = 1
+    #weight[1, :] = 1
+    #bias = np.zeros(shape=(5,5))
+    print (net.conv1.weight.data.size())
+    net.conv1.weight.data[0][0] = torch.torch.from_numpy(weight).float()
+    #net.conv1.bias.data[0][0] = torch.torch.from_numpy(bias).float()
+
+
+    pnn = net.forward(p)
+    plt.subplot(nrows, ncols,3)
+    plt.imshow(pnn[0][0].detach().numpy()) # original figure
+
+    c1 = net.conv1(p)
+    print (c1.size())
+    c2 = F.relu(c1)
+
+
+    for i in range(c1.size()[1]):
+        plt.subplot(nrows, ncols, 4 + 3*i)
+        plt.imshow(c1.detach().numpy()[0][i])
+        plt.subplot(nrows, ncols, 5 + 3*i)
+        plt.imshow(c2.detach().numpy()[0][i])
+        plt.subplot(nrows, ncols, 6 + 3*i,)
+        plt.imshow(net.conv1.weight.data[i][0].numpy())
+    plt.show()
+    print(net.conv1.weight.data[0][0])
+    #plt.imshow(net.conv1.weight.data.numpy()[0,0])
+    #plt.show()
+
 
 if __name__ == "__main__":
     #freeze_support()
@@ -204,4 +336,5 @@ if __name__ == "__main__":
     #fixed_placed_triangle_with_random_noize_and_loop()
     #moving_triangle_with_random_noize_and_loop()
     #moving_triangle_with_random_noize_and_loop_convNet()
-    moving_triangle_and_loop_convOnlyNet()
+    #moving_triangle_and_flying_loop_convOnlyNet()
+    test()
