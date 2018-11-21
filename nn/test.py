@@ -7,12 +7,14 @@ import sys
 sys.path.append(os.path.dirname(os.getcwd()))
 from matrix_plotter import MatrixPlotter
 from test_ds_creators import *
+from test_nets import *
 from shared import Interval
+import datetime
+from multiprocessing import  freeze_support
 
 # Here comes torch
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 import torch.optim as optim
 from torch.utils.data import Dataset, DataLoader
 
@@ -134,22 +136,24 @@ def plot_matrixes(arrs,showFig=True,**kwargs):
         plt.show()
         plt.clf()
 
-def train_and_show(dataset, dataloader,net,num_epochs,title="", subset = 1):
-    optimizer = optim.SGD(net.parameters(), lr=0.001)
+def train_and_show(validation_dataset, train_dataloader,net,num_epochs,title="", subset = 1):
+    lr = 0.005
+    optimizer = optim.SGD(net.parameters(), lr=lr)
     criterion = nn.MSELoss()
 
     for epoch in range(num_epochs):
         losses = []
-        for i_batch, (p,r) in enumerate(dataloader):
+        for i_batch, (p,r) in enumerate(train_dataloader):
             optimizer.zero_grad()
             net_out = net(p)
             loss = criterion(net_out, r)
             loss.backward()
             optimizer.step()
             losses.append(loss.item())
-        if (epoch % 100 == 0 and epoch > 100):
-                print (epoch, " loss = ", np.average(losses))
-    draw_dataset(dataset,net,title=title + " num epochs = "+str(num_epochs), subset=subset)
+        if (epoch % 100 == 0 and epoch >= 100):
+                print (datetime.datetime.now()," ", epoch, " loss = ", np.average(losses))
+    print(datetime.datetime.now(), " ", epoch, " loss = ", np.average(losses))
+    draw_dataset(validation_dataset,net,title=title + " num epochs = "+str(num_epochs) + " lr = " + str(lr), subset=subset)
 
 def fixed_placed_triangle():
     size = (10,10)
@@ -184,17 +188,20 @@ def moving_triangle_with_random_noize_and_loop():
     train_and_show(dataset,dataloader=dataloader,net=net,num_epochs=1000,
                    title="Moving triangle with noize and loop",subset = 5)
 
-def moving_triangle_with_random_noize_and_loop_convNet():
+def moving_triangle_and_loop_convOnlyNet():
     size = (40,40)
-    dataset = DatasetMaker_moving_TAD(numSamples=40,size=size,st=2,en=38,maxlen=15,TAD=3)
-    dataloader = DataLoader(dataset,batch_size=2)
-    net = SimpleConvNet(input_size=size,output_size=size)
-    train_and_show(dataset,dataloader=dataloader,net=net,num_epochs=1000,
-                   title="Moving triangle with noize and loop",subset = 5)
+    dataset = DatasetMaker_moving_TAD(numSamples=20,size=size,st=2,en=38,maxlen=15,TAD=3)
+    validation_dataset = DatasetMaker_moving_TAD(numSamples=10, size=size, st=2, en=38, maxlen=15, TAD=3)
+    dataloader = DataLoader(dataset,batch_size=4)
+    net = SimpleConvOnlyNet(input_size=size,output_size=size)
+    train_and_show(validation_dataset = validation_dataset,train_dataloader=dataloader,net=net,num_epochs=2000,
+                   title=str(net) + "\nMoving triangle with or w/o loop",subset = 5)
 
-
-#fixed_placed_triangle()
-#fixed_placed_triangle_with_random_noize()
-#fixed_placed_triangle_with_random_noize_and_loop()
-#moving_triangle_with_random_noize_and_loop()
-moving_triangle_with_random_noize_and_loop_convNet()
+if __name__ == "__main__":
+    #freeze_support()
+    #fixed_placed_triangle()
+    #fixed_placed_triangle_with_random_noize()
+    #fixed_placed_triangle_with_random_noize_and_loop()
+    #moving_triangle_with_random_noize_and_loop()
+    #moving_triangle_with_random_noize_and_loop_convNet()
+    moving_triangle_and_loop_convOnlyNet()

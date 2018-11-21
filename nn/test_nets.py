@@ -1,3 +1,8 @@
+import numpy as np
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+
 class SimplestNet(nn.Module):
     # Lets make a simple Net, 1
     def __init__(self,input_size,output_size):
@@ -34,12 +39,15 @@ class SimpleConvNet(nn.Module):
     def __init__(self, input_size, output_size):
         super(SimpleConvNet, self).__init__()
         filter_size = 4
-        n_filters = 2
+        n_filters = 1
         self.conv1 = nn.Conv2d(1, n_filters, filter_size) # 3x3 square to find TAD loop
+        self.triu_ids = np.triu_indices(input_size[0]-filter_size + 1,input_size[1]-filter_size+1)
+
         self.linear_size = (input_size[0]-filter_size + 1)*(input_size[1]-filter_size+1)*n_filters
         self.linear = nn.Linear(self.linear_size,self.linear_size)
         self.out = nn.Linear(self.linear_size,output_size[0]*output_size[1])
         self.out_shape = list(output_size)
+
     def forward(self, x):
         #print ("------")
         batch_size = x.shape[0]
@@ -59,13 +67,15 @@ class SimpleConvNet(nn.Module):
 class SimpleConvOnlyNet(nn.Module):
     def __init__(self, input_size, output_size):
         super(SimpleConvOnlyNet, self).__init__()
-        filter_size = 4
-        n_filters = 2
+        filter_size = 3
+        n_filters = 4
         self.conv1 = nn.Conv2d(1, n_filters, filter_size) # 3x3 square to find TAD loop
         self.conv2 = nn.Conv2d(n_filters,1,1)
         self.linear_size = (input_size[0]-filter_size + 1)*(input_size[1]-filter_size+1)
-        self.out = nn.Linear(self.linear_size,output_size[0]*output_size[1])
+        assert (output_size[0]*output_size[1] + output_size[0]) % 2 == 0
+        self.out = nn.Linear(self.linear_size, (output_size[0]*output_size[1] + output_size[0]) // 2)
         self.out_shape = list(output_size)
+        self.triu_i, self.triu_j = np.triu_indices(output_size[0])
     def forward(self, x):
         #print ("------")
         batch_size = x.shape[0]
@@ -77,9 +87,19 @@ class SimpleConvOnlyNet(nn.Module):
         #x = x.reshape((batch_size,1,self.linear_size))
         #print (x.shape)
         x = self.conv2(x)
-        x = x.reshape()
-        x = self.linear(x)
-        x = F.relu(x)
+        #x = F.relu(x)
+        #print(x.shape)
+        x = x.reshape((batch_size,-1))
+        #print(x.shape)
+        #print (self.linear_size)
         x = self.out(x)
-        x = x.reshape(tuple([batch_size,1]+self.out_shape))
-        return x
+        #print (x.shape)
+        y = torch.empty(([batch_size,1] + self.out_shape),dtype=x.dtype)
+        #print (y.shape)
+        #print (len(self.triu_i),len(self.triu_j))
+        #print (y[0].shape)
+        for i in range(batch_size):
+            y[i][0][self.triu_i,self.triu_j] = x[i]
+            y[i][0][self.triu_j,self.triu_i] = x[i]
+        #x = x.reshape(tuple([batch_size,1]+self.out_shape))
+        return y
