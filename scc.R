@@ -274,6 +274,7 @@ loop_calc <- function(M1){
 args = commandArgs(trailingOnly=TRUE)
 in_fname = args[1]
 h = as.numeric(args[2])
+chr = args[3]
 message(c("in_fname =:", in_fname))
 binsize <- 25000
 M1 <- read.table(in_fname,head=T)
@@ -295,6 +296,42 @@ Z4 <- matrix(0, nrow = length(Z2), ncol = length(Z2))
 Z5 <- matrix(0, nrow = length(Z2), ncol = length(Z2))
 min1 <- min(M1[ ,1])
 min2 <- min(M1[ ,2])
+
+#pr_en
+Pr <- read.table("Pr_en_GM12878/promoters.bed.txt",head=T)
+En <- read.table("Pr_en_GM12878/enhancers.bed.txt",head=T)
+Pr_size = length(which(Pr[,1]==chr))
+En_size = length(which(En[,1]==chr))
+for(t in 1:(En_size - 1)) {
+  for(l in 1:(Pr_size - 1)) {
+    r = Pr[l,2]%/%25000 + 1
+    c = En[t,2]%/%25000 + 1
+    Z4[r,c] = 1
+    Z4[c,r] = 1
+  }}
+mse = 0
+mod_avr = 0
+k = 0
+mmax = 1 
+for (t in 1:length(M1[,3])) {
+  #%/%
+  #Pr
+  r = (M1[t,1]-min1)/25000 + 1
+  c = (M1[t,2]-min2)/25000 + 1
+  if(Z4[r,c]==1){
+    mse = mse + (M1[t,3] - M1[t,4])*(M1[t,3] - M1[t,4])
+    mod_avr = mod_avr + abs(M1[t,3] - M1[t,4])
+    #if(mmax> abs(M1[t,3] - M1[t,4])){mmax = abs(M1[t,3] - M1[t,4])}
+    k = k + 1
+  }
+}
+mse = sqrt(mse/k)
+mod_avr = mod_avr/k
+
+
+#scc
+Z4 <- matrix(0, nrow = length(Z2), ncol = length(Z2))
+Z5 <- matrix(0, nrow = length(Z2), ncol = length(Z2))
 k = 0
 euc_sq = 0
 euc_mod_avr = 0
@@ -350,12 +387,12 @@ message(c("scc =:", j$scc))
 message(c("cor =:", c))
 out_fname = paste(in_fname,"out",sep=".")
 if (length(M1[1,])>4){
-  out1 = paste("corr","scc","scc_loop_only","corr_loop_only","MSE","mod_avr",sep = "	")
-  out2 = paste(c,as.numeric(j$scc),loop, euc_sq, euc_mod_avr, sep =  "	")
+  out1 = paste("corr","scc","scc_loop_only","corr_loop_only","MSE","mod_avr","Pr_en_MSE","Pr_en_mod_avr",sep = "	")
+  out2 = paste(c,as.numeric(j$scc),loop, euc_sq, euc_mod_avr,mse,mod_avr, sep =  "	")
 }
 if (length(M1[1,])<=4){
-  out1 = paste("corr","scc","MSE","mod_avr", sep = "	")
-  out2 = paste(c,as.numeric(j$scc), euc_sq, euc_mod_avr, sep =  "	")
+  out1 = paste("corr","scc","MSE","mod_avr","Pr_en_MSE","Pr_en_mod_avr", sep = "	")
+  out2 = paste(c,as.numeric(j$scc), euc_sq, euc_mod_avr,mse,mod_avr, sep =  "	")
 }
 out = paste(out1,"\n",out2,sep = "")
 write(out,out_fname,sep = " ")

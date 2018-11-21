@@ -12,6 +12,8 @@ import pandas as pd
 from numpy import int64,float32
 from sklearn import ensemble
 from shared import str2hash,Interval,write_XML
+import matplotlib
+matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from matrix_plotter import MatrixPlotter
 from collections import OrderedDict
@@ -46,9 +48,9 @@ class Predictor(object):
         result["input_file"] = self.input_file
         result["predictors"] = ".".join(self.predictors)
         result["algrorithm"] = str(self.alg.__class__.__name__)
+        result["algorithm_params"] = str(self.alg_params)
         result["apply_log"] = str(self.apply_log)
         result["weights_func"] = str(self.weightsFunc.__name__)
-        result["algorithm_params"] = str(self.alg.get_params)
         return result
 
     def __represent_validation__(self):
@@ -121,7 +123,7 @@ class Predictor(object):
     # if dump = True, save it to file dump_file
     # show_plot = True/False show features importance plot
     # returns class instance with trained_model object
-    def train(self, alg = sklearn.G(n_estimators=100,max_depth=5),
+    def train(self, alg = xgboost.XGBRegressor(n_estimators=100,max_depth=9,subsample=0.7),
               shortcut = "model", apply_log = True,
               dump = True, out_dir = "out/models/",
               weightsFunc = ones_like,
@@ -138,6 +140,7 @@ class Predictor(object):
         # Save paramters to be able to hash model name
         self.predictors = sorted(self.predictors)
         self.alg = alg
+        self.alg_params = ".".join([str(k)+"_"+str(v) for k,v in alg.get_params().items()])
         self.shortcut = shortcut
         self.apply_log = apply_log
         self.weightsFunc = weightsFunc
@@ -240,9 +243,7 @@ class Predictor(object):
         #     predicted = np.exp(np.array(predicted))
         #     print(validation_data["contact_count"])
         #     print(predicted)
-        chr_column_index= validation_data.columns.get_loc("chr")
-        chromosome = str(validation_data.iloc[chr_column_index:0])
-        print(chromosome)
+
         if "h" not in kwargs:
             kwargs["h"] = 2
         else:
@@ -254,7 +255,7 @@ class Predictor(object):
             d = pd.concat([validation_data["contact_st"],validation_data["contact_en"],validation_data["contact_count"],pd.DataFrame(predicted),validation_data["IsLoop"]], axis=1)
         out_fname = os.path.join(out_dir+"scc/",self.__represent_validation__()) + ".scc"
         pd.DataFrame.to_csv(d, out_fname, sep=" ", index=False)
-        out = subprocess.check_output(["Rscript", "scc.R", out_fname, str(kwargs["h"])])#, chromosome])
+        out = subprocess.check_output(["Rscript", "scc.R", out_fname, str(kwargs["h"]),])
 
     def decorate_scc(self, func, h, loop_file):
         result = partial(func, h=h, loop_file=loop_file)
@@ -349,6 +350,8 @@ class Predictor(object):
         logging.getLogger(__name__).info("Reading file "+inp_file)
         input_data = pd.read_csv(inp_file, delimiter="\t", dtype=dtypes,
                                  header=0, names=header)
+        print(input_data.keys())
+        print(len(input_data.keys()))
         input_data.fillna(value=0, inplace=True) # Filling N/A values TODO check why N/A appear
         return input_data
 
@@ -357,4 +360,5 @@ class Predictor(object):
     def read_data_predictors(self,inp_file):
         header = self.get_avaliable_predictors(inp_file)
         self.predictors = [h for h in header if not h in self.constant_nonpredictors]
+        # print(self.predictors)
         self.input_file = inp_file
