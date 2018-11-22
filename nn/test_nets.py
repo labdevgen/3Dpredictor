@@ -128,3 +128,21 @@ class SimpleConvOnlyNet(nn.Module):
             y[i][0][self.triu_j,self.triu_i] = x1[i]
         #x = x.reshape(tuple([batch_size,1]+self.out_shape))
         return y
+
+
+class test_conv(nn.Module):
+    def __init__(self, nfilters, inshape):
+        super(test_conv, self).__init__()
+        filter_size = 5
+        n_filters = 1
+        self.conv1 = nn.Conv2d(1, n_filters, filter_size, padding=2)
+        self.linear = nn.Linear(inshape**2,inshape**2)
+    def forward(self, x):
+        batch = x.size()[0]
+        original_shape = x.size()
+        x = self.conv1(x)
+        x = F.relu(x)
+        x = x.reshape((batch,-1))
+        x = self.linear(x)
+        x = x.reshape(original_shape)
+        return x
