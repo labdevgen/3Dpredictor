@@ -2,7 +2,10 @@ import torch
 from torch.utils.data import Dataset, DataLoader
 import numpy as np
 import random
-
+import sys
+import os
+sys.path.append(os.path.dirname(os.getcwd()))
+from shared import get_bin_size
 import pandas as pd
 
 # Returns: predicted, real
@@ -198,16 +201,24 @@ class DatasetMaker_moving_TAD_with_flying_Loop_and_Noize(DatasetMaker):
 
 class DatasetFromRealAndPredicted():
     def __init__(self, filename):
+        def add_contact(series):
+            l1 = series["contact_st"]
+            l2 = series["contact_en"]
+            x = l2 -
+
+
         assert np.iinfo(np.dtype("uint32")).max > 250000000
         data = pd.read_csv(filename,sep=" ",dtype={"contact_st" : np.uint32,
                                                    "contact_en" : np.uint32,
                                                    "contact_count": np.float32,
                                                    "0": np.float32,
                                                    "IsLoop": np.uint8})
-        data_min, data_max = data["contact_st"].min, data["contact_end"].max
-        data["dist"] = data["contact_en"] - data["contact_st"]
-        assert np.all(data["dist"]) >= 0
-        assert 0 <= np.all(data["contact_count"]) <= 1
-        binsize = min(data["dist"][data["dist"] > 0])
-        binsize = data["contact_st"].values
-        print (data.head())
+        data_min, data_max = data["contact_st"].min(), data["contact_en"].max()
+        binsize = get_bin_size(data)
+        assert data_min % binsize == data_max % binsize == 0
+        max_dist = (data["contact_en"]-data["contact_st"]).max()
+        assert max_dist % binsize == 0
+        matrix = np.zeros(shape=(max_dist // binsize, (data_max - data_min) // binsize))
+        print (matrix.shape)
+
+        # Fill matrix
