@@ -77,6 +77,7 @@ def draw_matrix(real,predicted):
 
 def draw_dataset(dataset,net,subset = 1, title=""):
     def _draw_dataset(dataset,net,title):
+        #plt.clf()
         N = len(dataset)
         mi = np.finfo(np.float64).max
         ma = 0
@@ -137,12 +138,13 @@ def plot_matrixes(arrs,showFig=True,**kwargs):
         plt.show()
         plt.clf()
 
-def train_and_show(validation_dataset, train_dataloader,net,num_epochs,title="", subset = 1):
-    lr = 0.05
+def train_and_show(validation_dataset, train_dataloader,net,num_epochs,title="", subset = 1, lr = 0.05):
     #optimizer = optim.SGD(net.parameters(), lr=lr)
     optimizer = optim.Adagrad(net.parameters(),lr=lr)
     criterion = nn.MSELoss()
 
+    print (datetime.datetime.now(), " Start iteration")
+    start_time = datetime.datetime.now()
     for epoch in range(num_epochs):
         raw_losses = []
         losses = []
@@ -158,8 +160,16 @@ def train_and_show(validation_dataset, train_dataloader,net,num_epochs,title="",
                 if epoch == 100:
                     print("Raw loss = ",np.average(raw_losses))
                 print (datetime.datetime.now()," ", epoch, " loss = ", np.average(losses))
+                time_delta = datetime.datetime.now() - start_time
+                #if time_delta.seconds > 30:
+                #    start_time = datetime.datetime.now()
+                #    draw_dataset(validation_dataset,net,title=title + " num epochs = "+str(epoch) + " lr = " + str(lr),
+                #         subset=subset, show_plot=draw_and_pause)
+
     print(datetime.datetime.now(), " ", epoch, " loss = ", np.average(losses))
-    draw_dataset(validation_dataset,net,title=title + " num epochs = "+str(num_epochs) + " lr = " + str(lr), subset=subset)
+    draw_dataset(validation_dataset, net, title=title + " num epochs = " + str(num_epochs) + " lr = " + str(lr),
+             subset=subset)
+
 
 def fixed_placed_triangle():
     size = (10,10)
@@ -185,7 +195,6 @@ def fixed_placed_triangle_with_random_noize_and_loop():
     train_and_show(dataset,dataloader=dataloader,net=net,num_epochs=1000,
                    title="Fixed place triangle with noize and loop",subset = 5)
 
-
 def moving_triangle_with_random_noize_and_loop():
     size = (40,40)
     dataset = DatasetMaker_moving_TAD(numSamples=40,size=size,st=2,en=38,maxlen=15,TAD=3)
@@ -200,9 +209,8 @@ def moving_triangle_and_loop_convOnlyNet():
     validation_dataset = DatasetMaker_moving_TAD(numSamples=10, size=size, st=25, en=35, maxlen=15, TAD=3)
     dataloader = DataLoader(dataset,batch_size=4)
     net = SimpleConvOnlyNet(input_size=size,output_size=size)
-    train_and_show(validation_dataset = validation_dataset,train_dataloader=dataloader,net=net,num_epochs=600,
-                   title=str(net) + "\nMoving triangle with or w/o loop",subset = 5)
-
+    train_and_show(validation_dataset = validation_dataset,train_dataloader=dataloader,net=net,num_epochs=6,
+                   title=str(net) + "\nMoving triangle with or w/o loop",subset = 5, lr = 0.05)
     p,r = validation_dataset.__getitem__(0)
     print (p)
     print (p.size())
@@ -239,8 +247,8 @@ def moving_triangle_and_flying_loop_convOnlyNet():
     validation_dataset = DatasetMaker_moving_TAD_with_flying_Loop(numSamples=10, size=size, st=19, en=34, maxlen=13, TAD=3)
     dataloader = DataLoader(dataset,batch_size=4)
     net = SimpleConvOnlyNet(input_size=size,output_size=size)
-    train_and_show(validation_dataset = validation_dataset,train_dataloader=dataloader,net=net,num_epochs=600,
-                   title=str(net) + "\nMoving triangle with or w/o loop",subset = 5)
+    train_and_show(validation_dataset = validation_dataset,train_dataloader=dataloader,net=net,num_epochs=800,
+                   title=str(net) + "\nMoving triangle with or w/o loop",subset = 5, lr=0.01)
 
     p,r = validation_dataset.__getitem__(0)
     print (p)
@@ -276,6 +284,14 @@ def moving_triangle_and_flying_loop_convOnlyNet():
     #plt.show()
 
 
+def moving_triangle_and_flying_loop_and_Noize_convOnlyNet():
+    size = (40,40)
+    dataset = DatasetMaker_moving_TAD_with_flying_Loop_and_Noize(numSamples=80,size=size,st=1,en=20,maxlen=12,TAD=3)
+    validation_dataset = DatasetMaker_moving_TAD_with_flying_Loop_and_Noize(numSamples=10, size=size, st=19, en=34, maxlen=13, TAD=5)
+    dataloader = DataLoader(dataset,batch_size=4)
+    net = SimpleConvOnlyNet(input_size=size,output_size=size)
+    train_and_show(validation_dataset = validation_dataset,train_dataloader=dataloader,net=net,num_epochs=1250,
+                   title=str(net) + "\nMoving triangle with or w/o loop",subset = 5, lr=0.01)
 def test():
     size = (40,40)
     dataset = DatasetMaker_moving_TAD_with_flying_Loop(numSamples=80,size=size,st=1,en=20,maxlen=12,TAD=3)
@@ -328,7 +344,6 @@ def test():
     #plt.imshow(net.conv1.weight.data.numpy()[0,0])
     #plt.show()
 
-
 def test2():
     a = np.zeros(shape=(10,10))
     i,j = np.triu_indices(3)
@@ -345,7 +360,7 @@ def test2():
 
     net = test_conv(nfilters = 1, inshape=10)
 
-    row = 1
+    row = 2
     column = 4
     plt.subplot(row,column,1)
     plt.imshow(a[0][0])
@@ -367,10 +382,8 @@ def test2():
    # weights[:,-2] = -1
     weights[-1,:] = 1
 
-    weights2 = np.zeros(shape=tuple(net.linear.weight.data.size()))
-    weights2[np.diag_indices(len(weights2))] = 1
-    net.linear.weight.data = torch.from_numpy(weights2).float()
-    net.linear.bias.data = torch.from_numpy(np.zeros(shape=tuple(net.linear.bias.size()))).float()
+    weights2 = np.zeros(shape=(filter_size,filter_size))
+    weights2[3,3] = 1
 
 
     plt.subplot(row,column,2)
@@ -379,21 +392,37 @@ def test2():
     net.conv1.weight.data[0] = torch.from_numpy(weights).float().unsqueeze(0)
     net.conv1.bias.data[0] = torch.from_numpy(np.array([-14])).float().unsqueeze(0)
 
-    b = net.forward(a).detach()
+    net.conv2.weight.data[0] = torch.from_numpy(weights2).float().unsqueeze(0)
+    net.conv2.bias.data[0] = torch.from_numpy(np.array([0])).float().unsqueeze(0)
+
+    b = net.conv1(a).detach()
     plt.subplot(row,column,3)
-    plt.title("result")
+    plt.title("conv1")
     plt.imshow(b[0][0])
 
     import torch.nn.functional as F
     c = F.relu(b)
     plt.subplot(row,column,4)
-    plt.title("result + relu")
+    plt.title("conv1 + relu")
     plt.imshow(c[0][0])
 
+    d = net.conv2(c).detach()
+    plt.subplot(row,column,5)
+    plt.title("conv2")
+    plt.imshow(d[0][0])
 
-    plt.gca().grid(which='minor', color='w', linestyle='-', linewidth=2)
+    plt.subplot(row,column,6)
+    plt.title("weights")
+    plt.imshow(weights2)
+
+
+    #plt.gca().grid(which='minor', color='w', linestyle='-', linewidth=2)
 
     plt.show()
+
+def test_real_data():
+    a = DatasetFromRealAndPredicted("input/model5823236996.validation..equal.h=2.Interval_chr9_0_141100000validatingOrient.contacts.gz.6.1500000.50001.863649.25000.txt.scc")
+
 
 if __name__ == "__main__":
     #freeze_support()
@@ -402,5 +431,6 @@ if __name__ == "__main__":
     #fixed_placed_triangle_with_random_noize_and_loop()
     #moving_triangle_with_random_noize_and_loop()
     #moving_triangle_with_random_noize_and_loop_convNet()
-    #moving_triangle_and_flying_loop_convOnlyNet()
-    test()
+    #moving_triangle_and_flying_loop_and_Noize_convOnlyNet()
+    #test2()
+    test_real_data()

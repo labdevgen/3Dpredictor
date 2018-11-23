@@ -2,6 +2,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import math
 
 class SimplestNet(nn.Module):
     # Lets make a simple Net, 1
@@ -68,27 +69,45 @@ class SimpleConvOnlyNet(nn.Module):
     def __init__(self, input_size, output_size):
         super(SimpleConvOnlyNet, self).__init__()
         filter_size = 5
-        n_filters = 3
+        n_filters = 10
         assert (filter_size -1) % 2 ==0
         padding = (filter_size-1) // 2
         self.conv1 = nn.Conv2d(1, n_filters, filter_size, padding=padding) # 3x3 square to find TAD loop
-        self.conv2 = nn.Conv2d(n_filters,n_filters,1)
-        self.conv3 = nn.Conv2d(n_filters,1,1)
+        self.conv2 = nn.Conv2d(n_filters, n_filters, filter_size, padding=padding)
+        self.conv3 = nn.Conv2d(n_filters, n_filters // 2, filter_size, padding=padding)
+        self.conv4 = nn.Conv2d(n_filters // 2, 1, filter_size, padding=padding)
+        #self.conv4 = nn.Conv2d(n_filters // 2, n_filters // 2, filter_size, padding=padding)
+        #self.conv5 = nn.Conv2d(n_filters // 2, 1, filter_size, padding=padding)
 
-        self.linear_size = (input_size[0] + 2*padding - filter_size + 1)*(input_size[1] + 2*padding - filter_size + 1)
-        assert (output_size[0]*output_size[1] + output_size[0]) % 2 == 0
+        self.linear = nn.Linear(input_size[0]*input_size[1],input_size[0]*input_size[1]*2)
+        self.out = nn.Linear(input_size[0]*input_size[1]*2,input_size[0]*input_size[1])
+
+        #self.linear_size = (input_size[0] + 2*padding - filter_size + 1)*(input_size[1] + 2*padding - filter_size + 1)
+        #assert (output_size[0]*output_size[1] + output_size[0]) % 2 == 0
         #self.out = nn.Linear(self.linear_size, (output_size[0]*output_size[1] + output_size[0]) // 2)
-        self.out = nn.Linear(self.linear_size, output_size[0]*output_size[1])
-        self.out_shape = list(output_size)
-        self.triu_i, self.triu_j = np.triu_indices(output_size[0])
+        #self.out = nn.Linear(self.linear_size, output_size[0]*output_size[1])
+        #self.out_shape = list(output_size)
+        #self.triu_i, self.triu_j = np.triu_indices(output_size[0])
     def forward(self, x):
         #print ("------")
         batch_size = x.shape[0]
         x1 = self.conv1(x)
         #x1[:,:,self.triu_i, self.triu_j] = x1[:,:,self.triu_j, self.triu_i]
         x1 = F.relu(x1)
+        x1 = self.conv2(x1)
+        x1 = F.relu(x1)
+        x1 = self.conv3(x1)
+        x1 = F.relu(x1)
+        x1= self.conv4(x1)
+        x1 = F.relu(x1)
 
-        return self.conv3(x1)
+        x1 = x1.reshape((x1.size()[0],-1))
+        x1 = self.linear(x1)
+        x1 = F.relu(x1)
+        x1 = self.out(x1)
+        x_len = int(math.sqrt(x1.size()[-1]))
+        new_shape = (x1.size()[0],1,x_len,x_len)
+        return x1.reshape(new_shape)
 
         x2 = self.conv2(x1)
 
@@ -136,13 +155,14 @@ class test_conv(nn.Module):
         filter_size = 5
         n_filters = 1
         self.conv1 = nn.Conv2d(1, n_filters, filter_size, padding=2)
-        self.linear = nn.Linear(inshape**2,inshape**2)
+        self.conv2 = nn.Conv2d(1, n_filters, filter_size, padding=2)
+        #self.linear = nn.Linear(inshape**2,inshape**2)
     def forward(self, x):
         batch = x.size()[0]
         original_shape = x.size()
         x = self.conv1(x)
         x = F.relu(x)
-        x = x.reshape((batch,-1))
-        x = self.linear(x)
-        x = x.reshape(original_shape)
+        #x = x.reshape((batch,-1))
+        #x = self.conv2(x)
+        #x = x.reshape(original_shape)
         return x

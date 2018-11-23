@@ -3,6 +3,8 @@ from torch.utils.data import Dataset, DataLoader
 import numpy as np
 import random
 
+import pandas as pd
+
 # Returns: predicted, real
 class DatasetMaker(Dataset):
     def make_test(self, **kwargs):
@@ -133,7 +135,7 @@ class DatasetMaker_moving_TAD_with_flying_Loop(DatasetMaker):
         p = np.ones(shape=size)
         st, en, maxlen = kwargs["st"], kwargs["en"], kwargs["maxlen"]
         maxlen = min(maxlen,size[0],size[1])
-        TAD_len = random.randint(4,maxlen)
+        TAD_len = random.randint(6,maxlen)
         st = random.randint(st,en-TAD_len-1)
         en = st + TAD_len
         for i in list(range(st, en)):
@@ -142,11 +144,13 @@ class DatasetMaker_moving_TAD_with_flying_Loop(DatasetMaker):
                 p[i, j] += kwargs["TAD"]
 
         # Add loop
-        fly_distance = 0
-        for i in range(st+fly_distance,st+fly_distance+1):
-            for j in range(en + fly_distance, en + fly_distance + 1):
-                r[i,j] += kwargs["TAD"]*3
-                #r[j,i] += kwargs["TAD"]*3
+        fly_distance = 2
+        r[st + TAD_len // 3, en + 2] = kwargs["TAD"]*3
+        #r[en - 2, en + 2] = kwargs["TAD"] * 3
+        #for i in range(st+fly_distance,st+fly_distance+1):
+        #    for j in range(en + fly_distance, en + fly_distance + 1):
+        #        r[i,j] += kwargs["TAD"]*3
+        #        r[j,i] += kwargs["TAD"]*3
 
         coeff = np.sum(p)
         #p = p / coeff
@@ -156,3 +160,54 @@ class DatasetMaker_moving_TAD_with_flying_Loop(DatasetMaker):
         r = np.reshape(r, (1,) + r.shape)
 
         return torch.from_numpy(p).float(),torch.from_numpy(r).float()
+
+class DatasetMaker_moving_TAD_with_flying_Loop_and_Noize(DatasetMaker):
+    def __init__(self, **kwargs):
+        random.seed()
+        super().__init__(**kwargs)
+
+    def make_test(self, **kwargs):
+        size = kwargs["size"]
+        r = np.random.normal(0,1,size=size)
+        p = np.random.normal(0,1,size=size)
+        st, en, maxlen = kwargs["st"], kwargs["en"], kwargs["maxlen"]
+        maxlen = min(maxlen,size[0],size[1])
+        TAD_len = random.randint(3,maxlen)
+        st = random.randint(st,en-TAD_len-1)
+        en = st + TAD_len
+        for i in list(range(st, en)):
+            for j in list(range(st, en)):
+                r[i, j] += kwargs["TAD"]
+                p[i, j] += kwargs["TAD"]
+
+        # Add loop
+        fly_distance = 2
+        for i in range(st+fly_distance,st+fly_distance+1):
+            for j in range(en + fly_distance, en + fly_distance + 1):
+                r[i,j] += kwargs["TAD"]*3
+                r[j,i] += kwargs["TAD"]*3
+
+        coeff = np.sum(p)
+        #p = p / coeff
+        #r = r / coeff
+
+        p = np.reshape(p, (1,) + p.shape) # Add one "color" dimension
+        r = np.reshape(r, (1,) + r.shape)
+
+        return torch.from_numpy(p).float(),torch.from_numpy(r).float()
+
+class DatasetFromRealAndPredicted():
+    def __init__(self, filename):
+        assert np.iinfo(np.dtype("uint32")).max > 250000000
+        data = pd.read_csv(filename,sep=" ",dtype={"contact_st" : np.uint32,
+                                                   "contact_en" : np.uint32,
+                                                   "contact_count": np.float32,
+                                                   "0": np.float32,
+                                                   "IsLoop": np.uint8})
+        data_min, data_max = data["contact_st"].min, data["contact_end"].max
+        data["dist"] = data["contact_en"] - data["contact_st"]
+        assert np.all(data["dist"]) >= 0
+        assert 0 <= np.all(data["contact_count"]) <= 1
+        binsize = min(data["dist"][data["dist"] > 0])
+        binsize = data["contact_st"].values
+        print (data.head())
