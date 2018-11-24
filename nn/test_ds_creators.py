@@ -7,6 +7,9 @@ import os
 sys.path.append(os.path.dirname(os.getcwd()))
 from shared import get_bin_size
 import pandas as pd
+import matplotlib.pyplot as plt
+import logging
+import datetime
 
 # Returns: predicted, real
 class DatasetMaker(Dataset):
@@ -200,12 +203,45 @@ class DatasetMaker_moving_TAD_with_flying_Loop_and_Noize(DatasetMaker):
         return torch.from_numpy(p).float(),torch.from_numpy(r).float()
 
 class DatasetFromRealAndPredicted():
-    def __init__(self, filename):
-        def add_contact(series):
-            l1 = series["contact_st"]
-            l2 = series["contact_en"]
-            x = l2 -
+    def split2pairs(self, matrix, length, step):
+        # split large matrix to regions which would be feeded to nn
+        # length - length (along diagonal) of each region
+        # step - distance (along diagonal) between start of each region
 
+        # TODO this is now not really memory efficient, since overlapping part of array are stored as independent elements
+        # if this will be the point, one may move core of this function to the .__get__ func, to get views from matrix
+        # on the fly as they needed
+
+        assert matrix.shape[0] == matrix.shape[1] # matrix supposed to be squared
+        self.reals = []
+        self.predicted = []
+        I,J = np.triu_indices(length)
+
+        for i in range(0, len(matrix)-length, step):
+            real = np.array(matrix[i:i+length,i:i+length])
+            predicted = np.array(matrix[i:i+length,i:i+length])
+
+            real[J,I] = real[I,J]
+            predicted[I,J] = predicted[J,I]
+
+            # Add a 'color' dimension
+            real = np.reshape(real,((1,) + real.shape))
+            predicted = np.reshape(predicted,((1,) + predicted.shape))
+            self.reals.append(torch.from_numpy(real).float())
+            self.predicted.append(torch.from_numpy(predicted).float())
+
+    def __init__(self, filename):
+        # def add_contact(series):
+        #     i = int((series["contact_st"] - data_min) // binsize)
+        #     j = int((series["contact_en"]- data_min) // binsize)
+        #     predicted = series["contact_count"]
+        #     real = series["0"]
+        #     matrix[i,j] = predicted
+        #     matrix[j,i] = real
+
+        logging.basicConfig(format='%(asctime)s %(name)s: %(message)s',
+                                                datefmt='%I:%M:%S',
+                                                level=logging.DEBUG)
 
         assert np.iinfo(np.dtype("uint32")).max > 250000000
         data = pd.read_csv(filename,sep=" ",dtype={"contact_st" : np.uint32,
@@ -213,12 +249,57 @@ class DatasetFromRealAndPredicted():
                                                    "contact_count": np.float32,
                                                    "0": np.float32,
                                                    "IsLoop": np.uint8})
+        logging.getLogger(__name__).debug("Reading data")
         data_min, data_max = data["contact_st"].min(), data["contact_en"].max()
-        binsize = get_bin_size(data)
+        binsize = int(get_bin_size(data))
+        logging.getLogger(__name__).debug("Using bin size "+str(binsize))
         assert data_min % binsize == data_max % binsize == 0
-        max_dist = (data["contact_en"]-data["contact_st"]).max()
-        assert max_dist % binsize == 0
-        matrix = np.zeros(shape=(max_dist // binsize, (data_max - data_min) // binsize))
-        print (matrix.shape)
+        assert data_max > data_min
+        chr_len = int((data_max - data_min) // binsize)
+        logging.getLogger(__name__).debug("Data size: " + str(chr_len) + " bins")
+        matrix = np.zeros(shape=(chr_len + 1, chr_len + 1))
+
 
         # Fill matrix
+        logging.getLogger(__name__).debug("Filling matrix")
+
+        data["contact_st"] = ((data["contact_st"] - data_min) // binsize).astype(int)
+        data["contact_en"] = ((data["contact_en"] - data_min) // binsize).astype(int)
+        i = data["contact_st"].values
+        j = data["contact_en"].values
+        matrix[(i,j)] = data["contact_count"].values
+        matrix[(j,i)] = data["0"].values
+
+        #data.apply(add_contact,axis = "columns")
+
+        diag_sums = [np.trace(matrix,i) for i in range(len(matrix))]
+
+        assert diag_sums[0] + diag_sums[1] == 0 # check that first 2 diagonals are empty
+        assert np.trace(matrix, 1500000 // binsize - 1) != 0 # check that we have disctances up to 1.5 Mb
+
+        #TODO apply transformations to data here
+        logging.getLogger(__name__).debug("Normalizing data")
+
+        mean = -100 # find mean along first non-zero diagonal
+        for ind,val in enumerate(diag_sums):
+            if val != 0:
+                mean = val / (len(matrix) - ind)
+
+        if mean - 1 <= 1: # For oe values mean is ~1
+            logging.getLogger(__name__).info("Assuming contacts, going to convert to o/e values.")
+
+            for i in range(len(matrix)):
+                if diag_sums[i] == 0:
+                    continue
+                else:
+                    for j in range(i,len(matrix)):
+                        matrix[j-i, j] = matrix[j-i,j] / diag_sums[i]
+                        matrix[j,j-i] = matrix[j,j-i] / diag_sums[i]
+
+        self.split2pairs(matrix,length=1500000 // binsize, step=750000 // binsize)
+
+    def __len__(self):
+        return len(self.reals)
+
+    def __getitem__(self, idx):
+        return self.predicted[idx], self.reals[idx]

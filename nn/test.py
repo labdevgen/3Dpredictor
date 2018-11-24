@@ -19,62 +19,6 @@ import torch.optim as optim
 import torch.nn.functional as F
 from torch.utils.data import Dataset, DataLoader
 
-
-# Generate test sample
-def generate_sample(length = 1500, binsize = 25, modifier = lambda x: x + 0.001):
-    length = int(length / binsize)
-
-    # Square matrix shape length * length, conts = exp(distance)
-    counts = np.ones(shape=(length,length))
-    for i in range(length):
-        idxs = np.arange(length - i)
-        counts[idxs,idxs + i] = (1 / math.exp(i))*10000000
-
-    # Add some noise
-    real = np.abs(np.random.normal(counts, counts / 2)) + np.min(counts)
-
-    # Calculate "predicted"
-    predicted = modifier(counts)
-
-    #convert to pd dataframe
-    for counts in [real, predicted]:
-        data = np.array(list(np.ndenumerate(counts)))
-        data = pd.DataFrame(data, columns= ["coord","contact_count"])
-        data[["contact_st","contact_en"]] = data["coord"].apply(pd.Series)
-        data.drop(["coord"],axis="columns",inplace=True)
-        data["contact_st"] = (data["contact_st"] + 1) * binsize
-        data["contact_en"] = (data["contact_en"] + 1) * binsize
-        data = data.query("contact_st < contact_en")
-        data["chr"] = ["chrT"]*len(data)
-        yield data
-
-def sample2vector(data):
-    #Define binsize
-    binsize = np.sort((np.concatenate((data["contact_en"].values,data["contact_st"].values))))
-    binsize = binsize[1:] - binsize[:-1]
-    binsize = min(binsize)
-    assert binsize > 0
-
-    l = max(data["contact_en"]) - min(data["contact_st"])
-    assert l % binsize == 0
-    l = l / binsize
-
-    i = torch.LongTensor([data["contact_st"] / binsize, data["contact_en"] / binsize])
-    v = torch.FloatTensor(data["contact_count"])
-    dense = torch.sparse.FloatTensor(i, v, torch.Size([l,l])).to_dense()
-    print (dense)
-
-# Helper fn to draw maps
-def draw_matrix(real,predicted):
-    mp = MatrixPlotter()
-    mp.set_data(real)
-    mp.set_control(predicted)
-    matrix = np.log(matrix)
-    tick_pos, tick_labels = mp.get_bins_strart_labels(maxTicksNumber=15)
-    plt.xticks(tick_pos, tick_labels, rotation=45)
-    plt.imshow(matrix, cmap="OrRd")
-    plt.show()
-
 def draw_dataset(dataset,net,subset = 1, title=""):
     def _draw_dataset(dataset,net,title):
         #plt.clf()
@@ -96,18 +40,18 @@ def draw_dataset(dataset,net,subset = 1, title=""):
             p_reduced = p.reshape(p.shape[-2],p.shape[-1]).detach().numpy()
             r_reduced = r.reshape(r.shape[-2],r.shape[-1]).detach().numpy()
             plt.subplot(N, 3,(i+1)*3 + 1)
-            plt.imshow(r_reduced,vmin=total_min,vmax=total_max)
+            plt.imshow(r_reduced,vmin=total_min,vmax=total_max, cmap="OrRd")
             plt.axis('off')
             if i==0: plt.title("Real")
             plt.subplot(N, 3, (i+1)*3 + 2)
-            plt.imshow(p_reduced,vmin=total_min,vmax=total_max)
+            plt.imshow(p_reduced,vmin=total_min,vmax=total_max, cmap="OrRd")
             plt.axis('off')
             if i == 0: plt.title("Predicted")
             plt.subplot(N, 3, (i+1)*3 + 3)
             p = torch.reshape(p,tuple([1]+list(p.shape))) # make +one dimension to imitate batch
             nn_p = net(p)
             nn_p = nn_p.reshape(nn_p.shape[-2], nn_p.shape[-1]).detach().numpy()
-            plt.imshow(nn_p,vmin=total_min,vmax=total_max)
+            plt.imshow(nn_p,vmin=total_min,vmax=total_max, cmap="OrRd")
             plt.axis('off')
             if i == 0: plt.title("Predicted + NN")
         plt.show()
@@ -122,54 +66,48 @@ def draw_dataset(dataset,net,subset = 1, title=""):
     print (subset, " Subsetting to ",len(subset_of_dataset))
     _draw_dataset(subset_of_dataset, net, title=title)
 
-def plot_matrixes(arrs,showFig=True,**kwargs):
-    if "titles" in kwargs:
-        titles = kwargs["titles"]
-    else:
-        titles = list(map(str,range(arrs)))
-
-    total_min = min(map(np.min,arrs))
-    total_max = max(map(np.max,arrs))
-    for ind,val in enumerate(arrs):
-        plt.subplot(len(arrs),1,ind+1)
-        plt.imshow(val,vmin=total_min,vmax=total_max)
-        plt.title(titles[ind])
-    if showFig:
-        plt.show()
-        plt.clf()
-
-def train_and_show(validation_dataset, train_dataloader,net,num_epochs,title="", subset = 1, lr = 0.05):
+def train_and_show(validation_dataset, train_dataloader,net,num_epochs,title="", subset = 1, lr = 0.05,
+                   interactive=True):
     #optimizer = optim.SGD(net.parameters(), lr=lr)
     optimizer = optim.Adagrad(net.parameters(),lr=lr)
     criterion = nn.MSELoss()
 
     print (datetime.datetime.now(), " Start iteration")
+    calc_raw_losses = True
     start_time = datetime.datetime.now()
-    for epoch in range(num_epochs):
+
+    epoch = 0
+    while epoch < num_epochs:
         raw_losses = []
         losses = []
         for i_batch, (p,r) in enumerate(train_dataloader):
             optimizer.zero_grad()
             net_out = net(p)
-            raw_losses = criterion(p, r)
+            if calc_raw_losses:
+                raw_losses.append(criterion(p, r).item())
             loss = criterion(net_out, r)
             loss.backward()
             optimizer.step()
             losses.append(loss.item())
-        if (epoch % 100 == 0 and epoch >= 100):
-                if epoch == 100:
-                    print("Raw loss = ",np.average(raw_losses))
-                print (datetime.datetime.now()," ", epoch, " loss = ", np.average(losses))
-                time_delta = datetime.datetime.now() - start_time
-                #if time_delta.seconds > 30:
-                #    start_time = datetime.datetime.now()
-                #    draw_dataset(validation_dataset,net,title=title + " num epochs = "+str(epoch) + " lr = " + str(lr),
-                #         subset=subset, show_plot=draw_and_pause)
-
-    print(datetime.datetime.now(), " ", epoch, " loss = ", np.average(losses))
-    draw_dataset(validation_dataset, net, title=title + " num epochs = " + str(num_epochs) + " lr = " + str(lr),
-             subset=subset)
-
+        time_delta = datetime.datetime.now() - start_time
+        if calc_raw_losses:
+            calc_raw_losses = False
+            print("Raw loss = ", np.average(raw_losses))
+        if (epoch % 100 == 0 and epoch >= 100) or time_delta.seconds > 60:
+                print(datetime.datetime.now()," ", epoch, " loss = ", np.average(losses))
+                start_time = datetime.datetime.now()
+        epoch += 1
+        if epoch == num_epochs:
+            if interactive:
+                print(datetime.datetime.now(), " ", epoch, " loss = ", np.average(losses))
+                draw_dataset(validation_dataset, net, title=title + " num epochs = " + str(num_epochs) + " lr = " + str(lr),
+                             subset=subset)
+                add_epoch = input("How many inputs more to compute? (enter 0 to stop iterating) \n")
+                try:
+                    num_epochs += int(add_epoch)
+                except:
+                    add_epoch = input("Please eneter integer value\n")
+                    num_epochs += int(add_epoch)
 
 def fixed_placed_triangle():
     size = (10,10)
@@ -282,7 +220,6 @@ def moving_triangle_and_flying_loop_convOnlyNet():
     #print(net.conv1.weight.data[0][0])
     #plt.imshow(net.conv1.weight.data.numpy()[0,0])
     #plt.show()
-
 
 def moving_triangle_and_flying_loop_and_Noize_convOnlyNet():
     size = (40,40)
@@ -421,7 +358,15 @@ def test2():
     plt.show()
 
 def test_real_data():
-    a = DatasetFromRealAndPredicted("input/model5823236996.validation..equal.h=2.Interval_chr9_0_141100000validatingOrient.contacts.gz.6.1500000.50001.863649.25000.txt.scc")
+    dataset = DatasetFromRealAndPredicted("input/model5823236996.validation..equal.h=2.Interval_chr9_0_141100000validatingOrient.contacts.gz.6.1500000.50001.863649.25000.txt.scc")
+    size = dataset[0][0][0].size() # [first_sample_in_dataset][predicted][first_color]
+    validation_dataset = dataset
+    dataloader = DataLoader(dataset,batch_size=12)
+    #net = ConvNet_1(input_size=size,output_size=size)
+    net = ConvNet_2(input_size=size,output_size=size)
+
+    train_and_show(validation_dataset = validation_dataset,train_dataloader=dataloader,net=net,num_epochs=2,
+                   title=str(net) + "\nReal data",subset = 5, lr=0.005)
 
 
 if __name__ == "__main__":

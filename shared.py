@@ -217,5 +217,6 @@ def get_bin_size(data):
     dist = dist[np.nonzero(dist)]
     assert len(dist) > 0
     binsize = min(dist)
-    return binsize
+    assert int(binsize) == binsize
+    return int(binsize)
 
