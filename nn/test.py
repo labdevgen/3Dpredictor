@@ -363,7 +363,9 @@ def test_real_data():
     validation_dataset = dataset
     dataloader = DataLoader(dataset,batch_size=12)
     #net = ConvNet_1(input_size=size,output_size=size)
-    net = ConvNet_2(input_size=size,output_size=size)
+    #   net = ConvNet_2(input_size=size,output_size=size)
+    net = ConvNet_3(input_size=size,output_size=size)
+
 
     train_and_show(validation_dataset = validation_dataset,train_dataloader=dataloader,net=net,num_epochs=2,
                    title=str(net) + "\nReal data",subset = 5, lr=0.005)

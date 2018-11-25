@@ -154,3 +154,25 @@ class ConvNet_2(nn.Module):
         x = self.linear(x)
         x = F.relu(x)
         return self.out(x).reshape(tuple(x.size()[0:2])+tuple(self.out_size))
+
+class ConvNet_3(nn.Module):
+    def __init__(self, input_size, output_size):
+        super(ConvNet_3, self).__init__()
+        filter_size = 5
+        n_filters = 10
+        assert filter_size % 2 == 1
+        assert filter_size > 2
+        padding = (filter_size - 1 ) // 2
+        self.conv1 = nn.Conv2d(1, n_filters, filter_size, padding=padding) # 3x3 square to find TAD loop
+        self.conv2 = nn.Conv2d(n_filters, n_filters, filter_size, padding=padding)
+        self.conv3 = nn.Conv2d(n_filters, n_filters // 2, filter_size, padding=padding)
+        self.conv4 = nn.Conv2d(n_filters // 2, 1, filter_size, padding=padding)
+    def forward(self, x):
+        x1 = self.conv1(x)
+        x1 = F.relu(x1)
+        x1 = self.conv2(x1)
+        x1 = F.relu(x1)
+        x1 = self.conv3(x1)
+        x1 = F.relu(x1)
+        x2 = x + self.conv4(x1)
+        return x2
