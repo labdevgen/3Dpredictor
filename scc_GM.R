@@ -227,8 +227,8 @@ binsize <- 25000
 #cell_type2 <- "IMR90"
 #m1 <- paste(chr,".5MB.",cell_type1,".contacts", sep = "")
 #m2 <- paste(chr,".5MB.",cell_type2,".contacts", sep = "")
-m1 <- paste(chr,".5MB.",cell_type1,".contacts.gz", sep = "")
-m2 <- paste(chr,".5MB.",cell_type2,".contacts.gz", sep = "")
+#m1 <- paste(chr,".5MB.",cell_type1,".contacts.gz", sep = "")
+#m2 <- paste(chr,".5MB.",cell_type2,".contacts.gz", sep = "")
 M1 <- read.table(in_fname,head=T)
 M2 <- read.table(in_fname,head=T)
 M2[,3] = M1[,4]
