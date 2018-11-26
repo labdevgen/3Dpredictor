@@ -1,3 +1,4 @@
+#message(c("step:", 0))
 MatToVec <- function(dat){
   
   mat = as.matrix(dat)
@@ -66,7 +67,7 @@ htrain1 <- function(R1, R2, resol, max, range){
   corr = matrix(0, max(range)+1, 2)
   corr[,1] = range
   for (i in range){
-    message(c("smoothing:", i))
+    #message(c("smoothing:", i))
     pre = prep1(R1, R2, resol, i)
     s_cor = array()
     for (j in 1:10){
@@ -121,18 +122,19 @@ get.scc1 <- function (dat, resol, max){
     
     return(list(corr = corr, wei = wei))
   }
+  #print("hire2")
   grp <- match(gdist, seq_len(ub) * resol)
   idx <- split(seq_len(length(gdist)), grp)
-
+  #print("hire3")
   st = sapply(idx, est.scc)
   corr0 = unlist(st[1,])
   wei0 = unlist(st[2,])
-
+  #print("hire4")
   corr = corr0[!is.na(corr0)]
   wei = wei0[!is.na(wei0)]
-
+  #print("hire5")
   scc = corr %*% wei/sum(wei)
-
+  #print("hire6")
   std = sqrt(sum(wei^2*(1-corr^2)^2/(n-3))/(sum(wei))^2)
   
   return(list(corr = corr, wei = wei, scc = scc, std = std))
@@ -156,9 +158,11 @@ smoothMat1 <- function(dat, h){
     crb <- ifelse(j + h < c, j +  h, c)
 
     for (i in seq_len(r)){
+		#message(c("i:", i))
         for (j in seq_len(c)){
-            if(abs(r-c)<60 - h){
-            smd_matr[i,j] = mean(matr[rlb[i]:rrb[i], clb[j]:crb[j]])}
+            #if((abs(i-j)<60-h)&&abs(i-j)>2 + h){
+            smd_matr[i,j] = mean(matr[rlb[i]:rrb[i], clb[j]:crb[j]])
+            #}
         }
     }
 
@@ -169,29 +173,34 @@ smoothMat1 <- function(dat, h){
 }
 
 prep1 <- function(R1, R2, resol, h, max){
-
+  #print("start_prep")
+  #message(c("start_prep:", 0))
   pro_Rep1 = R1[,-c(1,2,3)]
   rownames(pro_Rep1) = colnames(pro_Rep1) = R1[,3]-resol/2
-
+  #print("start_prep_1")
+  #message(c("start_prep_1:", 0))
   pro_Rep2 = R2[,-c(1,2,3)]
   rownames(pro_Rep2)=colnames(pro_Rep2)=R2[,3]-resol/2
-
+  #print("start_prep_2")
   if(h == 0){
     vec_Rep1=MatToVec(pro_Rep1)
-
+    ##print("vec_Rep1")
+    ##print(vec_Rep1)
     vec_Rep2=MatToVec(pro_Rep2)
   } else {
-
+    #print("start_prep_3")
+    #message(c("start_prep_3:", 0))
     smt_Rep1 = smoothMat1(pro_Rep1, h)
     smt_Rep2 = smoothMat1(pro_Rep2, h)
     vec_Rep1 = MatToVec(smt_Rep1)
     vec_Rep2 = MatToVec(smt_Rep2)
   }
-
+  #message(c("start_prep_4:", 0))
+  #print("start_prep_4")
   comb = data.frame(vec_Rep1,vec_Rep2[,3])
   colnames(comb) = c("V1", "V2", "V3", "V4")
   eidx = which(comb[,3] == 0 & comb[,4] == 0)
-
+  #print("start_prep_5")
   if (length(eidx) == 0) {
     filt = comb
   } else {
@@ -201,197 +210,172 @@ prep1 <- function(R1, R2, resol, h, max){
   return(filt)
 }
 
-prep1_half_smoof <- function(R1, R2, resol, h, max){
 
-  pro_Rep1 = R1[,-c(1,2,3)]
-  rownames(pro_Rep1) = colnames(pro_Rep1) = R1[,3]-resol/2
-
-  pro_Rep2 = R2[,-c(1,2,3)]
-  rownames(pro_Rep2)=colnames(pro_Rep2)=R2[,3]-resol/2
-
-  if(h == 0){
-    vec_Rep1=MatToVec(pro_Rep1)
-
-    vec_Rep2=MatToVec(pro_Rep2)
-  } else {
-
-    smt_Rep1 = smoothMat1(pro_Rep1, h)
-    smt_Rep2 = pro_Rep2
-    vec_Rep1 = MatToVec(smt_Rep1)
-    vec_Rep2 = MatToVec(smt_Rep2)
-  }
-
-  comb = data.frame(vec_Rep1,vec_Rep2[,3])
-  colnames(comb) = c("V1", "V2", "V3", "V4")
-  eidx = which(comb[,3] == 0 & comb[,4] == 0)
-
-  if (length(eidx) == 0) {
-    filt = comb
-  } else {
-    filt = comb[-eidx,]
-  }
-  
-  return(filt)
-}
-
-loop_calc <- function(M1){
-  max1 <- max(M1[,2])
-  min1 <- min(M1[ ,1])
-  min2 <- min(M1[ ,2])
-  wide <- max(M1[,2] - M1[,1])
-  maxdist = max1 - min1 - 2*binsize
-  size <- max1 - min1
-  Z2 <- seq(0,size - binsize,by = binsize)
-  Z1 <- cbind(1:length(Z2))
-  Z3 <- seq(binsize ,size,by = binsize)
-  Z <- cbind(Z1,Z2,Z3)
-  Z4 <- matrix(0, nrow = length(Z2), ncol = length(Z2))
-  for (t in 1:length(M1[,3])) { 
-    r = (M1[t,1]-min1)/25000
-    c = (M1[t,2]-min2)/25000
-    if(abs(r-c)<60 && M1[t,5] == 1){
-      Z4[r,c] = M1[t,3]
-      Z4[c,r] = M1[t,3]}}
-  H1_loop <- cbind(Z,Z4)
-	
-  Z5 <- matrix(0, nrow = length(Z2), ncol = length(Z2))
-  for (t in 1:length(M1[,4])) {
-    r = (M1[t,1]-min1)/25000
-    c = (M1[t,2]-min2)/25000
-    if(abs(r-c)<60 && M1[t,5] == 1){
-    Z5[r,c] = M1[t,4]
-    Z5[c,r] = M1[t,4]}
-  }
-  H2_loop <- cbind(Z,Z5)
-  H <- prep1(H1_loop, H2_loop, binsize, 0, maxdist)
-  corr_loop <- cor(as.double(H[,3]),as.double(H[,4]))
-  j_loop = get.scc1(H, binsize, maxdist)
-  return(paste(as.numeric(j_loop$scc),corr_loop,sep = "	"))
-}
-
-
-
+chrs_length = c(249250621,243199373,198022430,191154276,180915260,171115067,159138663,146364022,141213431,135534747,135006516,133851895,115169878,107349540,102531392,90354753,81195210,78077248,59128983,63025520,48129895,51304566)
+#message(c("step:", 0))
+#print("0")
+binsize <- 25000
+chrs_length = chrs_length%/%binsize
 args = commandArgs(trailingOnly=TRUE)
 in_fname = args[1]
 h = as.numeric(args[2])
 chr = args[3]
 message(c("in_fname =:", in_fname))
 binsize <- 25000
+#chr <- "1"
+#cell_type1 <- "NHEK"
+#cell_type2 <- "IMR90"
+#m1 <- paste(chr,".5MB.",cell_type1,".contacts", sep = "")
+#m2 <- paste(chr,".5MB.",cell_type2,".contacts", sep = "")
+m1 <- paste(chr,".5MB.",cell_type1,".contacts.gz", sep = "")
+m2 <- paste(chr,".5MB.",cell_type2,".contacts.gz", sep = "")
 M1 <- read.table(in_fname,head=T)
-M1 <- as.matrix.data.frame(M1)
-M1 <- as.matrix.data.frame(M1)
+M2 <- read.table(in_fname,head=T)
+M2[,3] = M1[,4]
+M1[is.na(M1)] <- 0
+M2[is.na(M2)] <- 0
 
-max1 <- max(M1[,2])
-min1 <- min(M1[,1])
-wide <- max(M1[,2] - M1[,1])
-maxdist = max1 - binsize
-size <- max1
-Z2 <- seq(0,size,by = binsize)
+maxx = max(max(M1[,2]),max(M2[,2]))
+minn = min(min(M1[,1]),min(M2[,1]))
+mx = max(max(M1[,2]),max(M2[,2]))/25000
+mn = min(min(M1[,1]),min(M2[,1]))/25000
+#print(M1[1,3])
+wide = binsize*60
+maxdist = maxx - minn - 2*binsize
+#print(maxdist)
+#message(c("maxM1:", max(M1[,2])))
+#message(c("maxM2:", max(M2[,2])))
+#message(c(":", length(M1[,3])))
+#message(c(":", length(M2[,3])))
+size <- maxx
+Z2 <- seq(0,size - binsize + binsize,by = binsize)
 Z1 <- cbind(1:length(Z2))
 Z3 <- seq(binsize ,size + binsize,by = binsize)
 Z <- cbind(Z1,Z2,Z3)
-if (length(M1[1,])>4){loop <- loop_calc(M1)} else loop = ""
 Z4 <- matrix(0, nrow = length(Z2), ncol = length(Z2))
 Z5 <- matrix(0, nrow = length(Z2), ncol = length(Z2))
-min1 <- min(M1[ ,1])
-min2 <- min(M1[ ,2])
+Z6 <- matrix(0, nrow = length(Z2), ncol = length(Z2))
+#print("1")
+	
+
+for (t in 1:length(M1[,3])) {
+  r = (M1[t,1])/25000 + 1
+  c = (M1[t,2])/25000 + 1
+  if(abs(r-c)<60&&abs(r-c)>2){
+    Z4[r,c] = M1[t,3]
+    Z4[c,r] = M1[t,3]}
+}
+
+#message(c("step:", 0))
+for (t in 1:length(M2[,3])) {
+  r = (M2[t,1])/25000 + 1
+  c = (M2[t,2])/25000 + 1
+  if(abs(r-c)<60&&abs(r-c)>2){
+    Z5[r,c] = M2[t,3]
+    Z5[c,r] = M2[t,3]}
+}
 
 #pr_en
-Pr <- read.table("Pr_en_Hepat/mm10.promoter.liver.bed",head=T)
-En <- read.table("Pr_en_Hepat/mm10.enhancer.liver.bed",head=T)
-Pr_size = length(which(Pr[,1]==chr))
-En_size = length(which(En[,1]==chr))
-mx = max1/25000
-mn = min1/25000
-k = 0
+Pr <- read.table("mm10.promoter.liver.bed",head=T)
+En <- read.table("mm10.enhancer.liver.bed",head=T)
 message(c("scc =:", 0))
-for(t in 1:(En_size - 1)) {
-  for(l in 1:(Pr_size - 1)) {
+for(t in which(En[,1]==chr)) {
+  for(l in which(Pr[,1]==chr)) {
     r = Pr[l,2]%/%25000 + 1
     c = En[t,2]%/%25000 + 1
-    if(r<mx&&c<mx&&r>mn&&c>mn){
-      Z4[r,c] = 1
-      Z4[c,r] = 1}
+    if(r<mx&&c<mx&&r>mn&&c>mn&&abs(r-c)<60&&abs(r-c)>2){
+      Z6[r,c] = 1
+      Z6[c,r] = 1}
   }}
+message(c("scc =:", 1))
+
+#evaluate easy metrics
+mse_pr_en = 0
+mod_avr_pr_en = 0
+mod_ps_pr_en = 0
+k_pr_en = 0
+k_mod_pr_en = 0
+k_mod_ps_pr_en = 0
+
 mse = 0
 mod_avr = 0
+mod_ps = 0
 k = 0
-mmax = 1 
-for (t in 1:length(M1[,3])) {
-  #%/%
-  #Pr
-  r = M1[t,1]/25000 + 1
-  c = M1[t,2]/25000 + 1
-  if(Z4[r,c]==1){
-    mse = mse + (M1[t,3] - M1[t,4])*(M1[t,3] - M1[t,4])
-    mod_avr = mod_avr + abs(M1[t,3] - M1[t,4])
-    #if(mmax> abs(M1[t,3] - M1[t,4])){mmax = abs(M1[t,3] - M1[t,4])}
-    k = k + 1
-  }
-}
+k_mod = 0
+k_mod_ps = 0
+
+for (r in 1:length(Z4[,1])){
+  for (c in 1:length(Z4[,1])){
+    #pr_en
+    if(abs(r-c)<=60&&abs(r-c)>2&&Z6[r,c]==1){
+      mse_pr_en = mse_pr_en + (Z4[r,c] - Z5[r,c])*(Z4[r,c] - Z5[r,c])
+      mod_avr_pr_en = mod_avr_pr_en + abs(Z4[r,c] - Z5[r,c])
+      if(Z4[r,c]!=0){
+        mod_ps_pr_en = mod_ps_pr_en + abs((Z4[r,c] - Z5[r,c])/Z4[r,c])
+        k_mod_ps_pr_en = k_mod_ps_pr_en + 1}
+      if(r>mn&&r<mx&&c>mn&&c<mx){k_pr_en = k_pr_en + 1}
+      if(abs(Z4[r,c])+abs(Z5[r,c]!=0)){k_mod_pr_en = k_mod_pr_en + 1}
+    }
+    #all
+    if(abs(r-c)<=60&&abs(r-c)>2){
+      mse = mse + (Z4[r,c] - Z5[r,c])*(Z4[r,c] - Z5[r,c])
+      mod_avr = mod_avr + abs(Z4[r,c] - Z5[r,c])
+      if(Z4[r,c]!=0){mod_ps = mod_ps + abs((Z4[r,c] - Z5[r,c])/Z4[r,c])
+      k_mod_ps = k_mod_ps + 1}
+      if(r>mn&&r<mx&&c>mn&&c<mx){k = k + 1}
+      if(abs(Z4[r,c])+abs(Z5[r,c]!=0)){k_mod = k_mod + 1}
+    }
+  }}
+
+#pr_en
+mse_pr_en = sqrt(mse_pr_en/k_pr_en)
+mod_avr_pr_en = mod_avr_pr_en/k_mod_pr_en
+mod_ps_pr_en = mod_ps_pr_en/k_mod_pr_en
+#all
 mse = sqrt(mse/k)
 mod_avr = mod_avr/k
+mod_ps = mod_ps/k_mod_ps
+message(c("mse_pr_en",mse_pr_en))
+message(c("mod_avr_pr_en",mod_avr_pr_en))
+message(c("mod_ps_pr_en",mod_ps_pr_en))
+message(c("mse",mse))
+message(c("mod_avr",mod_avr))
+message(c("mod_ps",mod_ps))
 
-#scc
-Z4 <- matrix(0, nrow = length(Z2), ncol = length(Z2))
-Z5 <- matrix(0, nrow = length(Z2), ncol = length(Z2))
-k = 0
-euc_sq = 0
-euc_mod_avr = 0
-for (t in 1:length(M1[,3])) { 
-  r = M1[t,1]/25000 + 1
-  c = M1[t,2]/25000 + 1
-  if(abs(r-c)<60){
-  Z4[r,c] = M1[t,3]
-  Z4[c,r] = M1[t,3]
-  Z5[r,c] = M1[t,4]
-  Z5[c,r] = M1[t,4]
-  }
-}
-
-k = 0
-for (t in 1:length(M1[,3])) { 
-  r = M1[t,1]/25000 + 1
-  c = M1[t,2]/25000 + 1
-  if(abs(r-c)<60){
-    euc_sq = euc_sq + (M1[t,3] - M1[t,4])*(M1[t,3] - M1[t,4])
-    euc_mod_avr = euc_mod_avr + abs(M1[t,3] - M1[t,4])
-    k = k + 1
-  }
-}
-k1 = (maxdist/binsize - 60)*2*60
-euc_sq = euc_sq/k1
-euc_mod_avr = euc_mod_avr/k
+#correlation
 H1 <- cbind(Z,Z4)
 H2 <- cbind(Z,Z5)
+
+#pearson
 k <- 0
 c <- 0
-for (t in 1:length(Z5[,1])) {
+for (t in 1:length(Z2)) {
+
   m = cor(as.double(Z5[t,]),as.double(Z4[t,]))
 
   if (!is.na(m)) {
     c <- c + as.double(cor(as.double(Z5[t,]),as.double(Z4[t,])))
-
     k <- k + 1
   }
 }
 
 c = c/k
 
+
+#scc  
 #h_hat <- htrain1(H1, H2, binsize, maxdist, 0:10)
 processed <- prep1(H1, H2, binsize, h, maxdist)
 j = get.scc1(processed, binsize, maxdist)
-
 message(c("scc =:", j$scc))
 message(c("cor =:", c))
 out_fname = paste(in_fname,"out",sep=".")
 if (length(M1[1,])>4){
-  out1 = paste("corr","scc","scc_loop_only","corr_loop_only","MSE","mod_avr","Pr_en_MSE","Pr_en_mod_avr",sep = "	")
-  out2 = paste(c,as.numeric(j$scc),loop, euc_sq, euc_mod_avr,mse,mod_avr, sep =  "	")
+  out1 = paste("corr","scc","MSE","mod_avr","Pr_en_MSE","Pr_en_mod_avr","mod_ps","mod_ps_pr_en",sep = "	")
+  out2 = paste(c,as.numeric(j$scc), mse, mod_avr,mse_pr_en,mod_avr_pr_en,mod_ps,mod_ps_pr_en, sep =  "	")
 }
 if (length(M1[1,])<=4){
-  out1 = paste("corr","scc","MSE","mod_avr","Pr_en_MSE","Pr_en_mod_avr", sep = "	")
-  out2 = paste(c,as.numeric(j$scc), euc_sq, euc_mod_avr,mse,mod_avr, sep =  "	")
+  out1 = paste("corr","scc","MSE","mod_avr","Pr_en_MSE","Pr_en_mod_avr","mod_ps","mod_ps_pr_en", sep = "	")
+  out2 = paste(c,as.numeric(j$scc), mse, mod_avr,mse_pr_en,mod_avr_pr_en,mod_ps,mod_ps_pr_en, sep =  "	")
 }
 out = paste(out1,"\n",out2,sep = "")
 write(out,out_fname,sep = " ")
