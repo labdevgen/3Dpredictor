@@ -276,8 +276,8 @@ for (t in 1:length(M2[,3])) {
 }
 
 #pr_en
-Pr <- read.table("promoters.bed.txt",head=T)
-En <- read.table("enhancers.bed.txt",head=T)
+Pr <- read.table("Pr_en_GM12878/promoters.bed.txt",head=T)
+En <- read.table("Pr_en_GM12878/enhancers.bed.txt",head=T)
 message(c("scc =:", 0))
 for(t in which(En[,1]==chr)) {
   for(l in which(Pr[,1]==chr)) {

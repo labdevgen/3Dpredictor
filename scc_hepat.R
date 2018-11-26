@@ -276,8 +276,8 @@ for (t in 1:length(M2[,3])) {
 }
 
 #pr_en
-Pr <- read.table("mm10.promoter.liver.bed",head=T)
-En <- read.table("mm10.enhancer.liver.bed",head=T)
+Pr <- read.table("Pr_en_Hepat/mm10.promoter.liver.bed",head=T)
+En <- read.table("Pr_en_Hepat/mm10.enhancer.liver.bed",head=T)
 message(c("scc =:", 0))
 for(t in which(En[,1]==chr)) {
   for(l in which(Pr[,1]==chr)) {
