@@ -257,8 +257,8 @@ class Predictor(object):
         pd.DataFrame.to_csv(d, out_fname, sep=" ", index=False)
         out = subprocess.check_output(["Rscript", "scc.R", out_fname, str(kwargs["h"]),])
 
-    def decorate_scc(self, func, h, loop_file):
-        result = partial(func, h=h, loop_file=loop_file)
+    def decorate_scc(self, func, h, loop_file, pe_file):
+        result = partial(func, h=h, loop_file=loop_file, pe_file=pe_file)
         self.h_for_scc = "h="+str(h)
         result.__name__ = str(h) + func.__name__
         return result
