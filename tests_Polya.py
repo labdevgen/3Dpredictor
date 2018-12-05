@@ -120,18 +120,28 @@ def test_intersect_intervals():
     #print(ctcf_reader.chr_data['chr1'].iloc[75])
     #print(ctcf_reader.chr_data['chr1'].iloc[76])
 def test_sites_orientation():
-    ctcf_reader = ChiPSeqReader(
-        "D:/Users/Polina/3Dpredictor/input/Hepat_WT_MboI_rep1-rep2.IDR0.05.filt.narrowPeak")
-    ctcf_reader.read_file()
-    ctcf_reader.set_sites_orientation("D:/Users/Polina/3Dpredictor/input/Hepat_WT_MboI_rep1-rep2_IDR0_05_filt_narrowPeak-orient_N10.bed")
+    ctcf_reader_2 = ChiPSeqReader("D:/Users/Polina/3Dpredictor/input/NPC/CTCF/GSE96107_NPC_CTCF.IDR0.05.filt.narrowPeak")
+    ctcf_reader_2.read_file()
+    ctcf_reader_2.set_sites_orientation("D:/Users/Polina/3Dpredictor/input/NPC/CTCF/GSE96107_NPC_CTCF.IDR0.05.filt.narrowPeak-orient.bed")
+    print(ctcf_reader_2.chr_data["chr1"])
+    ctcf_reader_2.chr_data["chr1"].to_csv("D:/Users/Polina/3Dpredictor/input/NPC/CTCF/testNPC", sep="\t")
+    ctcf_reader_1 = ChiPSeqReader(
+        "D:/Users/Polina/3Dpredictor/input/Hepat/CTCF/Hepat_WT_MboI_rep1-rep2.IDR0.05.filt.narrowPeak")
+    ctcf_reader_1.read_file()
+    ctcf_reader_1.set_sites_orientation("D:/Users/Polina/3Dpredictor/input/Hepat/CTCF/Hepat_WT_MboI_rep1-rep2_IDR0_05_filt_narrowPeak-orient_N10.bed")
+    print(ctcf_reader_1.chr_data["chr1"])
+    ctcf_reader_1.chr_data["chr1"].to_csv("D:/Users/Polina/3Dpredictor/input/Hepat/CTCF/testHepat", sep="\t")
+
     #print(ctcf_reader.chr_data['chr1'])
     #print(ctcf_reader.chr_data['chr4'].iloc[23])
     #print(ctcf_reader.chr_data['chr4'])
     #ctcf_reader.export2bed_files_with_orientation("D:/Users/Polina/3Dpredictor/data/")
-    ctcf_reader.keep_only_with_orient_data()
+    # ctcf_reader.keep_only_with_orient_data()
     #print(ctcf_reader.chr_data['chr1'])
     #print(ctcf_reader.chr_data['chr1'].query("start=='4516413'"))
     #print(result)
+test_sites_orientation()
+
 def test_N_nearest_peaks_in_interval():
     ctcf_reader = ChiPSeqReader(
         "D:/Users/Polina/3Dpredictor/input/Hepat_WT_MboI_rep1-rep2.IDR0.05.filt.narrowPeak")
@@ -243,7 +253,7 @@ def test_add_loop():
     validation_data= predictor.read_file("D:/Users/Polina/3Dpredictor/out/GM12878/2018-10-11-training.RandOnchr1oe.gz.12.1500000.50001.25000.25000.txt")
     add_loop(validation_data, "D:/Users/Polina/3Dpredictor/input/Loops/GM12878/GM12878.25000.loops")
     print(validation_data.query('IsLoop!=0'))
-test_add_loop()
+# test_add_loop()
 #test_RNAseqReader()
 #test_WeightFunc()
 #correlation()

@@ -28,13 +28,15 @@ class ContactsReader():
         logging.info("get normalized contacts")
         print(datetime.datetime.now())
         data["contact_count"] = data["contact_count"].apply(lambda x: x/coeff)
+        if fname.split(".")[-2]=="contacts":
+            assert 0<=np.all(data["contact_count"])<=1
         # print("!!!!")
         print(datetime.datetime.now())
         # print(data["contact_count"])
         data["chr"] = [chr] * len(data)
         data["dist"] = data["contact_en"] - data["contact_st"]
         assert np.all(data["dist"]) >= 0
-        assert 0 <= np.all(data["contact_count"]) <= 1
+
         binsize = min(data["dist"][data["dist"] > 0])
         if self.binsize != -1 and binsize != self.binsize:
             logging.error("Binsize in file "+str(fname)

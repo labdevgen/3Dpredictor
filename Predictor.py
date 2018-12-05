@@ -125,7 +125,7 @@ class Predictor(object):
     # returns class instance with trained_model object
     def train(self, alg = xgboost.XGBRegressor(n_estimators=100,max_depth=9,subsample=0.7),
               shortcut = "model", apply_log = True,
-              dump = True, out_dir = "out/models/",
+              dump = True, out_dir = "/mnt/scratch/ws/psbelokopytova/201901151331psbelokopytova/3DPredictor/out/models/",
               weightsFunc = ones_like,
               show_plot = True,
               *args, **kwargs):
@@ -140,7 +140,7 @@ class Predictor(object):
         # Save paramters to be able to hash model name
         self.predictors = sorted(self.predictors)
         self.alg = alg
-        self.alg_params = ".".join([str(k)+"_"+str(v) for k,v in alg.get_params().items()])
+        self.alg_params = ".".join([str(k)+"_"+str(v) for k,v in sorted(alg.get_params().items())])
         self.shortcut = shortcut
         self.apply_log = apply_log
         self.weightsFunc = weightsFunc
@@ -243,7 +243,9 @@ class Predictor(object):
         #     predicted = np.exp(np.array(predicted))
         #     print(validation_data["contact_count"])
         #     print(predicted)
-
+        # print(validation_data["chr"])
+        chromosome = str(validation_data["chr"][1])
+        print("chromosome", chromosome)
         if "h" not in kwargs:
             kwargs["h"] = 2
         else:
@@ -255,10 +257,10 @@ class Predictor(object):
             d = pd.concat([validation_data["contact_st"],validation_data["contact_en"],validation_data["contact_count"],pd.DataFrame(predicted),validation_data["IsLoop"]], axis=1)
         out_fname = os.path.join(out_dir+"scc/",self.__represent_validation__()) + ".scc"
         pd.DataFrame.to_csv(d, out_fname, sep=" ", index=False)
-        out = subprocess.check_output(["Rscript", "scc.R", out_fname, str(kwargs["h"]),])
+        out = subprocess.check_output(["Rscript", kwargs["scc_file"], out_fname, str(kwargs["h"]), chromosome, kwargs["pe_file"]])
 
-    def decorate_scc(self, func, h, loop_file, pe_file):
-        result = partial(func, h=h, loop_file=loop_file, pe_file=pe_file)
+    def decorate_scc(self, func, h, loop_file, scc_file, pe_file):
+        result = partial(func, h=h, loop_file=loop_file, scc_file=scc_file, pe_file=pe_file)
         self.h_for_scc = "h="+str(h)
         result.__name__ = str(h) + func.__name__
         return result
@@ -275,7 +277,7 @@ class Predictor(object):
     #     MatPlot2HiC(mp, self.__represent_validation__(), out_dir)
 
     def plot_juicebox(self,validation_data,predicted,out_dir,**kwargs):
-        out_dir="out/hic_files"
+        out_dir="/mnt/scratch/ws/psbelokopytova/201901151331psbelokopytova/3DPredictor/out/hic_files"
         predicted_data = validation_data.copy(deep=True)
         # print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
         # print(predicted_data.keys())
@@ -289,7 +291,7 @@ class Predictor(object):
 
     # Validate model
     def validate(self, validation_file,
-                 out_dir = "out/pics/",
+                 out_dir = "/mnt/scratch/ws/psbelokopytova/201901151331psbelokopytova/3DPredictor/out/pics/",
                  validators = None,
                  transformation = equal,
                  **kwargs):
@@ -350,8 +352,8 @@ class Predictor(object):
         logging.getLogger(__name__).info("Reading file "+inp_file)
         input_data = pd.read_csv(inp_file, delimiter="\t", dtype=dtypes,
                                  header=0, names=header)
-        print(input_data.keys())
-        print(len(input_data.keys()))
+        # print(input_data.keys())
+        # print(len(input_data.keys()))
         input_data.fillna(value=0, inplace=True) # Filling N/A values TODO check why N/A appear
         return input_data
 
