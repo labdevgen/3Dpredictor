@@ -58,7 +58,7 @@ class Predictor(object):
             self.validation_file
         except:
             raise Exception("Please read validation data firts")
-        return "model"+str(self)+".validation."+"."+str(self.transformation_for_validation_data)+"." +str(self.h_for_scc)+"."+\
+        return "model"+str(self)+".validation."+"."+str(self.transformation_for_validation_data)+"." +str(self.h_for_scc)+"."+self.cell_type+"."+\
                         str2hash(os.path.basename(self.validation_file))
 
     def __repr__(self): # Representation should reflect all paramteres
@@ -146,6 +146,7 @@ class Predictor(object):
         self.weightsFunc = weightsFunc
         self.out_dit = out_dir
 
+
         # remove validation data since we are going to dump instance and
         # do not want file to be large
         try:
@@ -163,6 +164,8 @@ class Predictor(object):
         else:
             # read data
             self.input_data = self.read_file(self.input_file)
+            self.train_chrms = set(self.input_data["chr"].values)
+            print("!!!!!!!!1", self.train_chrms)
             self.input_data.fillna(value=0, inplace=True)
             self.contacts = np.array(self.input_data["contact_count"].values)
 
@@ -245,7 +248,7 @@ class Predictor(object):
         #     print(predicted)
         # print(validation_data["chr"])
         chromosome = str(validation_data["chr"][1])
-        print("chromosome", chromosome)
+        # print("chromosome", chromosome)
         if "h" not in kwargs:
             kwargs["h"] = 2
         else:
@@ -257,12 +260,29 @@ class Predictor(object):
             d = pd.concat([validation_data["contact_st"],validation_data["contact_en"],validation_data["contact_count"],pd.DataFrame(predicted),validation_data["IsLoop"]], axis=1)
         out_fname = os.path.join(out_dir+"scc/",self.__represent_validation__()) + ".scc"
         pd.DataFrame.to_csv(d, out_fname, sep=" ", index=False)
-        out = subprocess.check_output(["Rscript", kwargs["scc_file"], out_fname, str(kwargs["h"]), chromosome, kwargs["pe_file"]])
+        if "p_file" not in kwargs or "e_file" not in kwargs:
+            out = subprocess.check_output(["Rscript", kwargs["scc_file"], out_fname, str(kwargs["h"]), chromosome])
+        else:
+            out = subprocess.check_output(["Rscript", kwargs["scc_file"], out_fname, str(kwargs["h"]), chromosome, kwargs["p_file"], kwargs["e_file"]])
+        print(str(out))
 
-    def decorate_scc(self, func, h, loop_file, scc_file, pe_file):
-        result = partial(func, h=h, loop_file=loop_file, scc_file=scc_file, pe_file=pe_file)
+
+    def decorate_scc(self, func, h, scc_file,cell_type, **kwargs):
+        # print("!!!!!!!!!!!")
+        if "loop_file" in kwargs:
+            if "p_file" in kwargs and "e_file" in kwargs:
+                result = partial(func, h=h, scc_file=scc_file, loop_file=kwargs["loop_file"], p_file=kwargs["p_file"], e_file=["e_file"])
+            else:
+                result = partial(func, h=h, scc_file=scc_file, loop_file=kwargs["loop_file"])
+        elif "loop_file" not in kwargs:
+            if "p_file" in kwargs and "e_file" in kwargs:
+                # print(kwargs["p_file"])
+                result = partial(func, h=h, scc_file=scc_file, p_file=kwargs["p_file"], e_file=kwargs["e_file"])
+            else:
+                result = partial(func, h=h, scc_file=scc_file)
         self.h_for_scc = "h="+str(h)
-        result.__name__ = str(h) + func.__name__
+        self.cell_type = cell_type
+        result.__name__ = str(h) + cell_type+ func.__name__
         return result
 
 
@@ -309,6 +329,10 @@ class Predictor(object):
         self.transformation_for_validation_data = transformation.__name__
         self.predicted = transformation(self.trained_model.predict(self.validation_data[self.predictors]),
                                         data=self.validation_data)
+        #check that train chrms not in validate
+        validate_chrms = set(self.validation_data["chr"].values)
+        for chr in validate_chrms:
+            assert chr not in self.train_chrms
         if self.apply_log:
             #self.validation_data["contact_count"] = np.log(self.validation_data["contact_count"].values)
             self.predicted = np.exp(self.predicted)
