@@ -208,9 +208,11 @@ def decorate_oe2obs(func,expected_folder, cell_type):
     result.__name__ = str(cell_type) + func.__name__
     return result
 
-def get_bin_size(data):
-    dist = pd.unique(data["contact_en"] - data["contact_st"])
-    sorted_starts = np.sort(data["contact_st"].values[:min(1000, len(data))])
+def get_bin_size(data, fields = ["contact_en","contact_st"]):
+    f1 = fields[0]
+    f2 = fields[1]
+    dist = pd.unique(data[f1] - data[f2])
+    sorted_starts = np.sort(data[f1].values[:min(1000, len(data))])
     dist2 = np.unique(np.subtract(sorted_starts[1:], sorted_starts[:-1]))
     assert (dist2 >= 0).all()
     dist = np.unique(np.concatenate((dist, dist2)))
