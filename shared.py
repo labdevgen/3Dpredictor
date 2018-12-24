@@ -222,3 +222,36 @@ def get_bin_size(data, fields = ["contact_en","contact_st"]):
     assert int(binsize) == binsize
     return int(binsize)
 
+def sparse2dense(data,fields=["st","end","oe"], debug_mode = False):
+    # Sparse to dense
+    # IMPORTANT: 1.) data should be already binned
+    # 2.) min(data["st"]) will be subtracted from all coordinates
+    #
+    # assume 'data' is pd.DataFrame
+    # describing matrix in sparce format
+    # where columns with names
+    # fields[0] and fields[1] are row and column ids of matrix item
+    # and column fields[2] is matrix value
+    # sparse2dense will return numpy array corrsponding to dense matrix
+    f1 = fields[0]
+    f2 = fields[1]
+    f3 = fields[2]
+    L = data[f2].max() - data[f1].min() + 1
+    array = np.zeros(shape=(L, L))
+    X = (data[f1] - data[f1].min()).values
+    Y = (data[f2] - data[f1].min()).values
+    array[X, Y] = data[f3]
+    array[Y, X] = data[f3]
+
+    if debug_mode:
+    # slow; use ones for debuging only
+        global_min = data[f1].min()
+        def check_func(series):
+            x = int(series[f1] - global_min)
+            y = int(series[f2] - global_min)
+            return array[x,y] == array[y,x] == series[f3]
+
+        data["check"] = data.apply(check_func,axis = "columns")
+        assert np.all(data["check"].values)
+        print ("passed check!")
+    return array
