@@ -296,7 +296,7 @@ if (!is.na(enhancers)){
 En <- read.table(enhancers,head=T)
 message(c("scc =:", 0))
 for(t in which(En[,1]==chr)) {
-    r = En[l,2]%/%25000 + 1
+    r = En[t,2]%/%25000 + 1
     c = En[t,5]%/%25000 + 1
     if(r<mx&&c<mx&&r>mn&&c>mn&&abs(r-c)<60&&abs(r-c)>2){
       Z6[r,c] = 1
