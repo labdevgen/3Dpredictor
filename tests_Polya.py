@@ -70,7 +70,8 @@ def test_E1reader():
     #print(eig.get_E1inInterval(Interval("chr1",200000000,250000000)))
 
 def test_ChipSeqRemoval():
-    ctcf_reader = ChiPSeqReader("input/Hepat_WT_MboI_rep1-rep2.IDR0.05.filt.narrowPeak")
+    print("!!!!!!1")
+    ctcf_reader = ChiPSeqReader("input/Hepat/CTCF/Hepat_WT_MboI_rep1-rep2.IDR0.05.filt.narrowPeak")
     ctcf_reader.read_file()
     logging.getLogger(__name__).info("------------Before deleting:")
 
@@ -100,10 +101,10 @@ def test_ChipSeqRemoval():
 
 def test_ContactsRemoval():
     contacts_reader = ContactsReader()
-    contacts_reader.read_files(["input/chr1.5MB.Hepat.contacts"])
+    contacts_reader.read_files(["input/Hepat/chr1.5MB.Hepat.contacts.gz"], coeff_fname="cofficient_Hepat.txt")
     c = contacts_reader.get_contacts(Interval("chr1",5000000,5150000))
     logging.getLogger(__name__).info(c)
-    contacts_reader.delete_region(Interval("chr1",5030000,5100000))
+    contacts_reader.delete_region(Interval("chr1",5031234,5100000))
     c = contacts_reader.get_contacts(Interval("chr1",5000000,5150000))
     logging.getLogger(__name__).info(c)
 
@@ -124,7 +125,7 @@ def test_sites_orientation():
     ctcf_reader_2.read_file()
     ctcf_reader_2.set_sites_orientation("D:/Users/Polina/3Dpredictor/input/NPC/CTCF/GSE96107_NPC_CTCF.IDR0.05.filt.narrowPeak-orient.bed")
     print(ctcf_reader_2.chr_data["chr1"])
-    ctcf_reader_2.chr_data["chr1"].to_csv("D:/Users/Polina/3Dpredictor/input/NPC/CTCF/testNPC", sep="\t")
+    ctcf_reader_2.chr_data["chr1"].to_csv("D:/Users/Polina/3Dpredictor/input/NPC/CTCF/testNPC", sep="/t")
     ctcf_reader_1 = ChiPSeqReader(
         "D:/Users/Polina/3Dpredictor/input/Hepat/CTCF/Hepat_WT_MboI_rep1-rep2.IDR0.05.filt.narrowPeak")
     ctcf_reader_1.read_file()
@@ -140,7 +141,7 @@ def test_sites_orientation():
     #print(ctcf_reader.chr_data['chr1'])
     #print(ctcf_reader.chr_data['chr1'].query("start=='4516413'"))
     #print(result)
-test_sites_orientation()
+# test_sites_orientation()
 
 def test_N_nearest_peaks_in_interval():
     ctcf_reader = ChiPSeqReader(
@@ -180,13 +181,15 @@ def correlation():
     print(res)
 
 def test_RNAseqReader():
-    RNA = RNAseqReader(fname="input/GSE95111_genes.fpkm_table.txt.pre.txt")
-    RNA.read_file(rename={"Gene name":"gene",
-                          "Gene start (bp)":"start",
-                          "Gene end (bp)":"end",
-                          "Chromosome/scaffold name":"chr",
-                          "shCtrl-1_0":"sigVal"},
-                  sep="\t")
+    RNA = RNAseqReader(fname="D:/Users/Polina/3Dpredictor/input/Dactily/RNA-seq/dact_RNA",
+                                       name="RNA")
+    RNA.read_file(rename={"tr_ex": "gene",
+                                          "start": "start",
+                                          "end": "end",
+                                          "chr": "chr",
+                                          "FPKM": "sigVal"},
+                                  sep="\t")
+    print(RNA.chr_data["chr1"])
     logging.getLogger(__name__).info(iter(RNA.chr_data.values()).__next__().head())
     for inteval2 in [Interval("chr1",36511867,36528237),
                         Interval("chr1",36511866,36528237),
@@ -240,6 +243,8 @@ def test_RNAseqReader():
         logging.info(str(RNA.get_interval(inteval2))) #New func, based on Polina's intersect_intervals
         logging.info(str(RNA._get_interval(inteval2))) #Original Polina's intersect intervals
     print(RNA.chr_data['chr1'])
+    RNA.delete_region(Interval("chr1", 11869, 29000))
+    print(RNA.chr_data['chr1'])
 def test_nonchip_reader():
     # ctcfreader = ChiPSeqReader("input/GM12878/")
 
@@ -268,7 +273,7 @@ def test_add_loop():
 #test_contacts()
 #test_E1reader()
 #test_ctcf()
-#test_ChipSeqRemoval()
-#test_ContactsRemoval() #TODO it doesn't throw errors, however the behaviour was not thoroughly tested
+# test_ChipSeqRemoval()
+test_ContactsRemoval() #TODO it doesn't throw errors, however the behaviour was not thoroughly tested
 #test_read_orient()
-#test_RNAseqReader()
+# test_RNAseqReader()

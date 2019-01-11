@@ -142,7 +142,7 @@ def intersect_intervals(chr_int_data1, chr_int_data2, suppreseChrNumberCheck=Fal
 # interval - interval object
 # output:
 # returns subset of chr_int_data2 which intersects interval
-def intersect_with_interval(chr_int_data1, interval):
+def intersect_with_interval(chr_int_data1, interval, return_ids=False):
     chr = interval.chr
     if not chr in chr_int_data1:
         logging.getLogger(__name__).warning("No intervals on chr", chr)
@@ -156,8 +156,10 @@ def intersect_with_interval(chr_int_data1, interval):
         logging.getLogger(__name__).error('st_end_i larger then end_st_i')
         # As it's an error, I assume raising exeption.
         raise Exception("Exception from intersect_intervals function")
-    else:
+    elif not return_ids:
         return chr_int_data1[chr].iloc[st_end:end_st,:]
+    elif return_ids:
+        return (st_end, end_st)
 
 
 # File descriptions are saved in XML form
