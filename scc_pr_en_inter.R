@@ -217,10 +217,10 @@ chrs_length = c(249250621,243199373,198022430,191154276,180915260,171115067,1591
 binsize <- 25000
 chrs_length = chrs_length%/%binsize
 args = commandArgs(trailingOnly=TRUE)
-in_fname = "model6598927843.validation..equal.h=2.Mcyte.Interval_chr2_0_243175000validatingOrient.contacts.gz.7.1500000.50001.1843341.25000.txt.scc"
-h = 0
-chr = "chr2"
-enhancers = "hg19_Mcyte_enhancer_tissue.bed"
+in_fname = args[1]
+h = as.numeric(args[2])
+chr = args[3]
+enhancers = args[4]
 #promoters = args[5]
 message(c("in_fname =:", in_fname))
 binsize <- 25000
