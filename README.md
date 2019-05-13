@@ -17,12 +17,13 @@ The project contains 2 major modules:
 
 **1. Data Generation module**
 
-The module _GenerateData_new.py_ loads some external files 
-(i.e. file with contacts frequencies, ChipSeq, E1 and etc.) 
-and builds a dataset with predictor values for each contact
-It mainly wraps  DataGenerators classes with specific file name,
-so read comments and code in DataGenerators.py to get idea of
-how it works.
+The module _GenerateData_new.py_ loads some external data files 
+(i.e. files with known contact frequencies, ChipSeq, E1 and etc.). 
+Then it builds a dataset with predictor values for each contact.
+Technically it and specifies paramteres (file names and etc.) and then
+uses classes from DataGenerators, so one should read comments and code in
+DataGenerators.py to get idea of how it works.
+
 Basic usage:
 Set variables:
 
@@ -46,6 +47,13 @@ The data files currently used could be downloaded from
 http://genedev.bionet.nsc.ru/hic_out/3DPredircor
 
 Note that predictors generation takes ~3h for 500 000 contacts.
+One may change parallelization options by tweak code in DataGenerator.py:
+
+
+    '''python
+    n_cpus = multiprocessing.cpu_count()
+    '''
+
 
 **2. Training and validation module**
 
