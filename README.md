@@ -43,8 +43,9 @@ as well as filenames and genomic intervals of interest
  
     '''python
     input_folder = "set/path/to/this/variable"
-The data files currently used could be downloaded from 
-http://genedev.bionet.nsc.ru/hic_out/3DPredircor
+
+Few sample data files could be downloaded from 
+http://genedev.bionet.nsc.ru/hic_out/3DPredictor/
 
 Note that predictors generation takes ~3h for 500 000 contacts.
 One may change parallelization options by tweak code in DataGenerator.py:
