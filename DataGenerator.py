@@ -17,12 +17,40 @@ import datetime
 import multiprocessing
 from collections import OrderedDict
 from shared import write_XML
+import os
+
+from multiprocessing.reduction import ForkingPickler
+import struct
 
 
 processed = 0
 
+def get_split_array_indexes(contacts,n_splits):
+    # this is copy-pasted from np.split_array
+    Nsections = n_splits
+    Neach_section, extras = divmod(len(contacts), Nsections)
+    section_sizes = ([0] +
+                     extras * [Neach_section + 1] +
+                     (Nsections - extras) * [Neach_section])
+    div_points = np.core.numeric.array(section_sizes).cumsum()
+    start_points = div_points[0:-1]
+    end_points = div_points[1:]
+    assert div_points[0] == 0
+    assert div_points[-1] == len(contacts)
+    return start_points,end_points
+
+def initializer(_main_data, _DataGeneratorObj):
+    global main_data
+    global DataGeneratorObj
+    main_data = _main_data # share _main_data so every child process has access to _main_data under "main_data" name
+    DataGeneratorObj = _DataGeneratorObj # same for _DataGeneratorObj
+
 def _apply_df(args):
-    df, DataGeneratorObj = args
+    #df, DataGeneratorObj = args
+
+    # main data is a big df with all contacts
+    # args is a tuple with 2 numbers (from,two), which indicates which part of main data to process in current child process
+    df = main_data.iloc[args[0]:args[1]]
     df.reset_index(inplace=True,drop=True) # To allow concat
     # Get not-vectorizable predicors
     basic_info = [df[["chr", "contact_st", "contact_en"]], df["contact_en"] - df["contact_st"],
@@ -41,18 +69,22 @@ def _apply_df(args):
 
 
 def generate_data(params, saveFileDescription = True):
+    print("sample size", params.sample_size)
+    print(params.interval, params.mindist, params.maxdist)
     contacts = params.contacts_reader.get_contacts(params.interval,mindist=params.mindist,maxdist=params.maxdist)
+    print("contacts_len", len(contacts))
     sample_size = min(params.sample_size,len(contacts))
     logging.getLogger(__name__).info("Using sample size "+str(sample_size))
     contacts_sample = contacts.sample(n=sample_size)
     assert len(contacts_sample) == sample_size
     generator = DataGenerator()
-    generator.contacts2file(contacts_sample, params)
+    result = generator.contacts2file(contacts_sample, params)
     if saveFileDescription:
         XML_report = generator.toXMLDict()
         write_XML(XML_report,
                   header = params.out_file,
                   fname = params.out_file+".xml")
+    return result
 
 def contact2file(contact,DataGeneratorObj,report = 5000):
         global processed
@@ -88,15 +120,26 @@ class DataGenerator():
         self.vect_predictor_generators = [p for p in params.pgs if p.vectorizable]
 
         self.predictor_generators = self.not_vect_predictor_generators + self.vect_predictor_generators
-        self.contacts = contacts
-        self.contacts.reset_index(drop=True,inplace=True) #This is requered to solve probles with concat later on
-        self.params = params
 
-        out_file = open(params.out_file, "w")
+        # example of contact df row
+        # needed for toXML_dict funct
+        self.contact_example = contacts.iloc[0,:]
+        self.N_contacs = len(contacts)
+
+        contacts.reset_index(drop=True,inplace=True) #This is requered to solve problems with concat later on
+
+        self.params = params
+        if os.path.exists(params.out_file):
+            out_file = open(params.out_file, "a")
+            write_header=False
+        else:
+            out_file = open(params.out_file, "w")
+            write_header=True
 
         #Check that predictor names are unique
         pg_names = [pg.name for pg in self.predictor_generators]
-        #print(pg_names)
+        # print(pg_names)
+        # print(set(pg_names))
         assert len(pg_names) == len(set(pg_names))
 
         #Get header row and calculate number of fields
@@ -108,8 +151,9 @@ class DataGenerator():
         for pg in self.vect_predictor_generators:
             header += pg.get_header(contacts.iloc[0,:])
         assert len(header) == len(set(header))
-
-        out_file.write("\t".join(header) + "\n")
+        # print("header", header)
+        if write_header:
+            out_file.write("\t".join(header) + "\n")
 
         logging.getLogger(__name__).debug("Going to generate predictors for "+ \
                                           str(len(contacts))+" contacts")
@@ -124,28 +168,48 @@ class DataGenerator():
         logging.getLogger(__name__).debug("Generating contact predictors")
 
         # Now get predictors
-        pool = multiprocessing.Pool(processes=n_cpus)
-        result = pool.map(_apply_df, [(d, self) for d in np.array_split(contacts, n_cpus)])
+        pool = multiprocessing.Pool(processes=n_cpus,initializer=initializer,initargs=(contacts,self))
+        '''chanks = np.array_split(contacts, n_cpus + 10)
+        for chank in chanks:
+            test = np.logical_and(np.all(chank<=2147483640),np.all(chank>=-2147483640))
+            print(test)
+            if not test:
+                logging.error("Out of range")
+            buf = ForkingPickler.dumps([chank,self])
+            n = len(buf)
+            # For wire compatibility with 3.2 and lower
+            header = struct.pack("!i", n)
+
+        self.contacts = self.contacts.iloc[0:10]
+        '''
+
+
+        start_points,end_points = get_split_array_indexes(contacts,n_cpus)
+        result = pool.map(_apply_df, [(st, end) for st,end in zip(start_points,end_points)])
+        #result = pool.map(_apply_df, [(d, self) for d in np.array_split(contacts, n_cpus+10)])
         #result = list(map(_apply_df, [(d, self) for d in np.array_split(contacts, n_cpus)]))
         pool.close()
 
         logging.getLogger(__name__).debug("Writing to file")
         for i in result:
-            i.apply(lambda x: out_file.write("\t".join(map(str,x))+"\n"), axis="columns")
+                i.apply(lambda x: out_file.write("\t".join(map(str,x))+"\n"), axis="columns")
         for pg in self.predictor_generators:
             pg.print_warnings_occured_during_predGeneration()
         out_file.close()
+        logging.getLogger(__name__).info("Done!")
+
 
     def toXMLDict(self):
-        if len(self.contacts) == 0:
+        if self.N_contacs == 0:
             raise Exception("Trying to get stats on empty data")
 
         res = OrderedDict()
         res["date"] = str(datetime.datetime.now())
         res["class"] = self.__class__.__name__
         res["output_file_name"] = self.params.out_file
-        res["N_contacts"] = len(self.contacts)
+        res["N_contacts"] = self.N_contacs
         res["Global paramteres"] = self.params.toXMLDict()
+
         for pg in self.predictor_generators:
-            res["Predictor generator " + pg.name] = pg.toXMLDict(self.contacts.iloc[0,:])
+            res["Predictor generator " + pg.name] = pg.toXMLDict(self.contact_example)
         return res

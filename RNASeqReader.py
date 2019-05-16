@@ -71,10 +71,6 @@ class RNAseqReader(ChiPSeqReader):
         gene_idxs = result[interval.chr]["intersection"]
         return self.chr_data[interval.chr].iloc[gene_idxs,:]
 
-     # This function was overloaded from ChiPseq readr
-     # Because original ChiPseq func only return those items
-     # which mid-pos overlap input interval
-     # For large genes midpos may not overalap interval, yet we want to return these gene
      def get_interval(self, interval, return_ids=False): #Return all genes that intersect interval
                                        #Also counts partial intersections
         return intersect_with_interval(self.chr_data,interval, return_ids=return_ids)
@@ -88,9 +84,9 @@ class RNAseqReader(ChiPSeqReader):
          debug = len(self.get_interval(interval))
          data = self.chr_data[interval.chr]
          st, en = self.get_interval(interval, return_ids=True)
-         self.chr_data[interval.chr].iloc[en:, data.columns.get_loc("start")] -= interval.len
-         self.chr_data[interval.chr].iloc[en:, data.columns.get_loc("end")] -= interval.len
-         self.chr_data[interval.chr].iloc[en:, data.columns.get_loc("mids")] -= interval.len
+         self.chr_data[interval.chr].loc[en:, data.columns.get_loc("start")] -= interval.len
+         self.chr_data[interval.chr].loc[en:, data.columns.get_loc("end")] -= interval.len
+         self.chr_data[interval.chr].loc[en:, data.columns.get_loc("mids")] -= interval.len
          old_length = len(self.chr_data[interval.chr])
          self.chr_data[interval.chr].drop(data.index[st:en], inplace=True)
          assert len(self.chr_data[interval.chr]) + debug == old_length

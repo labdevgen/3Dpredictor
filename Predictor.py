@@ -25,12 +25,17 @@ import numpy as np
 import math
 import xgboost
 from catboost import CatBoostRegressor
+from shared import Interval
+import datetime
 
 def ones_like(contacts,*args):
     return [1]*len(contacts)
 
-def equal(contacts,**kwargs):
-    return contacts
+def equal(contacts, data,**kwargs):
+    if kwargs['data_type']=='predicted':
+        return contacts
+    elif kwargs['data_type'] == 'validation':
+            return data
 
 class Predictor(object):
     def __setattr__(self, key, value):
@@ -58,7 +63,7 @@ class Predictor(object):
             self.validation_file
         except:
             raise Exception("Please read validation data firts")
-        return "model"+str(self)+".validation."+"."+str(self.transformation_for_validation_data)+"." +str(self.h_for_scc)+"."+self.cell_type+"."+\
+        return "model"+str(self)+".validation."+"."+str(self.transformation_for_validation_data)+"."+self.cell_type+"."+\
                         str2hash(os.path.basename(self.validation_file))
 
     def __repr__(self): # Representation should reflect all paramteres
@@ -123,9 +128,14 @@ class Predictor(object):
     # if dump = True, save it to file dump_file
     # show_plot = True/False show features importance plot
     # returns class instance with trained_model object
-    def train(self, alg = xgboost.XGBRegressor(n_estimators=100,max_depth=9,subsample=0.7),
+    def train(self,
+              alg = xgboost.XGBRegressor(n_estimators=100,max_depth=9,subsample=0.7
+              # alg = sklearn.ensemble.GradientBoostingRegressor(n_estimators=100, max_depth=9, subsample=0.7
+              # alg=CatBoostRegressor(n_estimators=100, max_depth=9, subsample=0.7
+              # alg=sklearn.ensemble.RandomForestRegressor(n_estimators=100, max_depth=9
+                                   ),
               shortcut = "model", apply_log = True,
-              dump = True, out_dir = "/mnt/scratch/ws/psbelokopytova/201901151331psbelokopytova/3DPredictor/out/models/",
+              dump = True, out_dir = "/mnt/scratch/ws/psbelokopytova/201905031108polinaB/3DPredictor/out/models/",
               weightsFunc = ones_like,
               show_plot = True,
               *args, **kwargs):
@@ -168,6 +178,7 @@ class Predictor(object):
             print("!!!!!!!!1", self.train_chrms)
             self.input_data.fillna(value=0, inplace=True)
             self.contacts = np.array(self.input_data["contact_count"].values)
+            print("train contacts", self.contacts)
 
             # fit new model
             if apply_log:
@@ -260,8 +271,12 @@ class Predictor(object):
             d = pd.concat([validation_data["contact_st"],validation_data["contact_en"],validation_data["contact_count"],pd.DataFrame(predicted),validation_data["IsLoop"]], axis=1)
         out_fname = os.path.join(out_dir+"scc/",self.__represent_validation__()) + ".scc"
         pd.DataFrame.to_csv(d, out_fname, sep=" ", index=False)
+        logging.info(datetime.datetime.now())
         if "p_file" not in kwargs or "e_file" not in kwargs:
-            out = subprocess.check_output(["Rscript", kwargs["scc_file"], out_fname, str(kwargs["h"]), chromosome])
+            if "interact_pr_en"  not in kwargs:
+                out = subprocess.check_output(["Rscript", kwargs["scc_file"], out_fname, str(kwargs["h"]), chromosome])
+            else:
+                out = subprocess.check_output(["Rscript", kwargs["scc_file"], out_fname,str(kwargs["h"]), chromosome, kwargs["interact_pr_en"]])
         else:
             out = subprocess.check_output(["Rscript", kwargs["scc_file"], out_fname, str(kwargs["h"]), chromosome, kwargs["p_file"], kwargs["e_file"]])
         print(str(out))
@@ -278,6 +293,8 @@ class Predictor(object):
             if "p_file" in kwargs and "e_file" in kwargs:
                 # print(kwargs["p_file"])
                 result = partial(func, h=h, scc_file=scc_file, p_file=kwargs["p_file"], e_file=kwargs["e_file"])
+            elif "interact_pr_en" in kwargs:
+                result = partial(func, h=h, scc_file=scc_file, interact_pr_en=kwargs["interact_pr_en"])
             else:
                 result = partial(func, h=h, scc_file=scc_file)
         self.h_for_scc = "h="+str(h)
@@ -285,35 +302,27 @@ class Predictor(object):
         result.__name__ = str(h) + cell_type+ func.__name__
         return result
 
-
-
-    # def plot_juicebox(self, validation_data, predicted, out_dir, **kwargs):
-    #     out_dir = "out/hic_files"
-    #     predicted_data = validation_data.copy(deep=True)
-    #     predicted_data["contact_count"] = predicted
-    #     mp = MatrixPlotter()
-    #     mp.set_data(validation_data)
-    #     mp.set_control(predicted_data)
-    #     MatPlot2HiC(mp, self.__represent_validation__(), out_dir)
-
     def plot_juicebox(self,validation_data,predicted,out_dir,**kwargs):
-        out_dir="/mnt/scratch/ws/psbelokopytova/201901151331psbelokopytova/3DPredictor/out/hic_files"
+        print("predicted", predicted)
+        print("validation cont_count", validation_data["contact_count"])
         predicted_data = validation_data.copy(deep=True)
-        # print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-        # print(predicted_data.keys())
         predicted_data["contact_count"] = predicted
         # print(predicted_data.query("contact_count >10000")['contact_count'])
+        out_dir = "/mnt/scratch/ws/psbelokopytova/201905031108polinaB/3DPredictor/out/hic_files"
         mp = MatrixPlotter()
         mp.set_data(predicted_data)
         mp.set_control(validation_data)
         #mp.set_apply_log(self.apply_log)
         MatPlot2HiC(mp, self.__represent_validation__(), out_dir)
 
+    def return_predicted(self, validation_data,predicted,out_dir,**kwargs):
+        return [validation_data, predicted]
     # Validate model
     def validate(self, validation_file,
-                 out_dir = "/mnt/scratch/ws/psbelokopytova/201901151331psbelokopytova/3DPredictor/out/pics/",
+                 out_dir = "/mnt/scratch/ws/psbelokopytova/201905031108polinaB/3DPredictor/out/pics/",
                  validators = None,
-                 transformation = equal,
+                 transformation = [equal],
+                 cell_type=None,
                  **kwargs):
         # validation_file - file with validation data
         # out_dir - directory to save output produced during validation
@@ -323,21 +332,30 @@ class Predictor(object):
         # kwargs will be passed to validation functions
 
         validators = validators if validators is not None else [self.r2score,self.plot_matrix,self.scc]
+        self.cell_type = cell_type
         self.validation_file = validation_file
         self.validation_data = self.read_file(validation_file)
         self.validation_data.fillna(value=0, inplace=True)
-        self.transformation_for_validation_data = transformation.__name__
-        self.predicted = transformation(self.trained_model.predict(self.validation_data[self.predictors]),
-                                        data=self.validation_data)
-        #check that train chrms not in validate
+        # check that train chrms not in validate
         validate_chrms = set(self.validation_data["chr"].values)
-        for chr in validate_chrms:
-            assert chr not in self.train_chrms
+        assert [chr not in self.train_chrms for chr in validate_chrms]
+        self.transformation_for_validation_data = ""
+        self.predicted = self.trained_model.predict(self.validation_data[self.predictors])
+        print("!!!!!!!!!!!predicted", self.predicted)
+        for transformation_function in transformation:
+            print(transformation_function.__name__)
+            print(self.validation_data)
+            self.transformation_for_validation_data+=transformation_function.__name__
+            self.predicted = transformation_function(self.predicted,
+                                        data=self.validation_data, data_type="predicted")
+            self.validation_data = transformation_function(self.validation_data["contact_count"].values,
+                                                               data=self.validation_data, data_type="validation")
+
+        print(self.validation_data)
+        #do this for validation with observed contacts
         if self.apply_log:
-            #self.validation_data["contact_count"] = np.log(self.validation_data["contact_count"].values)
             self.predicted = np.exp(self.predicted)
-        self.validation_data["contact_count"] = transformation(self.validation_data["contact_count"].values,
-                                                               data=self.validation_data)
+
         for validataion_function in validators:
             validataion_function(self.validation_data.copy(),self.predicted.copy(),
                                  out_dir = out_dir, **kwargs)

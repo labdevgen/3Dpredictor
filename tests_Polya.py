@@ -101,11 +101,11 @@ def test_ChipSeqRemoval():
 
 def test_ContactsRemoval():
     contacts_reader = ContactsReader()
-    contacts_reader.read_files(["input/Hepat/chr1.5MB.Hepat.contacts.gz"], coeff_fname="cofficient_Hepat.txt")
-    c = contacts_reader.get_contacts(Interval("chr1",5000000,5150000))
+    contacts_reader.read_files(["input/Hepat/chr10.5MB.Hepat.contacts.gz"], coeff_fname="cofficient_Hepat.txt")
+    c = contacts_reader.get_contacts(Interval("chr10",60725000,60780000))
     logging.getLogger(__name__).info(c)
-    contacts_reader.delete_region(Interval("chr1",5031234,5100000))
-    c = contacts_reader.get_contacts(Interval("chr1",5000000,5150000))
+    contacts_reader.delete_region(Interval("chr10", 60755595, 60761099))
+    c = contacts_reader.get_contacts(Interval("chr10",60725000,60780000))
     logging.getLogger(__name__).info(c)
 
 def test_intersect_intervals():
