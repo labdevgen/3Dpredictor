@@ -24,7 +24,7 @@ if __name__ == '__main__': #Requered for parallization, at least on Windows
         input_folder ="input/GM12878/"
         #output_folder = "D:/Users/Polina/3Dpredictor/"
         output_folder = "out/GM12878/validating_chrms_2/"
-        cell_type = "GM12878"
+        cell_type="GM12878"
         #input_folder =  "input"
 
         params = Parameters()
@@ -37,19 +37,19 @@ if __name__ == '__main__': #Requered for parallization, at least on Windows
         params.sample_size = 25000 #how many contacts write to file
         #params.conttype = "oe.gz"
         params.conttype = conttype
-        params.max_cpus = 12
+        params.max_cpus = 8
 
         logging.getLogger(__name__).debug("Using input folder "+input_folder)
 
         #Read contacts data
         params.contacts_reader = ContactsReader()
         contacts_files = []
-        contacts_files=[input_folder+ "chr"+str(i)+".5MB.GM12878."+params.conttype for i in range(1,23)]
+        contacts_files=[input_folder+ "chr"+str(i)+".5MB.GM12878."+params.conttype for i in (15,16)]
         contacts_files.append(input_folder+ "chrX.5MB.GM12878."+params.conttype)
         params.contacts_reader.read_files(contacts_files, coeff_fname="coefficient."+cell_type+".txt")
         #
         # #Loops predictor
-        # loopsReader = LoopReader("input/Hepat.merged.loops")
+        # loopsReader = LoopReader("input/Loops/GM12878/GM12878.25000.loops")
         # loopsReader.read_loops()
         # loopspg = loopsPredictorGenerator(loopsReader, params.window_size)
 
@@ -78,28 +78,28 @@ if __name__ == '__main__': #Requered for parallization, at least on Windows
         OrientBlocksCTCFpg = OrientBlocksPredictorGenerator(params.ctcf_reader_orientOnly,
                                                              params.window_size)
 
-        #Read other chip-seq data
-        logging.info('create chipPG')
-        chipPG = []
-        filenames_df = pd.read_csv(input_folder + "peaks/filenames.csv")
-        assert len(os.listdir(input_folder + 'peaks/')) - 1 == len(filenames_df['name'])
-        # print(len(os.listdir(input_folder + 'peaks/')))
-        # print(len(filenames_df['name']))
-        for index, row in filenames_df.iterrows():
-            params.chip_reader = ChiPSeqReader(input_folder + 'peaks/' + row["filename"] + '.gz', name=row['name'])
-            params.chip_reader.read_file()
-            chipPG.append(SmallChipSeqPredictorGenerator(params.chip_reader,params.window_size,N_closest=4))
-        #
-        #Read methylation data
-        logging.info('create metPG')
-        metPG = []
-        filemanes_df = pd.read_csv(input_folder + "methylation/filenames.csv")
-        assert len(os.listdir(input_folder + 'peaks/')) - 1 == len(filenames_df['name'])
-        for index, row in filemanes_df.iterrows():
-            #print(row["name"])
-            params.met_reader = ChiPSeqReader(input_folder + 'methylation/'+ row["filename"], name=row['name'])
-            params.met_reader.read_file(renamer={"0":"chr","1":"start","2":"end","4":"sigVal"})
-            metPG.append(SmallChipSeqPredictorGenerator(params.met_reader,params.window_size,N_closest=4))
+        # #Read other chip-seq data
+        # logging.info('create chipPG')
+        # chipPG = []
+        # filenames_df = pd.read_csv(input_folder + "peaks/filenames.csv")
+        # assert len(os.listdir(input_folder + 'peaks/')) - 1 == len(filenames_df['name'])
+        # # print(len(os.listdir(input_folder + 'peaks/')))
+        # # print(len(filenames_df['name']))
+        # for index, row in filenames_df.iterrows():
+        #     params.chip_reader = ChiPSeqReader(input_folder + 'peaks/' + row["filename"] + '.gz', name=row['name'])
+        #     params.chip_reader.read_file()
+        #     chipPG.append(SmallChipSeqPredictorGenerator(params.chip_reader,params.window_size,N_closest=4))
+        # # #
+        # #Read methylation data
+        # logging.info('create metPG')
+        # metPG = []
+        # filemanes_df = pd.read_csv(input_folder + "methylation/filenames.csv")
+        # assert len(os.listdir(input_folder + 'peaks/')) - 1 == len(filenames_df['name'])
+        # for index, row in filemanes_df.iterrows():
+        #     #print(row["name"])
+        #     params.met_reader = ChiPSeqReader(input_folder + 'methylation/'+ row["filename"], name=row['name'])
+        #     params.met_reader.read_file(renamer={"0":"chr","1":"start","2":"end","4":"sigVal"})
+        #     metPG.append(SmallChipSeqPredictorGenerator(params.met_reader,params.window_size,N_closest=4))
         #Read cage data
         cagePG = []
         filemanes_df = pd.read_csv(input_folder + "cage/filenames.csv")
@@ -130,33 +130,33 @@ if __name__ == '__main__': #Requered for parallization, at least on Windows
         #
         # e1pg = SmallE1PredictorGenerator(params.eig_reader,params.window_size)
         #
-        params.pgs = [OrientCtcfpg, NotOrientCTCFpg, OrientBlocksCTCFpg, RNAseqPG]+metPG + chipPG + cagePG
+        params.pgs = [OrientCtcfpg, NotOrientCTCFpg, OrientBlocksCTCFpg, RNAseqPG]+cagePG#+metPG+chipPG
 
-        # Generate train
-        for trainChrName in ["chr19", "chr1", "chr5"]:
-            training_file_name = "2018-10-11-training.RandOn" + trainChrName + str(params) + ".txt"
-            params.interval = Interval(trainChrName,
-                                  params.contacts_reader.get_min_contact_position(trainChrName),
-                                  params.contacts_reader.get_max_contact_position(trainChrName))
-            params.out_file = output_folder + training_file_name
-            generate_data(params,saveFileDescription=True)
-            del(params.out_file)
-
-        # # Generate test
-        # validate_chrs=["chr5"]
-        # #validate_chrs.append("chrX")
-        # for validateChrName in validate_chrs:
-        #     params.sample_size = len(params.contacts_reader.data[validateChrName])
-        #     #print(params.sample_size)
-        #     validation_file_name = "validatingOrient." + str(params) + ".txt"
-        #     params.interval = Interval(validateChrName,
-        #                                params.contacts_reader.get_min_contact_position(validateChrName),
-        #                                params.contacts_reader.get_max_contact_position(validateChrName))
-        #     logging.getLogger(__name__).info("Generating validation dataset for interval "+str(params.interval))
-        #     params.out_file = output_folder + params.interval.toFileName() + validation_file_name
-        #     generate_data(params)
+        # # Generate train
+        # for trainChrName in ["chr1"]:
+        #     training_file_name = "2018-10-11-training.RandOn" + trainChrName + str(params) + ".txt"
+        #     params.interval = Interval(trainChrName,
+        #                           params.contacts_reader.get_min_contact_position(trainChrName),
+        #                           params.contacts_reader.get_max_contact_position(trainChrName))
+        #     params.out_file = output_folder + training_file_name
+        #     generate_data(params,saveFileDescription=True)
         #     del(params.out_file)
-        #     del (params.sample_size)
+
+        # Generate test
+        validate_chrs=["chr20", "chr21","chr22", "chrX"]
+        #validate_chrs.append("chrX")
+        for validateChrName in validate_chrs:
+            params.sample_size = len(params.contacts_reader.data[validateChrName])
+            #print(params.sample_size)
+            validation_file_name = "validatingOrient." + str(params) + ".txt"
+            params.interval = Interval(validateChrName,
+                                       params.contacts_reader.get_min_contact_position(validateChrName),
+                                       params.contacts_reader.get_max_contact_position(validateChrName))
+            logging.getLogger(__name__).info("Generating validation dataset for interval "+str(params.interval))
+            params.out_file = output_folder + params.interval.toFileName() + validation_file_name
+            generate_data(params)
+            del(params.out_file)
+            del (params.sample_size)
 
         # for interval in [Interval("chr5", 11500000, 17500000)]:
         # #                  Interval("chr10", 47900000, 53900000),

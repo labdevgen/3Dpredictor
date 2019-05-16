@@ -220,8 +220,8 @@ args = commandArgs(trailingOnly=TRUE)
 in_fname = args[1]
 h = as.numeric(args[2])
 chr = args[3]
-promoters = args[4]
-enhancers = args[5]
+enhancers = args[4]
+#promoters = args[5]
 message(c("in_fname =:", in_fname))
 binsize <- 25000
 #chr <- "1"
@@ -291,18 +291,17 @@ mod_ps = 0
 k = 0
 k_mod = 0
 k_mod_ps = 0
-if (!is.na(promoters)&&!is.na(enhancers)){
-Pr <- read.table(promoters,head=T)
+if (!is.na(enhancers)){
+#Pr <- read.table(promoters,head=T)
 En <- read.table(enhancers,head=T)
 message(c("scc =:", 0))
 for(t in which(En[,1]==chr)) {
-  for(l in which(Pr[,1]==chr)) {
-    r = Pr[l,2]%/%25000 + 1
-    c = En[t,2]%/%25000 + 1
+    r = En[t,2]%/%25000 + 1
+    c = En[t,5]%/%25000 + 1
     if(r<mx&&c<mx&&r>mn&&c>mn&&abs(r-c)<60&&abs(r-c)>2){
       Z6[r,c] = 1
       Z6[c,r] = 1}
-  }}
+  }
 message(c("scc =:", 1))
 
 #evaluate easy metrics

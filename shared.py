@@ -32,7 +32,6 @@ class Interval:
 
     def toFileName(self):
         return self.__class__.__name__ + "_" + "_".join(map(str, [self.chr, self.start, self.end]))
-
 class Position(Interval):
     def __gt__(self, other):
         #if self.chr != other.chr:
@@ -142,7 +141,7 @@ def intersect_intervals(chr_int_data1, chr_int_data2, suppreseChrNumberCheck=Fal
 # interval - interval object
 # output:
 # returns subset of chr_int_data2 which intersects interval
-def intersect_with_interval(chr_int_data1, interval):
+def intersect_with_interval(chr_int_data1, interval, return_ids=False):
     chr = interval.chr
     if not chr in chr_int_data1:
         logging.getLogger(__name__).warning("No intervals on chr", chr)
@@ -156,8 +155,10 @@ def intersect_with_interval(chr_int_data1, interval):
         logging.getLogger(__name__).error('st_end_i larger then end_st_i')
         # As it's an error, I assume raising exeption.
         raise Exception("Exception from intersect_intervals function")
-    else:
+    elif not return_ids:
         return chr_int_data1[chr].iloc[st_end:end_st,:]
+    elif return_ids:
+        return (st_end, end_st)
 
 
 # File descriptions are saved in XML form
@@ -173,14 +174,17 @@ def write_XML(XML_report, header,fname="files_description.xml"):
     to_write = parseString(xml_line).toprettyxml()
 
     #write to file
+    # if not os.path.exists(fname):
     f = open(fname,"w")
+    # else:
+    #     f=open(fname, "a")
     f.write(to_write)
     f.close()
 
-def oe2obs(contacts, expected_folder, cell_type, **kwargs): # dists is array, element[i] --> distance between ancors of contact i
+def oe2obs(contacts, data, expected_folder, cell_type,coeff_fname, **kwargs): # dists is array, element[i] --> distance between ancors of contact i
     # read expected file
     # First number in this file is for diagonal elements, i.e. where distance = 0
-    input_data = kwargs["data"]
+    input_data = data
     expected_file = expected_folder + input_data.iloc[0, input_data.columns.get_loc("chr")] + "." + cell_type + ".expected.txt"
     expected = np.loadtxt(expected_file)
     expected = np.nan_to_num(expected)
@@ -195,17 +199,39 @@ def oe2obs(contacts, expected_folder, cell_type, **kwargs): # dists is array, el
     assert len(dist) > 0
     binsize = min(dist)
 
-    for ind, val in enumerate(expected):
-        expected_dist = dict([(ind*binsize,val) for ind,val in enumerate(expected)]) # dictionary, distance --> expected
+    expected_dist = dict([(ind*binsize,val) for ind,val in enumerate(expected)]) # dictionary, distance --> expected
+    coeff_data = pd.read_csv(coeff_fname, delimiter="\t") #coeff for normalization, we do it because for contacts prediction we divide all contacts on coeff
+    coeff = float(coeff_data["coeff"])
     result = []
     for ind,val in enumerate(contacts):
-        result.append(val*expected_dist[dists[ind]])
+        result.append(val*expected_dist[dists[ind]]/coeff)
     assert len(result) == len(contacts)
+    print("contacts", contacts)
+    print("result", result)
+    if kwargs['data_type']=='predicted':
+        return result
+    elif kwargs['data_type']=='validation':
+        input_data['contact_count']=result
+        return input_data
+
+def decorate_oe2obs(func,expected_folder, cell_type, coeff_fname):
+    result = partial(func,expected_folder=expected_folder, cell_type=cell_type, coeff_fname=coeff_fname)
+    result.__name__ = str(cell_type) + func.__name__
     return result
 
-def decorate_oe2obs(func,expected_folder, cell_type):
-    result = partial(func,expected_folder=expected_folder, cell_type=cell_type)
-    result.__name__ = str(cell_type) + func.__name__
+def return_coordinates_after_deletion(contacts, data, interval, **kwargs):
+    if kwargs['data_type']=='predicted':
+        return contacts
+    elif kwargs['data_type'] == 'validation':
+        if interval.__repr__()=='no_deletion':
+            return data
+        else:
+            data["contact_st"] = data["contact_st"].apply(lambda x: x if x < interval.start else x + interval.len)
+            data["contact_en"] = data["contact_en"].apply(lambda x: x if x < interval.start else x + interval.len)
+            return data
+def decorate_return_coordinates_after_deletion(func, interval):
+    result = partial(func, interval=interval)
+    result.__name__ = interval.__repr__()
     return result
 
 def get_bin_size(data, fields = ["contact_en","contact_st"]):

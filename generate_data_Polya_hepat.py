@@ -18,12 +18,13 @@ import os
 
 if __name__ == '__main__': #Requered for parallization, at least on Windows
     #,"chr10", "chr1"]:
-    for conttype in ["contacts.gz","oe.gz"]:
+    for conttype in ["oe"]:
         logging.basicConfig(format='%(asctime)s %(name)s: %(message)s', datefmt='%I:%M:%S', level=logging.DEBUG)
 
         input_folder ="input/Hepat/"
         #output_folder = "D:/Users/Polina/3Dpredictor/"
-        output_folder = "out/Hepat/validating_chrms/"
+        output_folder = "out/Hepat/validating_chrms_1/"
+        cell_type = "Hepat"
         #input_folder =  "input"
 
         params = Parameters()
@@ -36,7 +37,7 @@ if __name__ == '__main__': #Requered for parallization, at least on Windows
         params.sample_size = 25000 #how many contacts write to file
         #params.conttype = "oe.gz"
         params.conttype = conttype
-        params.max_cpus = 12
+        params.max_cpus = 8
 
         logging.getLogger(__name__).debug("Using input folder "+input_folder)
 
@@ -45,7 +46,7 @@ if __name__ == '__main__': #Requered for parallization, at least on Windows
         contacts_files = []
         contacts_files=[input_folder+ "chr"+str(i)+".5MB.Hepat."+params.conttype for i in range(1,20)]
         contacts_files.append(input_folder+ "chrX.5MB.Hepat."+params.conttype)
-        params.contacts_reader.read_files(contacts_files)
+        params.contacts_reader.read_files(contacts_files, coeff_fname=("coefficient." + cell_type+".txt"))
         #
         # #Loops predictor
         # loopsReader = LoopReader("input/Hepat.merged.loops")
@@ -121,21 +122,21 @@ if __name__ == '__main__': #Requered for parallization, at least on Windows
                                                   window_size=params.window_size,
                                                   N_closest=3)
 
-        #Read E1 data
-        params.eig_reader = E1Reader()
-        params.eig_reader.read_files([input_folder + "chr1.Hepat.E1.50k",
-                               input_folder + "chr2.Hepat.E1.50k",
-                               input_folder + "chr10.Hepat.E1.50k"],
-                               #input_folder + "chr6.Hepat.E1.50k"],
-                              binSizeFromName=fileName2binsize) #infer size of E1 bins from file name using this function
-
-        e1pg = SmallE1PredictorGenerator(params.eig_reader,params.window_size)
+        # #Read E1 data
+        # params.eig_reader = E1Reader()
+        # params.eig_reader.read_files([input_folder + "chr1.Hepat.E1.50k",
+        #                        input_folder + "chr2.Hepat.E1.50k",
+        #                        input_folder + "chr10.Hepat.E1.50k"],
+        #                        #input_folder + "chr6.Hepat.E1.50k"],
+        #                       binSizeFromName=fileName2binsize) #infer size of E1 bins from file name using this function
+        #
+        # e1pg = SmallE1PredictorGenerator(params.eig_reader,params.window_size)
 
         params.pgs = [OrientCtcfpg, NotOrientCTCFpg, OrientBlocksCTCFpg, RNAseqPG] #+ metPG + chipPG + cagePG
-
+        #
         # # Generate train
-        # for trainChrName in ["chr10", "chr2"]:
-        #     training_file_name = "2018-10-23-training.RandOn" + trainChrName + str(params) + ".txt"
+        # for trainChrName in ["chr2", "chr10"]:
+        #     training_file_name = "2018-11-11-training.RandOn" + trainChrName + str(params) + ".txt"
         #     params.interval = Interval(trainChrName,
         #                           params.contacts_reader.get_min_contact_position(trainChrName),
         #                           params.contacts_reader.get_max_contact_position(trainChrName))
@@ -143,18 +144,18 @@ if __name__ == '__main__': #Requered for parallization, at least on Windows
         #     generate_data(params,saveFileDescription=True)
         #     del(params.out_file)
 
-        #Generate test
-        # for interval in [# Interval("chr10", 59000000, 62000000)]:
-        #                  Interval("chr10", 65000000, 70000000),
-        #                  Interval("chr20", 37000000, 40000000),
-        #                  Interval("chr10", 10000000, 60000000)]:
-        #                  # Interval("chr10",36000000,41000000),
-        #                  # Interval("chr1", 100000000, 110000000)]:
-        # params.interval = interval
-        validate_chrs=["chr19", "chrX"]
+        # #Generate test
+        # for interval in [ Interval("chr2", 47900000, 53900000)]:
+        # #                  Interval("chr10", 65000000, 70000000),
+        # #                  Interval("chr20", 37000000, 40000000),
+        # #                  Interval("chr10", 10000000, 60000000)]:
+        # #                  # Interval("chr10",36000000,41000000),
+        # #                  # Interval("chr1", 100000000, 110000000)]:
+        #     params.interval = interval
+        validate_chrs=["chr1", "chr2","chr3", "chr4"]#, "chr5", "chr6", "chr7"]
         for validateChrName in validate_chrs:
             params.sample_size = len(params.contacts_reader.data[validateChrName])
-            #print(params.sample_size)
+            # print(params.sample_size)
             validation_file_name = "validatingOrient." + str(params) + ".txt"
             params.interval = Interval(validateChrName,
                                        params.contacts_reader.get_min_contact_position(validateChrName),
