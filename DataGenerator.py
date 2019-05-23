@@ -3,8 +3,8 @@
 # Class DataGenerator does it by applying contact2file to a dataframe
 # which contains contacts information in a format contact_st -- contact_en -- contact_count
 # To generate predictors for each contact, we use instances of PredictorGenerators
-# Each instance should be able to generate value(s) of specific predicor, e.g. ChiPSeq signal,
-# RNAseq of 1st Eigenvecor
+# Each instance should be able to generate value(s) of specific predictor, e.g. ChiPSeq signal,
+# RNAseq or 1st Eigenvecor
 # Function contact2file aggregates these predictors and writes data to file
 #
 # Generate data is high-level function that generates contacts sample,
@@ -69,10 +69,7 @@ def _apply_df(args):
 
 
 def generate_data(params, saveFileDescription = True):
-    print("sample size", params.sample_size)
-    print(params.interval, params.mindist, params.maxdist)
     contacts = params.contacts_reader.get_contacts(params.interval,mindist=params.mindist,maxdist=params.maxdist)
-    print("contacts_len", len(contacts))
     sample_size = min(params.sample_size,len(contacts))
     logging.getLogger(__name__).info("Using sample size "+str(sample_size))
     contacts_sample = contacts.sample(n=sample_size)

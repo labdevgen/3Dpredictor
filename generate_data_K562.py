@@ -19,7 +19,7 @@ chr_num=sys.argv[1] #comma separated number of chromosomes for predictor generat
 chr_nums=chr_num.split(",")
 conttype = sys.argv[2] #contacts.gz or oe.gz
 
-# chr_num="12"
+# chr_num="12,13,14"
 # conttype = "contacts.gz"
 
 if __name__ == '__main__': #Requiered for parallelisation, at least on Windows
