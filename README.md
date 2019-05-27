@@ -111,15 +111,15 @@ Also set folders name for validating results in Predictor module
 Choose validators to estimate accuracy of the algorithm. There are 2 main validators: SCC metric and plot_juicebox module for visual assessment of prediction
 Output files:
 
-    '''
-| xml file               | model definition                                                                                          |
-| featureImportances.png | histogram of feature importances                                                                          |
-| featureImportances.txt | list of feature importances scores                                                                        |
-| file.ssc.out           | file with standard metrics and SCC for prediction                                                         |
-| file.scc               | pre-file for SCC counting which looks like contact_st--contact_end--real_cont_count--predicted_cont_count |
-| data.hic               | predicted heatmap                                                                                         |
-| control.hic            | heatmap with experimental data                                                                            |
-    '''
+| xml file | model definition |
+| --------- | ---------------- |
+| featureImportances.png | histogram of feature importances |
+| featureImportances.txt | list of feature importances scores |
+| file.ssc.out | file with standard metrics and SCC for prediction |
+| file.scc | pre-file for SCC counting which looks like contact_st--contact_end--real_cont_count--predicted_cont_count |
+| data.hic | predicted heatmap |
+| control.hic | heatmap with experimental data |
+
 **Rearrangements**
 
 If you want to predict heatmap after rearrangement use corresponding validating file and choose transformation option (now it works only for deletion):
