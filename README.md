@@ -111,8 +111,9 @@ Also set folders name for validating results in Predictor module
 Choose validators to estimate accuracy of the algorithm. There are 2 main validators: SCC metric and plot_juicebox module for visual assessment of prediction
 Output files:
 
-| xml file | model definition |
+| file name | definition |
 | --------- | ---------------- |
+| file.xml | model definition |
 | featureImportances.png | histogram of feature importances |
 | featureImportances.txt | list of feature importances scores |
 | file.ssc.out | file with standard metrics and SCC for prediction |
