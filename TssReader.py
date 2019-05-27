@@ -1,27 +1,9 @@
-#Written by Minja, 2018-09
-#A reader for RNA seq data
-#It should store RNAseq data as Pandas DataFrame:
-#Chr -- Start -- End -- sigVal -- gene
-#The difference with ChipSeq data is that
-#Genes can be long, so we cannot convert whole gene
-#To one point called "mid", as we did with ChipSeq
 
 import pandas as pd
 import numpy as np
 import logging
 from ChiPSeqReader import ChiPSeqReader
 from shared import intersect_intervals, intersect_with_interval
-
-# TODO :
-# This class is inhereted from ChiPSeqReader
-# Some functions may work without rewriting, some are already rewritten
-# However some are specific to ChiPseq signals. They won't work correct now, and it makes
-# no scence to rewrite them because they are not planned to be used
-# in future, it's probably better to split ChiPSeqReader to 2 classes
-# one that would be parent for both ChiPSeqReader and RNAseqReader with shared functions
-# and one for specific ChiPseq funcs, mainly related to oriented data
-
-
 class TssReader(ChiPSeqReader):
      #Init is inhereted from ChiPSeqReader
      #It will set self.data to None

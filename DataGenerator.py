@@ -91,7 +91,6 @@ def contact2file(contact,DataGeneratorObj,report = 5000):
 
         line=[]
         for pg in DataGeneratorObj.not_vect_predictor_generators:
-            #print(pg)
             line += pg.get_predictors(contact)
         if len(line) != DataGeneratorObj.N_notVect_fields:
             logging.error(str(len(line))+" "+str(DataGeneratorObj.N_notVect_fields))
@@ -135,8 +134,6 @@ class DataGenerator():
 
         #Check that predictor names are unique
         pg_names = [pg.name for pg in self.predictor_generators]
-        # print(pg_names)
-        # print(set(pg_names))
         assert len(pg_names) == len(set(pg_names))
 
         #Get header row and calculate number of fields
@@ -148,7 +145,6 @@ class DataGenerator():
         for pg in self.vect_predictor_generators:
             header += pg.get_header(contacts.iloc[0,:])
         assert len(header) == len(set(header))
-        # print("header", header)
         if write_header:
             out_file.write("\t".join(header) + "\n")
 
@@ -166,21 +162,6 @@ class DataGenerator():
 
         # Now get predictors
         pool = multiprocessing.Pool(processes=n_cpus,initializer=initializer,initargs=(contacts,self))
-        '''chanks = np.array_split(contacts, n_cpus + 10)
-        for chank in chanks:
-            test = np.logical_and(np.all(chank<=2147483640),np.all(chank>=-2147483640))
-            print(test)
-            if not test:
-                logging.error("Out of range")
-            buf = ForkingPickler.dumps([chank,self])
-            n = len(buf)
-            # For wire compatibility with 3.2 and lower
-            header = struct.pack("!i", n)
-
-        self.contacts = self.contacts.iloc[0:10]
-        '''
-
-
         start_points,end_points = get_split_array_indexes(contacts,n_cpus)
         result = pool.map(_apply_df, [(st, end) for st,end in zip(start_points,end_points)])
         #result = pool.map(_apply_df, [(d, self) for d in np.array_split(contacts, n_cpus+10)])

@@ -1,10 +1,10 @@
 # Written by Minja, 2018-09
-# Class Predictor, to tain and validate models
-# Baseic functionality:
+# Class Predictor, to train and validate models
+# Basic functionality:
 # 1. Loading files with predictors
 # 2. Drop different sets of predictors
 # 3. Train and validate models
-# 4. Perform estimation and visualization of results (TODO)
+# 4. Perform estimation and visualization of results
 
 import logging,os,re,pickle,sklearn
 import numpy as np
@@ -99,7 +99,6 @@ class Predictor(object):
             return 0
         # create file with feature importances
         importances = pd.Series(self.trained_model.feature_importances_, index = self.predictors ).sort_values(ascending=False)
-        #print(importances)
         importances.to_csv(dump_path + ".featureImportance.txt", sep='\t')
         plt.plot(range(len(self.trained_model.feature_importances_)),
                  self.trained_model.feature_importances_, marker="o")
@@ -175,10 +174,8 @@ class Predictor(object):
             # read data
             self.input_data = self.read_file(self.input_file)
             self.train_chrms = set(self.input_data["chr"].values)
-            print("!!!!!!!!1", self.train_chrms)
             self.input_data.fillna(value=0, inplace=True)
             self.contacts = np.array(self.input_data["contact_count"].values)
-            print("train contacts", self.contacts)
 
             # fit new model
             if apply_log:
@@ -250,16 +247,7 @@ class Predictor(object):
         plt.clf()
 
     def scc(self,validation_data,predicted,out_dir,**kwargs):
-        # if self.apply_log:
-        #     print(validation_data["contact_count"])
-        #     print(predicted)
-        #     validation_data["contact_count"] = validation_data["contact_count"].apply(lambda x: math.exp(x))
-        #     predicted = np.exp(np.array(predicted))
-        #     print(validation_data["contact_count"])
-        #     print(predicted)
-        # print(validation_data["chr"])
         chromosome = str(validation_data["chr"][1])
-        # print("chromosome", chromosome)
         if "h" not in kwargs:
             kwargs["h"] = 2
         else:

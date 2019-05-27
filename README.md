@@ -1,4 +1,5 @@
 **3DPredictor**
+
 **How to migrate to gitLab**
 
 1.(optional, for PyCharm users):
@@ -18,7 +19,7 @@ The project contains 2 major modules:
 
 **1. Data Generation module**
 
-The module _GenerateData_new.py_ loads some external files 
+The module _GenerateData_K562.py_ loads some external files 
 (i.e. file with contacts frequencies, ChipSeq, E1 and etc.) 
 and builds a dataset with predictor values for each contact
 It mainly wraps  DataGenerators classes with specific file name,
@@ -46,7 +47,21 @@ as well as filenames and genomic intervals of interest
 The data files currently used could be downloaded from 
 http://genedev.bionet.nsc.ru/hic_out/3DPredircor
 
+There are 'readers' which read data files and 'predictor generators' which generate predictors for contacts. Note that you can change options of this functions
+
 Note that predictors generation takes ~3h for 500 000 contacts.
+
+There is an example of generating data for K562 cells
+
+**Rearrangements**
+
+If you want to predict data with rearrangements you should apply special rearrangement function for EVERY 'reader'. There are functions for duplication, deletion and inversion. For example:
+
+    '''python
+    params.contacts_reader.delete_region(Interval("chr22", 16064000, 16075000))
+    '''
+
+Output of this module is file with features (predictors) for all contacts. Output format: contact_st--contact_end--contact_dist--other features...
 
 **2. Training and validation module**
 
