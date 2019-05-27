@@ -68,20 +68,13 @@ Output of this module are file with features (predictors) for all contacts and x
 Run module train_and_validate_K562.py to train model.
 Set up following variables before running:
 
-training_file - file with data for training
-
-   '''python
-    training_files = [
-    "/mnt/scratch/ws/psbelokopytova/201905031108polinaB/3DPredictor/out/K562/5KB/1.1_1bins_withCTCF_wotraining.RandOnchr10contacts.gz.False.11.1500000.10001.100000.5000.txt",
-        ]
-    '''
+training_files - files with data for training
 
 validation_files - a list of files with data for validation
-   '''python
-    validation_files = [
-        "/mnt/scratch/ws/psbelokopytova/201905031108polinaB/3DPredictor/out/K562/5KB/Interval_chr4_86000000_114000000validatingOrient.contacts.gz.11.1500000.50001.1000000.5000.txt",
-        "/mnt/scratch/ws/psbelokopytova/201905031108polinaB/3DPredictor/out/K562/5KB/Interval_chr2_118000000_129000000validatingOrient.oe.gz.False.11.1500000.10001.24241897.5000.txt"
-    ]
+
+contact type - contacts or OE values:
+    '''python
+    for contact_type,apply_log in zip(["contacts"],[True]):
     '''
 
 keep - a list with predictors to use. Each entery should 
@@ -93,9 +86,17 @@ E.g. with
     keep = ["CTCF_W","contact_dist"] 
     '''
  only CTCF sites inbetween contacting loci and distance between them will be used.
+ 
+learning algorithm - you can change this in the Predictor module:
+
+    '''python
+def train(self,
+              alg = xgboost.XGBRegressor(n_estimators=100,max_depth=9,subsample=0.7    '''
  Please note that fitting model is time-consuming so fitted model is saved to the file with the name 
  representing model parameters (predictors and algorithm). 
  It is automatically determined wheather such file exists and
  model can be simply loaded without fitting again 
  (to change this behaviour pass _rewriteModel=True_ when calling 
  _trainAndValidate_ function)
+ 
+ 

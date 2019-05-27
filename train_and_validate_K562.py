@@ -10,7 +10,6 @@ from shared import Interval
 logging.basicConfig(format='%(asctime)s %(message)s', datefmt='%I:%M:%S', level=logging.DEBUG)
 
 cell_type = 'K562'
-deletion = "no_deletion"
 out_dir = "/mnt/scratch/ws/psbelokopytova/201905031108polinaB/3DPredictor/out/models/"
 # If you use OE values for training and validating:
 expected_folder = "/mnt/scratch/ws/psbelokopytova/201905031108polinaB/3DPredictor/input/expected/K562/5KB/"
