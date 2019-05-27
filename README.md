@@ -61,18 +61,28 @@ If you want to predict data with rearrangements you should apply special rearran
     params.contacts_reader.delete_region(Interval("chr22", 16064000, 16075000))
     '''
 
-Output of this module is file with features (predictors) for all contacts. Output format: contact_st--contact_end--contact_dist--other features...
+Output of this module are file with features (predictors) for all contacts and xml file with definition of dataset. Output format: contact_st--contact_end--contact_dist--other features...
 
 **2. Training and validation module**
 
-Run module train_and_validate2.py to train model.
+Run module train_and_validate_K562.py to train model.
 Set up following variables before running:
-
-lm - learning algorithm
 
 training_file - file with data for training
 
+   '''python
+    training_files = [
+    "/mnt/scratch/ws/psbelokopytova/201905031108polinaB/3DPredictor/out/K562/5KB/1.1_1bins_withCTCF_wotraining.RandOnchr10contacts.gz.False.11.1500000.10001.100000.5000.txt",
+        ]
+    '''
+
 validation_files - a list of files with data for validation
+   '''python
+    validation_files = [
+        "/mnt/scratch/ws/psbelokopytova/201905031108polinaB/3DPredictor/out/K562/5KB/Interval_chr4_86000000_114000000validatingOrient.contacts.gz.11.1500000.50001.1000000.5000.txt",
+        "/mnt/scratch/ws/psbelokopytova/201905031108polinaB/3DPredictor/out/K562/5KB/Interval_chr2_118000000_129000000validatingOrient.oe.gz.False.11.1500000.10001.24241897.5000.txt"
+    ]
+    '''
 
 keep - a list with predictors to use. Each entery should 
 contain a list of predictors, or a single string _"all"_
