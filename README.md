@@ -55,7 +55,7 @@ There is an example of generating data for K562 cells
 
 **Rearrangements**
 
-If you want to predict data with rearrangements you should apply special rearrangement function for EVERY 'reader'. There are functions for duplication, deletion and inversion. For example:
+If you want to predict contacts after rearrangement you should generate predictors for contacts with rearrangement.You should apply special rearrangement function for EVERY 'reader'. There are functions for duplication, deletion and inversion. For example:
 
     '''python
     params.contacts_reader.delete_region(Interval("chr22", 16064000, 16075000))
@@ -65,7 +65,7 @@ Output of this module are file with features (predictors) for all contacts and x
 
 **2. Training and validation module**
 
-Run module train_and_validate_K562.py to train model.
+Run module _train_and_validate_K562.py_ to train model.
 Set up following variables before running:
 
 training_files - files with data for training
@@ -89,13 +89,13 @@ E.g. with
 
  only CTCF sites inbetween contacting loci and distance between them will be used.
  
-learning algorithm - you can change this in the Predictor module:
+learning algorithm - you can change this in the _Predictor.py_ module:
  
     '''python
     def train(self,alg = xgboost.XGBRegressor(n_estimators=100,max_depth=9,subsample=0.7 
     '''
 
-Also set folders name for validating results in Predictor module
+Also set folders name for validating results in _Predictor.py_ module
 
     '''python
     dump = True, out_dir = "/mnt/scratch/ws/psbelokopytova/201905031108polinaB/3DPredictor/out/models/" 
@@ -123,7 +123,7 @@ Output files:
 
 **Rearrangements**
 
-If you want to predict heatmap after rearrangement use corresponding validating file and choose transformation option (now it works only for deletion):
+For heatmap prediction after rearrangement use corresponding validating file and choose transformation option (now it works only for deletion):
 
     '''python
     trained_predictor.validate(validation_file, show_plot = False,cell_type=cell_type,
