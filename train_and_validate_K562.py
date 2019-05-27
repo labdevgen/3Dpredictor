@@ -13,6 +13,7 @@ cell_type = 'K562'
 out_dir = "/mnt/scratch/ws/psbelokopytova/201905031108polinaB/3DPredictor/out/models/"
 # If you use OE values for training and validating:
 expected_folder = "/mnt/scratch/ws/psbelokopytova/201905031108polinaB/3DPredictor/input/expected/K562/5KB/"
+deletion = 'no deletion'
 
 # set all training files
 training_files = [

@@ -92,9 +92,15 @@ E.g. with
 learning algorithm - you can change this in the Predictor module:
  
     '''python
- def train(self,alg = xgboost.XGBRegressor(n_estimators=100,max_depth=9,subsample=0.7 
+    def train(self,alg = xgboost.XGBRegressor(n_estimators=100,max_depth=9,subsample=0.7 
     '''
 
+Also set folders name for validating results in Predictor module
+
+    '''python
+    dump = True, out_dir = "/mnt/scratch/ws/psbelokopytova/201905031108polinaB/3DPredictor/out/models/" 
+    out_dir = "/mnt/scratch/ws/psbelokopytova/201905031108polinaB/3DPredictor/out/pics/",
+    '''
  Please note that fitting model is time-consuming so fitted model is saved to the file with the name 
  representing model parameters (predictors and algorithm). 
  It is automatically determined wheather such file exists and
@@ -102,4 +108,24 @@ learning algorithm - you can change this in the Predictor module:
  (to change this behaviour pass _rewriteModel=True_ when calling 
  _trainAndValidate_ function)
  
- 
+Choose validators to estimate accuracy of the algorithm. There are 2 main validators: SCC metric and plot_juicebox module for visual assessment of prediction
+Output files:
+
+| xml file | model definition |
+| featureImportances.png | histogram of feature importances |
+| featureImportances.txt | list of feature importances scores |
+| file.ssc.out | file with standard metrics and SCC for prediction |
+| file.scc | pre-file for SCC counting which looks like contact_st--contact_end--real_cont_count--predicted_cont_count |
+| data.hic | predicted heatmap |
+| control.hic | heatmap with experimental data |
+
+**Rearrangements**
+
+If you want to predict heatmap after rearrangement use corresponding validating file and choose transformation option (now it works only for deletion):
+
+    '''python
+    trained_predictor.validate(validation_file, show_plot = False,cell_type=cell_type,
+                            #use transformation option if you want to return coordinates after rearrangement
+                            #                            transformation=
+                            # [decorate_return_coordinates_after_deletion(return_coordinates_after_deletion, interval=deletion)], 
+    '''
