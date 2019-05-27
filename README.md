@@ -74,7 +74,7 @@ validation_files - a list of files with data for validation
 
 contact type - contacts or OE values:
     '''python
-    for contact_type,apply_log in zip(["contacts"],[True]):
+    for contact_type,apply_log in zip(["contacts"],[True]): 
     '''
 
 keep - a list with predictors to use. Each entery should 
@@ -85,13 +85,15 @@ E.g. with
     '''python
     keep = ["CTCF_W","contact_dist"] 
     '''
+
  only CTCF sites inbetween contacting loci and distance between them will be used.
  
 learning algorithm - you can change this in the Predictor module:
 
     '''python
-def train(self,
-              alg = xgboost.XGBRegressor(n_estimators=100,max_depth=9,subsample=0.7    '''
+def train(self,alg = xgboost.XGBRegressor(n_estimators=100,max_depth=9,subsample=0.7 
+    '''
+
  Please note that fitting model is time-consuming so fitted model is saved to the file with the name 
  representing model parameters (predictors and algorithm). 
  It is automatically determined wheather such file exists and
