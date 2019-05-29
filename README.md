@@ -2,12 +2,14 @@
 
 **How to use the code**
 
-The project contains 2 major modules:
 
 **0. Prepare your data**
 We use epigenetic data from Encode, but one can use any source of data to train model. If you are using formats other than standard .bed files, you may want to write your own "reader" classes, which are responsible for data parsing (see below).
 
 One can use jucer_tools _dump_ command to obtain Hi-C contacts required for training. We also suggest to normalize contact counts between experiments (otherwise you can’t compare models trained using data from different Hi-C experiments). Normalization coefficient could be obtained running _NormCoef.py_ on particular contacts dataset and used later when creating the contacts_reader object.
+
+
+The model itself contains 2 major modules:
 
 **1. Data Generation module**
 
