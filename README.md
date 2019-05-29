@@ -1,30 +1,26 @@
-**How to migrate to gitLab**
-
-1.(optional, for PyCharm users):
-
---Commit and push current version to GitHub.
---Install GitLab Project Plugin (https://plugins.jetbrains.com/plugin/7975-gitlab-projects)
---Add GitLab repo in remotes (VCS->Git->Remotes)
---Fetch, Pull, Push (all under VCS control)
-
-2.To migrate with your local copy of GitHub repo, see 
-https://stackoverflow.com/questions/20359936/import-an-existing-git-project-into-gitlab
-
-
 **How to use the code**
 
 The project contains 2 major modules:
 
 **1. Data Generation module**
 
-The module _GenerateData_K562.py_ loads some external data files 
-(i.e. files with known contact frequencies, ChipSeq, E1 and etc.). 
-Then it builds a dataset with predictor values for each contact.
-Technically it and specifies paramteres (file names and etc.) and then
-uses classes from DataGenerators, so one should read comments and code in
-DataGenerators.py to get idea of how it works.
+The module _GenerateData_K562.py_ loads some external files 
+(i.e. file with known contact frequencies, ChipSeq, E1 and etc.) 
+and builds a dataset with predictor values for each contact.
+
+The architecture of the data generation is following:
+
+1. Reader object is responsible for parsing of specific data (i.e. ChiP-seq) and store it in pandas dataframe format.
+
+2. Predictor_generator object uses reader object as a proxy to access data and based on epigenetic data provided by reader and coordinates of pair of loci generates specific predictors (in other words, performs parametrization)
+
+3. DataGenerator object uses one contact_reader object and list of predictor_generator objects (each linked to its reader object)  to generate predictors for each contacts accessible by contact_reader object.
+
+Most of predictor_gerenrator classes do not accept vectorized operation, which means that they accept one pair of loci and return predictor for this pair. When you have multiple loci, it's much more computationally efficient to accept all of them at once as a list (or series or array) and calculate predictors using pandas and numpy vector operations. As for now, we have such implementation only for several predictors (those are available in VectPredictorGenerators.py). Contributions are welcome =)
+
 
 Basic usage:
+
 Set variables:
 
     '''python
@@ -46,7 +42,8 @@ as well as filenames and genomic intervals of interest
 The data files currently used could be downloaded from 
 http://genedev.bionet.nsc.ru/site/hic_out/3DPredictor/
 
-There are 'readers' which read data files and 'predictor generators' which generate predictors for contacts. Note that you can change options of this functions
+Few sample data files could be downloaded from 
+http://genedev.bionet.nsc.ru/hic_out/3DPredictor/
 
 Note that predictors generation takes ~3h for 500 000 contacts.
 One may change parallelization options by tweak code in DataGenerator.py:
