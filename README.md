@@ -45,7 +45,7 @@ as well as filenames and genomic intervals of interest
     '''python
     input_folder = "set/path/to/this/variable"
 The data files currently used could be downloaded from 
-http://genedev.bionet.nsc.ru/hic_out/3DPredircor
+http://genedev.bionet.nsc.ru/site/hic_out/3DPredictor/
 
 There are 'readers' which read data files and 'predictor generators' which generate predictors for contacts. Note that you can change options of this functions
 
