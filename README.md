@@ -1,7 +1,9 @@
 **3DPredictor**
 
-**How to use the code**
+**Dependences:**
+python3 (we used 3.5, although any version above 3.4 should work) with: numpy, pandas, dicttoxml, termcolor, sklearn/xgboost
 
+**How to use the code**
 
 **0. Prepare your data**
 We use epigenetic data from Encode, but one can use any source of data to train model. If you are using formats other than standard .bed files, you may want to write your own "reader" classes, which are responsible for data parsing (see below).
