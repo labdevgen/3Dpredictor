@@ -1,5 +1,0 @@
- более подробно про _init_
- нужно ли это? super(ChiPSeqReader,self).__init__(fname)
-self.chr_data = chr_data  line 54
-point
-def __repr__(self):

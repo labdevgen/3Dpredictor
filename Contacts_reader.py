@@ -8,7 +8,7 @@ from ChiPSeqReader import ChiPSeqReader
 
 MAX_CHR_DIST = 3000000000
 
-class ContactsReader():
+class ContactsReader(): #Class process files with contacts
     def __init__(self):
         self.data = {}
         self.binsize = -1
@@ -17,26 +17,19 @@ class ContactsReader():
         logging.getLogger(__name__).info("Reading file "+fname)
         if chr in self.data:
             logging.getLogger(__name__).warning("Chromosome "+chr+" will be rewritten")
-        # print(coeff_data.keys())
         if fname.split(".")[-2]=="oe":
             coeff = 1
         elif fname.split(".")[-2]=="contacts":
             coeff_data = pd.read_csv(coeff_fname, delimiter="\t")
             coeff=coeff_data["coeff"]
-        # print(coeff)
         data = pd.read_csv(fname, delimiter="\t", names=["contact_st", "contact_en", "contact_count"])
         data.dropna(inplace=True)
-        # print(data["contact_count"])
         logging.info("get normalized contacts")
-        print(datetime.datetime.now())
-        # print(data["contact_count"])
+        logging.info(datetime.datetime.now())
         data["contact_count"]=data["contact_count"]/int(coeff)
-        # print(data["contact_count"])
-        # data["contact_count"] = data["contact_count"].swifter.set_npartitions(max_cpus).apply(lambda x: x/coeff )
         if fname.split(".")[-2]=="contacts":
             assert 0<=np.all(data["contact_count"])<=1
-        print(datetime.datetime.now())
-        # print("done")
+        logging.info(datetime.datetime.now())
         data["chr"] = [chr] * len(data)
         data["dist"] = data["contact_en"] - data["contact_st"]
         assert np.all(data["dist"]) >= 0
@@ -56,15 +49,11 @@ class ContactsReader():
             min_bin = min(np.min(data["contact_st"].values), np.min(data["contact_en"].values))
             max_bin = max(np.max(data["contact_st"].values), np.min(data["contact_en"].values))
             binsize = self.binsize
-            print("min_bin", min_bin)
-            print("max_bin", max_bin)
-            print("binsize", binsize)
             contacts = []
             for i in range(min_bin, max_bin + 1, binsize):
                 for j in range(i + binsize, max_bin + 1, binsize):
                     if binsize*2+1<=abs(j-i)<=maxdist:
                         contacts.append((i, j))
-            print("get result")
             all_contacts = pd.DataFrame(contacts, columns=['contact_st', 'contact_en'])
             result = pd.merge(all_contacts, data, how='left', on=['contact_st', 'contact_en'])
             result["chr"].fillna(chr, inplace=True)
@@ -81,14 +70,6 @@ class ContactsReader():
                            maxdist=maxdist)
 
     def get_contacts(self,interval,mindist=0,maxdist=MAX_CHR_DIST):
-        # print("get contacts !!!!!!!!!!!!!!!")
-        # print(len(self.data[interval.chr]))
-        # print(len(self.data[interval.chr].query(
-        #       "dist <=@maxdist & "
-        #     + "dist >=@mindist")))
-        # print(interval.start, interval.end)
-        # print(len(self.data[interval.chr].query("19025000 <= contact_st < 115105000 & "
-        #     + "19025000 < contact_en <= 115105000")))
         return self.data[interval.chr].query(
               "@interval.start <= contact_st < @interval.end & "
             + "@interval.start < contact_en <= @interval.end & "
@@ -116,7 +97,7 @@ class ContactsReader():
             + "@interval.start < contact_en < @interval.end").index #either start or end in region to be removed
         #logging.getLogger(__name__).info (bad_ids)
         data.drop(bad_ids,inplace=True)
-        print("dropping contacts with index", bad_ids)
+        logging.getLogger(__name__).info("dropping contacts with index", bad_ids)
         #logging.getLogger(__name__).info(data.head())
 
         self.data[interval.chr] = data
@@ -144,9 +125,7 @@ class ContactsReader():
         old_length=len(self.data[interval.chr])
         bad_ids = data.query("@interval.start < contact_st < @interval.end | "
                              + "@interval.start < contact_en < @interval.end").index
-        print(bad_ids)
         dup_data= data.loc[bad_ids,:]
-        print("dup", len(dup_data))
         dup_data["contact_st"]+=interval.len
         dup_data["contact_en"] += interval.len
         dup_data["dist"] += interval.len
@@ -154,9 +133,6 @@ class ContactsReader():
         new_starts = data.contact_st.apply(lambda x: (x + interval.len) if (x >= interval.start) else x).values
         new_ends = data.contact_en.apply(lambda x: (x + interval.len) if (x >= interval.start) else x).values
         new_dist = new_ends - new_starts
-        # logging.getLogger(__name__).debug(data.iloc[new_dist < 0,:].head())
-        # logging.getLogger(__name__).debug(new_starts[new_dist < 0])
-        # logging.getLogger(__name__).debug(new_ends[new_dist < 0])
         assert np.all(new_dist >= 0)
 
         self.data[interval.chr].loc[:, "contact_st"] = new_starts
@@ -176,13 +152,11 @@ class ContactsReader():
         for chr in self.data.keys():
             contacts_data=self.data[chr]
             ctcf_data=ctcf_reader.chr_data[chr]
-            # print("ctcf_reader", ctcf_data)
             ctcf_bins=[] #list of bins which contain CTCF
             ctcf_data["mids"].apply(lambda x: ctcf_bins.extend([x//self.binsize*self.binsize, x//self.binsize*self.binsize+self.binsize,
                                                             x//self.binsize*self.binsize-self.binsize]))
             assert len(ctcf_data)*3==len(ctcf_bins)
             ctcf_bins=sorted(list(set(ctcf_bins)))
-            # print("ctcf_bins",ctcf_bins)
             contacts_with_ctcf=[]
             for i in range(0, len(ctcf_bins)):
                 for j in range(i + 1, len(ctcf_bins)):
@@ -190,16 +164,10 @@ class ContactsReader():
                         contacts_with_ctcf.append((ctcf_bins[i], ctcf_bins[j]))
             contacts_with_ctcf_df = pd.DataFrame(contacts_with_ctcf, columns=['contact_st', 'contact_en'])
             merging_dfs = pd.merge(contacts_data, contacts_with_ctcf_df, how='outer', on=['contact_st', 'contact_en'], indicator=True)
-            print(len(merging_dfs[merging_dfs["_merge"]=="both"]))
             df_with_CTCF=merging_dfs[merging_dfs["_merge"]=="both"].query("dist <=@maxdist & dist >=@mindist")
-            print("len(df_with_CTCF))", len(df_with_CTCF))
             df_wo_CTCF=merging_dfs[merging_dfs["_merge"]=="left_only"].query("dist <=@maxdist & dist >=@mindist")
             df_wo_CTCF =df_wo_CTCF.sample(n=len(df_with_CTCF)*proportion)
-            print("len(df_wo_CTCF))", len(df_wo_CTCF))
             result=pd.concat([df_with_CTCF, df_wo_CTCF])
             self.data[chr]=result
             conts_with_ctcf.append(len(df_with_CTCF))
         self.conts_with_ctcf= np.sum(conts_with_ctcf)
-            # print(self.data)
-
-

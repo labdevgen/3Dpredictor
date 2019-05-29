@@ -3,8 +3,8 @@
 # Class DataGenerator does it by applying contact2file to a dataframe
 # which contains contacts information in a format contact_st -- contact_en -- contact_count
 # To generate predictors for each contact, we use instances of PredictorGenerators
-# Each instance should be able to generate value(s) of specific predicor, e.g. ChiPSeq signal,
-# RNAseq of 1st Eigenvecor
+# Each instance should be able to generate value(s) of specific predictor, e.g. ChiPSeq signal,
+# RNAseq or 1st Eigenvecor
 # Function contact2file aggregates these predictors and writes data to file
 #
 # Generate data is high-level function that generates contacts sample,
@@ -69,10 +69,7 @@ def _apply_df(args):
 
 
 def generate_data(params, saveFileDescription = True):
-    print("sample size", params.sample_size)
-    print(params.interval, params.mindist, params.maxdist)
     contacts = params.contacts_reader.get_contacts(params.interval,mindist=params.mindist,maxdist=params.maxdist)
-    print("contacts_len", len(contacts))
     sample_size = min(params.sample_size,len(contacts))
     logging.getLogger(__name__).info("Using sample size "+str(sample_size))
     contacts_sample = contacts.sample(n=sample_size)
@@ -94,7 +91,6 @@ def contact2file(contact,DataGeneratorObj,report = 5000):
 
         line=[]
         for pg in DataGeneratorObj.not_vect_predictor_generators:
-            #print(pg)
             line += pg.get_predictors(contact)
         if len(line) != DataGeneratorObj.N_notVect_fields:
             logging.error(str(len(line))+" "+str(DataGeneratorObj.N_notVect_fields))
@@ -138,8 +134,6 @@ class DataGenerator():
 
         #Check that predictor names are unique
         pg_names = [pg.name for pg in self.predictor_generators]
-        # print(pg_names)
-        # print(set(pg_names))
         assert len(pg_names) == len(set(pg_names))
 
         #Get header row and calculate number of fields
@@ -151,7 +145,6 @@ class DataGenerator():
         for pg in self.vect_predictor_generators:
             header += pg.get_header(contacts.iloc[0,:])
         assert len(header) == len(set(header))
-        # print("header", header)
         if write_header:
             out_file.write("\t".join(header) + "\n")
 
@@ -169,21 +162,6 @@ class DataGenerator():
 
         # Now get predictors
         pool = multiprocessing.Pool(processes=n_cpus,initializer=initializer,initargs=(contacts,self))
-        '''chanks = np.array_split(contacts, n_cpus + 10)
-        for chank in chanks:
-            test = np.logical_and(np.all(chank<=2147483640),np.all(chank>=-2147483640))
-            print(test)
-            if not test:
-                logging.error("Out of range")
-            buf = ForkingPickler.dumps([chank,self])
-            n = len(buf)
-            # For wire compatibility with 3.2 and lower
-            header = struct.pack("!i", n)
-
-        self.contacts = self.contacts.iloc[0:10]
-        '''
-
-
         start_points,end_points = get_split_array_indexes(contacts,n_cpus)
         result = pool.map(_apply_df, [(st, end) for st,end in zip(start_points,end_points)])
         #result = pool.map(_apply_df, [(d, self) for d in np.array_split(contacts, n_cpus+10)])
