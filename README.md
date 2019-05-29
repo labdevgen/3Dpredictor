@@ -1,7 +1,11 @@
 **3DPredictor**
 
 **Dependences:**
-python3 (we used 3.5, although any version above 3.4 should work) with: numpy, pandas, dicttoxml, termcolor, sklearn/xgboost
+1. To train/validate/use models: python3 (we used 3.5, although any version above 3.4 should work) with: numpy, pandas, dicttoxml, termcolor, sklearn/xgboost
+
+2. To calculate scc: R >= 3.2
+
+3. To dump/export contacts in .hic format: java8, juicer_tools.jar by https://github.com/aidenlab/juicer (also provided in this repo)
 
 **How to use the code**
 
