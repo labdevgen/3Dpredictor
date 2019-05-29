@@ -20,6 +20,7 @@ Most of predictor_gerenrator classes do not accept vectorized operation, which m
 
 
 Basic usage:
+
 Set variables:
 
     '''python
