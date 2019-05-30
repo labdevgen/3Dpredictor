@@ -1,30 +1,25 @@
 **3DPredictor**
 
-**How to migrate to gitLab**
-
-1.(optional, for PyCharm users):
-
---Commit and push current version to GitHub.
---Install GitLab Project Plugin (https://plugins.jetbrains.com/plugin/7975-gitlab-projects)
---Add GitLab repo in remotes (VCS->Git->Remotes)
---Fetch, Pull, Push (all under VCS control)
-
-2.To migrate with your local copy of GitHub repo, see 
-https://stackoverflow.com/questions/20359936/import-an-existing-git-project-into-gitlab
-
-
 **How to use the code**
 
 The project contains 2 major modules:
 
 **1. Data Generation module**
 
-The module _GenerateData_K562.py_ loads some external files
-(i.e. file with contacts frequencies, ChipSeq, E1 and etc.) 
-and builds a dataset with predictor values for each contact
-It mainly wraps  DataGenerators classes with specific file name,
-so read comments and code in DataGenerators.py to get idea of
-how it works.
+The module _GenerateData_K562.py_ loads some external files 
+(i.e. file with known contact frequencies, ChipSeq, E1 and etc.)
+and builds a dataset with predictor values for each contact.
+
+The arhitecture of the data generation is following:
+
+1. Reader object is responsible for parsing of specific data (i.e. ChiP-seq) and store it in pandas dataframe format.
+
+2. Predictor_generator object uses reader object as a proxy to access data and based on epigenetic data provided by reader and coordinates of pair of loci generates specific predictors (in other words, performs parametrization)
+
+3. DataGenerator object uses one contact_reader object and list of predictor_generator objects (each linked to its reader object)  to generate predictors for each contacts accessible by contact_reader object.
+
+The _GenerateData_K562.py_ simply wraps DataGenerators object, providing specific file names.
+
 Basic usage:
 Set variables:
 
@@ -46,11 +41,6 @@ as well as filenames and genomic intervals of interest
     input_folder = "set/path/to/this/variable"
 The data files currently used could be downloaded from 
 http://genedev.bionet.nsc.ru/site/hic_out/3DPredictor/
-
-There are 'readers' which read data files and 'predictor generators' which generate predictors for contacts. Note that you can change options of this functions
-
-Few sample data files could be downloaded from
-http://genedev.bionet.nsc.ru/hic_out/3DPredictor/
 
 Note that predictors generation takes ~3h for 500 000 contacts.
 One may change parallelization options by tweak code in DataGenerator.py:
@@ -83,12 +73,12 @@ training_files - files with data for training
 validation_files - a list of files with data for validation
 
 contact type - contacts or OE values:
-
+ 
     '''python
-    for contact_type,apply_log in zip(["contacts"],[True]):
+    for contact_type,apply_log in zip(["contacts"],[True]): 
     '''
 
-keep - a list with predictors to use. Each entery should
+keep - a list with predictors to use. Each entery should 
 contain a list of predictors, or a single string _"all"_
 (for using all avaliable predictors). 
 E.g. with
@@ -98,26 +88,26 @@ E.g. with
     '''
 
  only CTCF sites inbetween contacting loci and distance between them will be used.
-
+ 
 learning algorithm - you can change this in the _Predictor.py_ module:
-
+ 
     '''python
-    def train(self,alg = xgboost.XGBRegressor(n_estimators=100,max_depth=9,subsample=0.7
+    def train(self,alg = xgboost.XGBRegressor(n_estimators=100,max_depth=9,subsample=0.7 
     '''
 
 Also set folders name for validating results in _Predictor.py_ module
 
     '''python
-    dump = True, out_dir = "/mnt/scratch/ws/psbelokopytova/201905031108polinaB/3DPredictor/out/models/"
+    dump = True, out_dir = "/mnt/scratch/ws/psbelokopytova/201905031108polinaB/3DPredictor/out/models/" 
     out_dir = "/mnt/scratch/ws/psbelokopytova/201905031108polinaB/3DPredictor/out/pics/",
     '''
- Please note that fitting model is time-consuming so fitted model is saved to the file with the name
+ Please note that fitting model is time-consuming so fitted model is saved to the file with the name 
  representing model parameters (predictors and algorithm). 
  It is automatically determined wheather such file exists and
  model can be simply loaded without fitting again 
  (to change this behaviour pass _rewriteModel=True_ when calling 
  _trainAndValidate_ function)
-
+ 
 Choose validators to estimate accuracy of the algorithm. There are 2 main validators: SCC metric and plot_juicebox module for visual assessment of prediction
 Output files:
 
@@ -139,5 +129,5 @@ For heatmap prediction after rearrangement use corresponding validating file and
     trained_predictor.validate(validation_file, show_plot = False,cell_type=cell_type,
                             #use transformation option if you want to return coordinates after rearrangement
                             #                            transformation=
-                            # [decorate_return_coordinates_after_deletion(return_coordinates_after_deletion, interval=deletion)],
+                            # [decorate_return_coordinates_after_deletion(return_coordinates_after_deletion, interval=deletion)], 
     '''
