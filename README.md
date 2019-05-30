@@ -1,8 +1,21 @@
 **3DPredictor**
 
+**Dependences:**
+1. To train/validate/use models: python3 (we used 3.5, although any version above 3.4 should work) with: numpy, pandas, dicttoxml, termcolor, sklearn/xgboost
+
+2. To calculate scc: R >= 3.2
+
+3. To dump/export contacts in .hic format: java8, juicer_tools.jar by https://github.com/aidenlab/juicer (also provided in this repo)
+
 **How to use the code**
 
-The project contains 2 major modules:
+**0. Prepare your data**
+We use epigenetic data from Encode, but one can use any source of data to train model. If you are using formats other than standard .bed files, you may want to write your own "reader" classes, which are responsible for data parsing (see below).
+
+One can use jucer_tools _dump_ command to obtain Hi-C contacts required for training. We also suggest to normalize contact counts between experiments (otherwise you can’t compare models trained using data from different Hi-C experiments). Normalization coefficient could be obtained running _NormCoef.py_ on particular contacts dataset and used later when creating the contacts_reader object.
+
+
+The model itself contains 2 major modules:
 
 **1. Data Generation module**
 
@@ -10,7 +23,7 @@ The module _GenerateData_K562.py_ loads some external files
 (i.e. file with known contact frequencies, ChipSeq, E1 and etc.)
 and builds a dataset with predictor values for each contact.
 
-The arhitecture of the data generation is following:
+The architecture of the data generation is following:
 
 1. Reader object is responsible for parsing of specific data (i.e. ChiP-seq) and store it in pandas dataframe format.
 
@@ -18,9 +31,11 @@ The arhitecture of the data generation is following:
 
 3. DataGenerator object uses one contact_reader object and list of predictor_generator objects (each linked to its reader object)  to generate predictors for each contacts accessible by contact_reader object.
 
-The _GenerateData_K562.py_ simply wraps DataGenerators object, providing specific file names.
+Most of predictor_gerenrator classes do not accept vectorized operation, which means that they accept one pair of loci and return predictor for this pair. When you have multiple loci, it's much more computationally efficient to accept all of them at once as a list (or series or array) and calculate predictors using pandas and numpy vector operations. As for now, we have such implementation only for several predictors (those are available in VectPredictorGenerators.py). Contributions are welcome =)
+
 
 Basic usage:
+
 Set variables:
 
     '''python
@@ -42,6 +57,9 @@ as well as filenames and genomic intervals of interest
 The data files currently used could be downloaded from 
 http://genedev.bionet.nsc.ru/site/hic_out/3DPredictor/
 
+Few sample data files could be downloaded from
+http://genedev.bionet.nsc.ru/hic_out/3DPredictor/
+
 Note that predictors generation takes ~3h for 500 000 contacts.
 One may change parallelization options by tweak code in DataGenerator.py:
 
@@ -51,7 +69,7 @@ One may change parallelization options by tweak code in DataGenerator.py:
     '''
 
 
-There is an example of generating data for K562 cells
+There is an example of generating data for K562 cells provided within file _GenerateData_K562.py_
 
 **Rearrangements**
 
