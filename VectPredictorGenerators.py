@@ -1,7 +1,7 @@
 import logging
 import pandas as pd
 import numpy as np
-from PredictorGenerators_new_edition import PredictorGenerator
+from PredictorGenerators import PredictorGenerator
 from shared import intersect_intervals
 
 class VectPredictorGenerator(PredictorGenerator):

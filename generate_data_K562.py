@@ -6,7 +6,7 @@ from TssReader import TssReader
 from E1_Reader import E1Reader,fileName2binsize
 from shared import Interval, Parameters
 from DataGenerator import generate_data
-from PredictorGenerators_new_edition import E1PredictorGenerator,ChipSeqPredictorGenerator, \
+from PredictorGenerators import E1PredictorGenerator,ChipSeqPredictorGenerator, \
                 SmallChipSeqPredictorGenerator,SmallE1PredictorGenerator, \
                 SitesOrientPredictorGenerator, OrientBlocksPredictorGenerator, ConvergentPairPredictorGenerator, Distance_to_TSS_PG
 from VectPredictorGenerators import loopsPredictorGenerator
