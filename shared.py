@@ -234,4 +234,50 @@ def decorate_return_coordinates_after_deletion(func, interval):
     result.__name__ = interval.__repr__()
     return result
 
+def get_bin_size(data, fields = ["contact_en","contact_st"]):
+    f1 = fields[0]
+    f2 = fields[1]
+    dist = pd.unique(data[f1] - data[f2])
+    sorted_starts = np.sort(data[f1].values[:min(1000, len(data))])
+    dist2 = np.unique(np.subtract(sorted_starts[1:], sorted_starts[:-1]))
+    assert (dist2 >= 0).all()
+    dist = np.unique(np.concatenate((dist, dist2)))
+    dist = dist[np.nonzero(dist)]
+    assert len(dist) > 0
+    binsize = min(dist)
+    assert int(binsize) == binsize
+    return int(binsize)
 
+def sparse2dense(data,fields=["st","end","oe"], debug_mode = False):
+    # Sparse to dense
+    # IMPORTANT: 1.) data should be already binned
+    # 2.) min(data["st"]) will be subtracted from all coordinates
+    #
+    # assume 'data' is pd.DataFrame
+    # describing matrix in sparce format
+    # where columns with names
+    # fields[0] and fields[1] are row and column ids of matrix item
+    # and column fields[2] is matrix value
+    # sparse2dense will return numpy array corrsponding to dense matrix
+    f1 = fields[0]
+    f2 = fields[1]
+    f3 = fields[2]
+    L = data[f2].max() - data[f1].min() + 1
+    array = np.zeros(shape=(L, L))
+    X = (data[f1] - data[f1].min()).values
+    Y = (data[f2] - data[f1].min()).values
+    array[X, Y] = data[f3]
+    array[Y, X] = data[f3]
+
+    if debug_mode:
+    # slow; use ones for debuging only
+        global_min = data[f1].min()
+        def check_func(series):
+            x = int(series[f1] - global_min)
+            y = int(series[f2] - global_min)
+            return array[x,y] == array[y,x] == series[f3]
+
+        data["check"] = data.apply(check_func,axis = "columns")
+        assert np.all(data["check"].values)
+        print ("passed check!")
+    return array

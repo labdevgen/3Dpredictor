@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import logging
 import numpy as np
+from shared import get_bin_size
 
 class MatrixPlotter(): #A class that plot fragments of heatmap
                         #Note - not optimized for large datasets such as whole chromosome
@@ -47,14 +48,15 @@ class MatrixPlotter(): #A class that plot fragments of heatmap
             return
 
         if binsize == None: #infer binsize from data
-            dist = pd.unique(self.data["contact_en"]-self.data["contact_st"])
-            sored_starts = np.sort(self.data["contact_st"].values[:min(1000,len(self.data))])
-            dist2 = np.unique(np.subtract(sored_starts[1:],sored_starts[:-1]))
-            assert (dist2 >= 0).all()
-            dist = np.unique(np.concatenate((dist,dist2)))
-            dist = dist[np.nonzero(dist)]
-            assert len(dist) > 0
-            binsize = min(dist)
+            # dist = pd.unique(self.data["contact_en"]-self.data["contact_st"])
+            # sorted_starts = np.sort(self.data["contact_st"].values[:min(1000,len(self.data))])
+            # dist2 = np.unique(np.subtract(sorted_starts[1:],sorted_starts[:-1]))
+            # assert (dist2 >= 0).all()
+            # dist = np.unique(np.concatenate((dist,dist2)))
+            # dist = dist[np.nonzero(dist)]
+            # assert len(dist) > 0
+            # binsize = min(dist)
+            binsize = get_bin_size(self.data)
             logging.getLogger(__name__).info("Using binsize "+str(binsize))
 
         Interval_size_bins = (interval.end - interval.start) // binsize + 1
