@@ -1,10 +1,10 @@
 # Written by Minja, 2018-09
-# Class Predictor, to train and validate models
-# Basic functionality:
+# Class Predictor, to tain and validate models
+# Baseic functionality:
 # 1. Loading files with predictors
 # 2. Drop different sets of predictors
 # 3. Train and validate models
-# 4. Perform estimation and visualization of results
+# 4. Perform estimation and visualization of results (TODO)
 
 import logging,os,re,pickle,sklearn
 import numpy as np
@@ -25,7 +25,7 @@ import numpy as np
 import math
 import xgboost
 from catboost import CatBoostRegressor
-from shared import Interval
+from shared import Interval, get_bin_size
 import datetime
 
 def ones_like(contacts,*args):
@@ -99,6 +99,7 @@ class Predictor(object):
             return 0
         # create file with feature importances
         importances = pd.Series(self.trained_model.feature_importances_, index = self.predictors ).sort_values(ascending=False)
+        #print(importances)
         importances.to_csv(dump_path + ".featureImportance.txt", sep='\t')
         plt.plot(range(len(self.trained_model.feature_importances_)),
                  self.trained_model.feature_importances_, marker="o")
@@ -134,7 +135,7 @@ class Predictor(object):
               # alg=sklearn.ensemble.RandomForestRegressor(n_estimators=100, max_depth=9
                                    ),
               shortcut = "model", apply_log = True,
-              dump = True, out_dir = "/mnt/scratch/ws/psbelokopytova/201905031108polinaB/3DPredictor/out/models/",
+              dump = True, out_dir = "/mnt/scratch/ws/psbelokopytova/201907031108polinaB/3DPredictor/out/models/",
               weightsFunc = ones_like,
               show_plot = True,
               *args, **kwargs):
@@ -174,8 +175,10 @@ class Predictor(object):
             # read data
             self.input_data = self.read_file(self.input_file)
             self.train_chrms = set(self.input_data["chr"].values)
+            print("!!!!!!!!1", self.train_chrms)
             self.input_data.fillna(value=0, inplace=True)
             self.contacts = np.array(self.input_data["contact_count"].values)
+            print("train contacts", self.contacts)
 
             # fit new model
             if apply_log:
@@ -247,7 +250,17 @@ class Predictor(object):
         plt.clf()
 
     def scc(self,validation_data,predicted,out_dir,**kwargs):
+        # if self.apply_log:
+        #     print(validation_data["contact_count"])
+        #     print(predicted)
+        #     validation_data["contact_count"] = validation_data["contact_count"].apply(lambda x: math.exp(x))
+        #     predicted = np.exp(np.array(predicted))
+        #     print(validation_data["contact_count"])
+        #     print(predicted)
+        # print(validation_data["chr"])
         chromosome = str(validation_data["chr"][1])
+        binsize = str(get_bin_size(validation_data))
+        # print("chromosome", chromosome)
         if "h" not in kwargs:
             kwargs["h"] = 2
         else:
@@ -257,7 +270,7 @@ class Predictor(object):
         else:
             add_loop(validation_data, kwargs["loop_file"])
             d = pd.concat([validation_data["contact_st"],validation_data["contact_en"],validation_data["contact_count"],pd.DataFrame(predicted),validation_data["IsLoop"]], axis=1)
-        out_fname = os.path.join(out_dir+"scc/",self.__represent_validation__()) + ".scc"
+        out_fname = os.path.join(out_dir+"scc/",chromosome + "." + binsize+"."+ self.__represent_validation__()) + ".scc"
         pd.DataFrame.to_csv(d, out_fname, sep=" ", index=False)
         logging.info(datetime.datetime.now())
         if "p_file" not in kwargs or "e_file" not in kwargs:
@@ -267,9 +280,10 @@ class Predictor(object):
                 out = subprocess.check_output(["Rscript", kwargs["scc_file"], out_fname,str(kwargs["h"]), chromosome, kwargs["interact_pr_en"]])
         else:
             out = subprocess.check_output(["Rscript", kwargs["scc_file"], out_fname, str(kwargs["h"]), chromosome, kwargs["p_file"], kwargs["e_file"]])
+        print(str(out))
 
 
-    def decorate_scc(self, func, h, scc_file,cell_type, **kwargs):
+    def decorate_scc(self, func, h, scc_file,cell_type,**kwargs):
         if "loop_file" in kwargs:
             if "p_file" in kwargs and "e_file" in kwargs:
                 result = partial(func, h=h, scc_file=scc_file, loop_file=kwargs["loop_file"], p_file=kwargs["p_file"], e_file=["e_file"])
@@ -277,6 +291,7 @@ class Predictor(object):
                 result = partial(func, h=h, scc_file=scc_file, loop_file=kwargs["loop_file"])
         elif "loop_file" not in kwargs:
             if "p_file" in kwargs and "e_file" in kwargs:
+                # print(kwargs["p_file"])
                 result = partial(func, h=h, scc_file=scc_file, p_file=kwargs["p_file"], e_file=kwargs["e_file"])
             elif "interact_pr_en" in kwargs:
                 result = partial(func, h=h, scc_file=scc_file, interact_pr_en=kwargs["interact_pr_en"])
@@ -288,19 +303,24 @@ class Predictor(object):
         return result
 
     def plot_juicebox(self,validation_data,predicted,out_dir,**kwargs):
+        print("predicted", predicted)
+        print("validation cont_count", validation_data["contact_count"])
         predicted_data = validation_data.copy(deep=True)
         predicted_data["contact_count"] = predicted
-        out_dir = "/mnt/scratch/ws/psbelokopytova/201905031108polinaB/3DPredictor/out/hic_files"
+        # print(predicted_data.query("contact_count >10000")['contact_count'])
+        out_dir = "/mnt/scratch/ws/psbelokopytova/201907031108polinaB/3DPredictor/out/hic_files"
         mp = MatrixPlotter()
         mp.set_data(predicted_data)
         mp.set_control(validation_data)
-        MatPlot2HiC(mp, self.__represent_validation__(), out_dir)
+        chromosome = str(validation_data["chr"][1])
+        #mp.set_apply_log(self.apply_log)
+        MatPlot2HiC(mp, chromosome + "." + self.__represent_validation__(), out_dir)
 
     def return_predicted(self, validation_data,predicted,out_dir,**kwargs):
         return [validation_data, predicted]
     # Validate model
     def validate(self, validation_file,
-                 out_dir = "/mnt/scratch/ws/psbelokopytova/201905031108polinaB/3DPredictor/out/pics/",
+                 out_dir = "/mnt/scratch/ws/psbelokopytova/201907031108polinaB/3DPredictor/out/",
                  validators = None,
                  transformation = [equal],
                  cell_type=None,
@@ -322,14 +342,17 @@ class Predictor(object):
         assert [chr not in self.train_chrms for chr in validate_chrms]
         self.transformation_for_validation_data = ""
         self.predicted = self.trained_model.predict(self.validation_data[self.predictors])
+        print("!!!!!!!!!!!predicted", self.predicted)
         for transformation_function in transformation:
             print(transformation_function.__name__)
+            print(self.validation_data)
             self.transformation_for_validation_data+=transformation_function.__name__
             self.predicted = transformation_function(self.predicted,
                                         data=self.validation_data, data_type="predicted")
             self.validation_data = transformation_function(self.validation_data["contact_count"].values,
                                                                data=self.validation_data, data_type="validation")
 
+        print(self.validation_data)
         #do this for validation with observed contacts
         if self.apply_log:
             self.predicted = np.exp(self.predicted)
@@ -372,7 +395,9 @@ class Predictor(object):
         logging.getLogger(__name__).info("Reading file "+inp_file)
         input_data = pd.read_csv(inp_file, delimiter="\t", dtype=dtypes,
                                  header=0, names=header)
-        input_data.fillna(value=0, inplace=True) # Filling N/A values
+        # print(input_data.keys())
+        # print(len(input_data.keys()))
+        input_data.fillna(value=0, inplace=True) # Filling N/A values TODO check why N/A appear
         return input_data
 
     # Read available predictors, drop non-predictors
@@ -380,4 +405,5 @@ class Predictor(object):
     def read_data_predictors(self,inp_file):
         header = self.get_avaliable_predictors(inp_file)
         self.predictors = [h for h in header if not h in self.constant_nonpredictors]
+        # print(self.predictors)
         self.input_file = inp_file

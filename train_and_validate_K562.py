@@ -57,30 +57,31 @@ for training_file in training_files:
                     trained_predictor.draw_Feature_importances(show_plot=False)
                     for validation_file in validation_files:
                         if apply_log:
-                            trained_predictor.validate(validation_file, show_plot = False,cell_type=cell_type,
-                            #use transformation option if you want to return coordinates after rearrangement
-                            #                            transformation=
-                            # [decorate_return_coordinates_after_deletion(return_coordinates_after_deletion, interval=deletion)],
-                                                       #validators and its options
-                                                       validators=[trained_predictor.plot_juicebox,
-                                                           trained_predictor.decorate_scc(
-                                                           trained_predictor.scc, h=h, scc_file="scc.r",cell_type=cell_type,
-                                                          ),
-                                                           ])
-
-                                                   # validators=[trained_predictor.r2score, trained_predictor.plot_matrix])
-                        else:
-                            trained_predictor.validate(validation_file, show_plot=False,cell_type=cell_type,
-                                                       # use transformation option get contacts count from OE values
-                                                       transformation=[decorate_oe2obs(oe2obs,
-                                                                                      expected_folder=expected_folder,
-                                                                                      cell_type=cell_type,
-                                                                                      coeff_fname="coefficient." + cell_type + ".5KB.txt")],
+                            trained_predictor.validate(validation_file, show_plot=False, cell_type=cell_type,
+                                                       #                            transformation=
+                                                       # [decorate_return_coordinates_after_deletion(return_coordinates_after_deletion, interval=deletion)],
                                                        validators=[trained_predictor.plot_juicebox,
                                                                    trained_predictor.decorate_scc(
-                                                           trained_predictor.scc, h=h, scc_file="scc.r",cell_type=cell_type,
+                                                                       trained_predictor.scc, h=h, scc_file="scc.r",
+                                                                       cell_type=cell_type),
+                                                                   ], out_dir=out_dir)
+
+                        # validators=[trained_predictor.r2score, trained_predictor.scc,
+                        #             trained_predictor.plot_matrix, trained_predictor.plot_juicebox])
+                        else:
+                            trained_predictor.validate(validation_file, show_plot=False, cell_type=cell_type,
+                                                       transformation=[decorate_oe2obs(oe2obs,
+                                                                                       expected_folder=expected_folder,
+                                                                                       cell_type=cell_type,
+                                                                                       coeff_fname="coefficient." + cell_type + ".5KB.txt")],
+                                                       validators=[trained_predictor.plot_juicebox,
+                                                                   trained_predictor.decorate_scc(
+                                                                       trained_predictor.scc, h=h, scc_file="scc.r",
+                                                                       cell_type=cell_type,
+                                                                       out_dir=out_dir + "scc/" + cell_type + "/"
                                                                    ),
-                                                           ])
+                                                                   ])
+
 
 
 
