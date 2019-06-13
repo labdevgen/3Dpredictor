@@ -160,9 +160,9 @@ smoothMat1 <- function(dat, h){
     for (i in seq_len(r)){
 		#message(c("i:", i))
         for (j in seq_len(c)){
-            #if((abs(i-j)<60-h)&&abs(i-j)>2 + h){
+            if((abs(i-j)<1500000/binsize-h)&&abs(i-j)>2 + h){
             smd_matr[i,j] = mean(matr[rlb[i]:rrb[i], clb[j]:crb[j]])
-            #}
+            }
         }
     }
 
@@ -170,6 +170,20 @@ smoothMat1 <- function(dat, h){
     rownames(smd_matr)=rownames(dat)
 
     return(smd_matr)
+}
+
+
+
+
+binsize_def <- function(M0){
+  buf = unique(M0[order(M0[,1]),1])
+  for (i in 1:(length(buf)-1)){
+    buf[i] = buf[i + 1] - buf[i]
+  }
+  buf = buf[1:(length(buf)-1)]
+  binsize = min(buf)
+  
+  return(binsize)
 }
 
 prep1 <- function(R1, R2, resol, h, max){
@@ -214,16 +228,17 @@ prep1 <- function(R1, R2, resol, h, max){
 chrs_length = c(249250621,243199373,198022430,191154276,180915260,171115067,159138663,146364022,141213431,135534747,135006516,133851895,115169878,107349540,102531392,90354753,81195210,78077248,59128983,63025520,48129895,51304566)
 #message(c("step:", 0))
 #print("0")
-binsize <- 25000
-chrs_length = chrs_length%/%binsize
+
+
+
 args = commandArgs(trailingOnly=TRUE)
 in_fname = args[1]
 h = as.numeric(args[2])
+message(c("h=",h))
 chr = args[3]
 promoters = args[4]
 enhancers = args[5]
 message(c("in_fname =:", in_fname))
-binsize <- 25000
 #chr <- "1"
 #cell_type1 <- "NHEK"
 #cell_type2 <- "IMR90"
@@ -236,13 +251,14 @@ M2 <- read.table(in_fname,head=T)
 M2[,3] = M1[,4]
 M1[is.na(M1)] <- 0
 M2[is.na(M2)] <- 0
-
+binsize = binsize_def(M1)
+chrs_length = chrs_length%/%binsize
 maxx = max(max(M1[,2]),max(M2[,2]))
 minn = min(min(M1[,1]),min(M2[,1]))
-mx = max(max(M1[,2]),max(M2[,2]))/25000
-mn = min(min(M1[,1]),min(M2[,1]))/25000
+mx = max(max(M1[,2]),max(M2[,2]))/binsize
+mn = min(min(M1[,1]),min(M2[,1]))/binsize
 #print(M1[1,3])
-wide = binsize*60
+wide = binsize*1500000/binsize
 maxdist = maxx - minn - 2*binsize
 #print(maxdist)
 #message(c("maxM1:", max(M1[,2])))
@@ -261,18 +277,18 @@ Z6 <- matrix(0, nrow = length(Z2), ncol = length(Z2))
 	
 
 for (t in 1:length(M1[,3])) {
-  r = (M1[t,1])/25000 + 1
-  c = (M1[t,2])/25000 + 1
-  if(abs(r-c)<60&&abs(r-c)>2){
+  r = (M1[t,1])/binsize + 1
+  c = (M1[t,2])/binsize + 1
+  if(abs(r-c)<1500000/binsize&&abs(r-c)>2){
     Z4[r,c] = M1[t,3]
     Z4[c,r] = M1[t,3]}
 }
 
 #message(c("step:", 0))
 for (t in 1:length(M2[,3])) {
-  r = (M2[t,1])/25000 + 1
-  c = (M2[t,2])/25000 + 1
-  if(abs(r-c)<60&&abs(r-c)>2){
+  r = (M2[t,1])/binsize + 1
+  c = (M2[t,2])/binsize + 1
+  if(abs(r-c)<1500000/binsize&&abs(r-c)>2){
     Z5[r,c] = M2[t,3]
     Z5[c,r] = M2[t,3]}
 }
@@ -297,9 +313,9 @@ En <- read.table(enhancers,head=T)
 message(c("scc =:", 0))
 for(t in which(En[,1]==chr)) {
   for(l in which(Pr[,1]==chr)) {
-    r = Pr[l,2]%/%25000 + 1
-    c = En[t,2]%/%25000 + 1
-    if(r<mx&&c<mx&&r>mn&&c>mn&&abs(r-c)<60&&abs(r-c)>2){
+    r = Pr[l,2]%/%binsize + 1
+    c = En[t,2]%/%binsize + 1
+    if(r<mx&&c<mx&&r>mn&&c>mn&&abs(r-c)<1500000/binsize&&abs(r-c)>2){
       Z6[r,c] = 1
       Z6[c,r] = 1}
   }}
@@ -311,7 +327,7 @@ message(c("scc =:", 1))
 for (r in 1:length(Z4[,1])){
   for (c in 1:length(Z4[,1])){
     #pr_en
-    if(abs(r-c)<=60&&abs(r-c)>2&&Z6[r,c]==1){
+    if(abs(r-c)<=1500000/binsize&&abs(r-c)>2&&Z6[r,c]==1){
       mse_pr_en = mse_pr_en + (Z4[r,c] - Z5[r,c])*(Z4[r,c] - Z5[r,c])
       mod_avr_pr_en = mod_avr_pr_en + abs(Z4[r,c] - Z5[r,c])
       if(Z4[r,c]!=0){
@@ -320,8 +336,24 @@ for (r in 1:length(Z4[,1])){
       if(r>mn&&r<mx&&c>mn&&c<mx){k_pr_en = k_pr_en + 1}
       if(abs(Z4[r,c])+abs(Z5[r,c]!=0)){k_mod_pr_en = k_mod_pr_en + 1}
     }
+  }}
+
+#pr_en
+mse_pr_en = sqrt(mse_pr_en/k_pr_en)
+mod_avr_pr_en = mod_avr_pr_en/k_mod_pr_en
+mod_ps_pr_en = mod_ps_pr_en/k_mod_pr_en
+message(c("mse_pr_en",mse_pr_en))
+message(c("mod_avr_pr_en",mod_avr_pr_en))
+message(c("mod_ps_pr_en",mod_ps_pr_en))
+}
+if (1==1){
+#evaluate easy metrics
+
+
+for (r in 1:length(Z4[,1])){
+  for (c in 1:length(Z4[,1])){
     #all
-    if(abs(r-c)<=60&&abs(r-c)>2){
+    if(abs(r-c)<=1500000/binsize&&abs(r-c)>2){
       mse = mse + (Z4[r,c] - Z5[r,c])*(Z4[r,c] - Z5[r,c])
       mod_avr = mod_avr + abs(Z4[r,c] - Z5[r,c])
       if(Z4[r,c]!=0){mod_ps = mod_ps + abs((Z4[r,c] - Z5[r,c])/Z4[r,c])
@@ -331,17 +363,11 @@ for (r in 1:length(Z4[,1])){
     }
   }}
 
-#pr_en
-mse_pr_en = sqrt(mse_pr_en/k_pr_en)
-mod_avr_pr_en = mod_avr_pr_en/k_mod_pr_en
-mod_ps_pr_en = mod_ps_pr_en/k_mod_pr_en
+
 #all
 mse = sqrt(mse/k)
 mod_avr = mod_avr/k
 mod_ps = mod_ps/k_mod_ps
-message(c("mse_pr_en",mse_pr_en))
-message(c("mod_avr_pr_en",mod_avr_pr_en))
-message(c("mod_ps_pr_en",mod_ps_pr_en))
 message(c("mse",mse))
 message(c("mod_avr",mod_avr))
 message(c("mod_ps",mod_ps))
@@ -373,13 +399,11 @@ j = get.scc1(processed, binsize, maxdist)
 message(c("scc =:", j$scc))
 message(c("cor =:", c))
 out_fname = paste(in_fname,"out",sep=".")
-if (length(M1[1,])>4){
-  out1 = paste("corr","scc","MSE","mod_avr","Pr_en_MSE","Pr_en_mod_avr","mod_ps","mod_ps_pr_en",sep = "	")
-  out2 = paste(c,as.numeric(j$scc), mse, mod_avr,mse_pr_en,mod_avr_pr_en,mod_ps,mod_ps_pr_en, sep =  "	")
-}
-if (length(M1[1,])<=4){
-  out1 = paste("corr","scc","MSE","mod_avr","Pr_en_MSE","Pr_en_mod_avr","mod_ps","mod_ps_pr_en", sep = "	")
-  out2 = paste(c,as.numeric(j$scc), mse, mod_avr,mse_pr_en,mod_avr_pr_en,mod_ps,mod_ps_pr_en, sep =  "	")
-}
+#if (length(M1[1,])>4){
+#  out1 = paste("corr","scc","MSE","mod_avr","Pr_en_MSE","Pr_en_mod_avr","mod_ps","mod_ps_pr_en",sep = "	")
+#  out2 = paste(c,as.numeric(j$scc), mse, mod_avr,mse_pr_en,mod_avr_pr_en,mod_ps,mod_ps_pr_en, sep =  "	")
+#}
+out1 = paste("corr","scc","MSE","mod_avr","Pr_en_MSE","Pr_en_mod_avr","mod_ps","mod_ps_pr_en", sep = "	")
+out2 = paste(c,as.numeric(j$scc), mse, mod_avr,mse_pr_en,mod_avr_pr_en,mod_ps,mod_ps_pr_en, sep =  "	")
 out = paste(out1,"\n",out2,sep = "")
 write(out,out_fname,sep = " ")
