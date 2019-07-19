@@ -135,7 +135,7 @@ class Predictor(object):
               # alg=sklearn.ensemble.RandomForestRegressor(n_estimators=100, max_depth=9
                                    ),
               shortcut = "model", apply_log = True,
-              dump = True, out_dir = "/mnt/scratch/ws/psbelokopytova/201907031108polinaB/3DPredictor/out/models/",
+              dump = True, out_dir = "output/models/",
               weightsFunc = ones_like,
               show_plot = True,
               *args, **kwargs):
@@ -308,7 +308,7 @@ class Predictor(object):
         predicted_data = validation_data.copy(deep=True)
         predicted_data["contact_count"] = predicted
         # print(predicted_data.query("contact_count >10000")['contact_count'])
-        out_dir = "/mnt/scratch/ws/psbelokopytova/201907031108polinaB/3DPredictor/out/hic_files"
+        out_dir = "output/hic_files"
         mp = MatrixPlotter()
         mp.set_data(predicted_data)
         mp.set_control(validation_data)
@@ -320,7 +320,7 @@ class Predictor(object):
         return [validation_data, predicted]
     # Validate model
     def validate(self, validation_file,
-                 out_dir = "/mnt/scratch/ws/psbelokopytova/201907031108polinaB/3DPredictor/out/",
+                 out_dir = "output/",
                  validators = None,
                  transformation = [equal],
                  cell_type=None,
