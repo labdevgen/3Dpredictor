@@ -1,0 +1,2 @@
+cell_type	coeff	median	std
+NPC	11489	11248	2632
