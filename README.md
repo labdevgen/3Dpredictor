@@ -108,16 +108,6 @@ One may change parallelization options by tweak code in DataGenerator.py:
 
 There is an example of generating data for K562 cells provided within file _GenerateData_K562.py_
 
-**Rearrangements**
-
-If you want to predict contacts after rearrangement you should generate predictors for contacts with rearrangement.You should apply special rearrangement function for EVERY 'reader'. There are functions for duplication, deletion and inversion. For example:
-
-    '''python
-    params.contacts_reader.delete_region(Interval("chr22", 16064000, 16075000))
-    '''
-
-Output of this module are file with features (predictors) for all contacts and xml file with definition of dataset. Output format: contact_st--contact_end--contact_dist--other features...
-
 **2. Training and validation module**
 
 Run module _train_and_validate_K562.py_ to train model.
@@ -177,8 +167,13 @@ Output files:
 | control.hic | heatmap with experimental data |
 
 **Rearrangements**
+If you want to predict contacts after rearrangement you should first generate appropriate predictors. You should apply special rearrangement function for EVERY 'reader' object (see above). There are functions for duplication, deletion and inversion. For example:
 
-For heatmap prediction after rearrangement use corresponding validating file and choose transformation option (now it works only for deletion):
+    '''python
+    params.contacts_reader.delete_region(Interval("chr22", 16064000, 16075000))
+    '''
+
+For prediction of heatmap of contacts in rearranged genome use corresponding validating file and choose transformation option (now it works only for deletion):
 
     '''python
     trained_predictor.validate(validation_file, show_plot = False,cell_type=cell_type,
