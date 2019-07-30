@@ -75,7 +75,7 @@ Basic usage:
 
 Set variables:
 
-    '''python
+    ```python
     params.window_size = 25000 #region around contact to be binned for predictors
     params.small_window_size = 12500 #region  around contact ancors to be considered as cis
     params.mindist = 50001 #minimum distance between contacting regions
@@ -84,13 +84,15 @@ Set variables:
     params.binsize = 20000 #when binning regions with predictors, use this binsize
     params.sample_size = 500000 #how many contacts write to file
     params.conttype = "contacts"
-    '''
+    ```
 
 as well as filenames and genomic intervals of interest 
 (see the code), and run. Data files sholud be located in 
  
-    '''python
+    ```python
     input_folder = "set/path/to/this/variable"
+    ```
+
 The data files currently used could be downloaded from 
 http://genedev.bionet.nsc.ru/site/hic_out/3DPredictor/
 
@@ -101,9 +103,9 @@ Note that predictors generation takes ~3h for 500 000 contacts.
 One may change parallelization options by tweak code in DataGenerator.py:
 
 
-    '''python
+    ```python
     n_cpus = multiprocessing.cpu_count()
-    '''
+    ```
 
 
 There is an example of generating data for K562 cells provided within file _GenerateData_K562.py_
@@ -113,39 +115,39 @@ There is an example of generating data for K562 cells provided within file _Gene
 Run module _train_and_validate_K562.py_ to train model.
 Set up following variables before running:
 
-training_files - files with data for training
+*training_files* - files with data for training
 
-validation_files - a list of files with data for validation
+*validation_files* - a list of files with data for validation
 
-contact type - contacts or OE values:
+*contact type* - contacts or OE values:
  
-    '''python
+    ```python
     for contact_type,apply_log in zip(["contacts"],[True]): 
-    '''
+    ```
 
 keep - a list with predictors to use. Each entery should 
 contain a list of predictors, or a single string _"all"_
 (for using all avaliable predictors). 
 E.g. with
  
-    '''python
+    ```python
     keep = ["CTCF_W","contact_dist"] 
-    '''
+    ```
 
  only CTCF sites inbetween contacting loci and distance between them will be used.
  
 learning algorithm - you can change this in the _Predictor.py_ module:
  
-    '''python
+    ```python
     def train(self,alg = xgboost.XGBRegressor(n_estimators=100,max_depth=9,subsample=0.7 
-    '''
+    ```
 
 Also set folders name for validating results in _Predictor.py_ module
 
-    '''python
+    ```python
     dump = True, out_dir = "/mnt/scratch/ws/psbelokopytova/201905031108polinaB/3DPredictor/out/models/" 
     out_dir = "/mnt/scratch/ws/psbelokopytova/201905031108polinaB/3DPredictor/out/pics/",
-    '''
+    ```
  Please note that fitting model is time-consuming so fitted model is saved to the file with the name 
  representing model parameters (predictors and algorithm). 
  It is automatically determined wheather such file exists and
@@ -169,15 +171,15 @@ Output files:
 **Rearrangements**
 If you want to predict contacts after rearrangement you should first generate appropriate predictors. You should apply special rearrangement function for EVERY 'reader' object (see above). There are functions for duplication, deletion and inversion. For example:
 
-    '''python
+    ```python
     params.contacts_reader.delete_region(Interval("chr22", 16064000, 16075000))
-    '''
+    ```
 
 For prediction of heatmap of contacts in rearranged genome use corresponding validating file and choose transformation option (now it works only for deletion):
 
-    '''python
+    ```python
     trained_predictor.validate(validation_file, show_plot = False,cell_type=cell_type,
                             #use transformation option if you want to return coordinates after rearrangement
                             #                            transformation=
                             # [decorate_return_coordinates_after_deletion(return_coordinates_after_deletion, interval=deletion)], 
-    '''
+    ```
