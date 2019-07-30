@@ -121,9 +121,9 @@ Set up following variables before running:
 
 *contact type* - contacts or OE values:
  
-    ```python
+```python
     for contact_type,apply_log in zip(["contacts"],[True]): 
-    ```
+```
 
 keep - a list with predictors to use. Each entery should 
 contain a list of predictors, or a single string _"all"_
