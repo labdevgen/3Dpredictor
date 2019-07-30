@@ -12,37 +12,37 @@ dicttoxml, termcolor, sklearn/xgboost, swifter
 1. Run 'example_generate_data_K562_train' and '_test' specifying chromosomes for training and source of training/validation 
 information (contacts or observed/expected ratios):
 
-'''
+```python
 #Training data for chrms 1,3,5,7,9
 python example_generate_data_K562_train.py 1,3,5,7,9 contacts.gz
 #Validation data for chr 18
 python example_generate_data_K562_test.py 18 contacts.gz
-'''
+```
 
 It will be a lot of technickal info in the output. Pay attention to names of the generated files, e.g.:
 
-'''
+```python
 DataGenerator: Writing data to file output/K562/chr1_chr3_chr5_chr7_chr9training.RandOncontacts.gz.False.11.1500000.50001.1.1.cont_with_CTCF666406.25000
 DataGenerator: Writing data to file output/K562/Interval_chr18_0_78000000validatingOrient.contacts.gz.False.11.1500000.50001.505429.all_cont.25000.txt
-'''
+```
 
 2. Insert names of generated files into the 'example_train_and_validate_K562.py':
-'''
+```python
 # set all training files
 training_files = [
     "output/K562/chr1_chr3_chr5_chr7_chr9training.RandOncontacts.gz.False.11.1500000.50001.1.1.cont_with_CTCF666406.25000",
         ]
-....
+#....
     # set all validation files
     validation_files = [
         "output/K562/Interval_chr18_0_78000000validatingOrient.contacts.gz.False.11.1500000.50001.505429.all_cont.25000.txt",
     ]
-'''
+```
 
-3. Run 'exampple_train_and_validate_K562.py'
-'''
+3. Run 'exampple_train_and_validate_K562.py
+```shell
 python exampple_train_and_validate_K562.py
-'''
+```
 
 **How to use the code**
 
