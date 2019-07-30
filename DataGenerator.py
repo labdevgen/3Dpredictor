@@ -16,7 +16,7 @@ import pandas as pd
 import datetime
 import multiprocessing
 from collections import OrderedDict
-from shared import write_XML
+from shared import write_XML,makedirs
 import os
 
 from multiprocessing.reduction import ForkingPickler
@@ -129,6 +129,9 @@ class DataGenerator():
             out_file = open(params.out_file, "a")
             write_header=False
         else:
+            # create directory if it does not exist
+            if not os.path.exists(os.path.dirname(params.out_file)):
+                makedirs(os.path.dirname(params.out_file))
             out_file = open(params.out_file, "w")
             write_header=True
 

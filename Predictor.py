@@ -24,7 +24,7 @@ from add_loop import add_loop
 import numpy as np
 import math
 import xgboost
-from catboost import CatBoostRegressor
+#from catboost import CatBoostRegressor
 from shared import Interval, get_bin_size
 import datetime
 

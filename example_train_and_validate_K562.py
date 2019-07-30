@@ -17,13 +17,13 @@ deletion = 'no deletion'
 
 # set all training files
 training_files = [
-    "output/K562/chr3_chr5_chr7training.RandOncontacts.gz.False.11.1500000.50001.1.1.cont_with_CTCF356867.25000",
+    "output/K562/chr1_chr3_chr5_chr7_chr9training.RandOncontacts.gz.False.11.1500000.50001.1.1.cont_with_CTCF666406.25000",
         ]
 
 for training_file in training_files:
     # set all validation files
     validation_files = [
-        "output/K562/Interval_chr10_50000_135500000validatingOrient.contacts.gz.False.11.1500000.50001.903243.all_cont.25000.txt",
+        "output/K562/Interval_chr18_0_78000000validatingOrient.contacts.gz.False.11.1500000.50001.505429.all_cont.25000.txt",
     ]
     #Some examples of predictors filtering:
     #predictor.filter_predictors(".*CTCF.*|.*RNA.*", keep=False) #-- discard CTCF AND RNA

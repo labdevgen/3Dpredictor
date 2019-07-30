@@ -37,8 +37,10 @@ if __name__ == '__main__':  # Requiered for parallelization, at least on Windows
         params.conttype = conttype
         params.max_cpus = 11
         params.keep_only_orient = False  # set True if you want use only CTCF with orient
-        params.use_only_contacts_with_CTCF = "cont_with_CTCF"   # "cont_with_CTCF"  #this option use for training to change proportion
-        # of contacts with nearest ctcf sites
+        params.use_only_contacts_with_CTCF = "cont_with_CTCF"   # "cont_with_CTCF"
+        # use this option to change proportion
+        # of contacts with nearest ctcf sites in training datasets
+
         write_all_chrms_in_file = True  # set True if you have train with few chromosomes. Need for writing different chromosomes in the same file
 
         fill_empty_contacts = False

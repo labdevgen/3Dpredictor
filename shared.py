@@ -149,8 +149,8 @@ def intersect_with_interval(chr_int_data1, interval, return_ids=False):
 
     #TODO Polina, if chr_int_data1 has nested intervals, chr_int_data1[chr]['end'] may not be sorted
     #  will this still work?
-    st_end = np.searchsorted(chr_int_data1[chr]['end'], interval.start)[0]
-    end_st = np.searchsorted(chr_int_data1[chr]['start'], interval.end)[0]
+    st_end = np.searchsorted(chr_int_data1[chr]['end'].values, interval.start)
+    end_st = np.searchsorted(chr_int_data1[chr]['start'].values, interval.end)
     if end_st < st_end:
         logging.getLogger(__name__).error('st_end_i larger then end_st_i')
         # As it's an error, I assume raising exeption.
@@ -281,3 +281,14 @@ def sparse2dense(data,fields=["st","end","oe"], debug_mode = False):
         assert np.all(data["check"].values)
         print ("passed check!")
     return array
+
+def makedirs(dir_path):
+    try:
+        os.makedirs(dir_path)
+    except OSError as exc:  # Python >2.5
+        if os.path.isdir(dir_path):
+            pass
+        else:
+            logging.error("Error "+str(exc.errno)+": cannot create directory "+dir_path)
+            logging.error(str(exc))
+            raise
