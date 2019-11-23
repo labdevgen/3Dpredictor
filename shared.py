@@ -1,6 +1,7 @@
 import os,sys,numbers
 import logging
 import inspect
+import requests
 from hashlib import sha224
 import numpy as np
 import pandas as pd
@@ -41,9 +42,21 @@ class Position(Interval):
         return self.start > other.start
 
 class FileReader(object):
+    def check_local_path_exist(self,path):
+        return os.path.isfile(path)
+    def check_url_path_exist(self,path):
+        try:
+            r = requests.head(path)
+            if not r.status_code in [200,302,304,307,308]:
+                return False
+            else:
+                return True
+        except:
+            return False
+
     def __init__(self,fname):
         self.fname = fname
-        if not os.path.isfile(fname):
+        if not self.check_local_path_exist(fname) and not self.check_url_path_exist(fname):
             logging.error("File "+fname+" does not exists")
             sys.exit(11)
 
