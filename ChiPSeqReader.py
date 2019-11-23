@@ -19,11 +19,11 @@ class ChiPSeqReader(FileReader): #Class process files with ChipSeq peaks
 
     #check duplicates, nested intervals, set mids, and split by chromosomes and sort
     def process_data(self,data):
-        #check duplicats
+        #check duplicates
         duplicated = data.duplicated(subset=["chr", "start", "end"])
         if sum(duplicated) > 0:
             logging.getLogger(__name__).warning(
-                "Duplicates by genomic positions found in file " + self.fname)  # TODO check why this happens
+                "Duplicates by genomic positions found in file " + self.fname)
         data.drop_duplicates(
             inplace=True)
         del duplicated
@@ -59,7 +59,7 @@ class ChiPSeqReader(FileReader): #Class process files with ChipSeq peaks
                 logging.getLogger(__name__).debug(data[nested].head(1))
                 print_example = False
         if nested_intevals_count > 0:
-            logging.getLogger(__name__).warning("Number of nested intervals: "+str(nested_intevals_count))
+            logging.getLogger(__name__).warning("Number of nested intervals: "+str(nested_intevals_count)+" in"+str(len(data)))
 
 
         return sorted_data
@@ -69,7 +69,7 @@ class ChiPSeqReader(FileReader): #Class process files with ChipSeq peaks
         logging.getLogger(__name__).info(msg="Reading ChipSeq file "+self.fname)
 
         # set random temporary labels
-        if self.fname.endswith(".gz"): #check gzipped files
+        if self.fname.endswith(".gz"):  # check gzipped files
             import gzip
             temp_file = gzip.open(self.fname)
         else:
@@ -77,8 +77,8 @@ class ChiPSeqReader(FileReader): #Class process files with ChipSeq peaks
         Nfields = len(temp_file.readline().strip().split())
         temp_file.close()
 
-        names = list(map(str,list(range(Nfields))))
-        data = pd.read_csv(self.fname,sep="\t",header=None,names=names)
+        names = list(map(str, list(range(Nfields))))
+        data = pd.read_csv(self.fname, sep="\t", header=None, names=names)
 
         # subset and rename
         data_fields = list(map(int,renamer.keys()))
@@ -125,7 +125,7 @@ class ChiPSeqReader(FileReader): #Class process files with ChipSeq peaks
         if side == "left":
             result = self.chr_data[point.chr].iloc[max(search_id-N,0):search_id,:]
             if len(result) == 0:
-                return self.get_mock_data(N=N - len(result),interval=point, midpos=0) #TODO why midpos is 0?
+                return self.get_mock_data(N=N - len(result),interval=point, midpos=0)
             if len(result) < N and N_is_strict:
                 return result.append(self.get_mock_data(N=N - len(result),interval=point, midpos=0))
             return result
@@ -141,7 +141,7 @@ class ChiPSeqReader(FileReader): #Class process files with ChipSeq peaks
         else:
             raise Exception()
 
-    def get_interval(self,interval,return_ids=False): #return all peaks intersecting interval as pd.dataframen
+    def get_interval(self,interval,return_ids=False): #return all peaks intersecting interval as pd.dataframe
                                                     #if return_ids=True returns int positions of first and last peak
         try:
             self.chr_data
@@ -150,7 +150,8 @@ class ChiPSeqReader(FileReader): #Class process files with ChipSeq peaks
             return None
 
         if not interval.chr in self.chr_data:
-            logging.error("Chromosome ",interval.chr,"not found in keys for reader ",self.proteinName)
+            logging.warning("Chromosome ",interval.chr,"not found in keys for reader ",self.proteinName)
+
             return pd.DataFrame()
 
         left = np.searchsorted(self.chr_data[interval.chr]["mids"].values,interval.start,"left")
@@ -240,19 +241,18 @@ class ChiPSeqReader(FileReader): #Class process files with ChipSeq peaks
         temp_file.close()
 
         names = list(map(str, list(range(Nfields))))
-        data = pd.read_csv(orient_fname, sep="\t", header=None, names=names)  #TODO check: CTCF fname == CTCF orient fname.split('-')[0]
-        # print(data)
+        data = pd.read_csv(orient_fname, sep="\t", header=None, names=names)
 
         # subset and rename
         data = data.iloc[:, [0, 1, 2, 4, 5]]
         data.rename(columns={"0": "chr", "1": "start", "2": "end", "4": "score", "5": "orientation"},
                     inplace=True)
 
-        # check duplicats
+        # check duplicates
         duplicated = data.duplicated(subset=["chr", "start", "end"])
         if sum(duplicated) > 0:
             logging.warning(
-                "Duplicates by genomic positions found in file " + orient_fname)  # TODO check why this happens
+                "Duplicates by genomic positions found in file " + orient_fname)
         data.drop_duplicates(
             inplace=True)
         del duplicated
@@ -284,9 +284,7 @@ class ChiPSeqReader(FileReader): #Class process files with ChipSeq peaks
              #   continue
             result_intersection_data[chr].sort_values(by=["orientation", "intersection", "score"], inplace=True)
             #duplicated = result_intersection_data[chr].duplicated(subset=["intersection", "orientation"])
-            #print(duplicated)
             result_intersection_data[chr].drop_duplicates(subset=["intersection", "orientation"], keep="first", inplace=True)
-            #print(result_intersection_data['chr4'])
             plus_orient_data = result_intersection_data[chr].query("orientation =='+'")
             plus_col_ind = self.chr_data[chr].columns.get_loc("plus_orientation")
             plus_row_list = list(plus_orient_data["intersection"])
@@ -324,7 +322,6 @@ class ChiPSeqReader(FileReader): #Class process files with ChipSeq peaks
                     logging.getLogger(__name__).warning('plus score equals minus score in line name '+str(line_name))
                     self.chr_data[chr].loc[line_name, 'minus_orientation'] = 0
                     self.chr_data[chr].loc[line_name, 'plus_orientation'] = 0
-                    #print(self.chr_data[chr].loc[line_name, :])
             self.chr_data[chr].query("plus_orientation!='0'|"
                                       "minus_orientation!='0'",inplace=True)
             self.only_orient_peaks = True
@@ -342,11 +339,62 @@ class ChiPSeqReader(FileReader): #Class process files with ChipSeq peaks
         self.chr_data[interval.chr].drop(data.index[st:en],inplace=True)
         assert len(self.chr_data[interval.chr]) + debug == old_length
 
+    def duplicate_region(self, interval):
+        st, en = self.get_interval(interval, return_ids=True)
+        dup_data=self.get_interval(interval)
+        drop_indecies = []
+        if dup_data.iloc[st, dup_data.columns.get_loc("start")] < interval.start:
+            drop_indecies.append(st)
+        elif dup_data.iloc[st, dup_data.columns.get_loc("end")] > interval.end:
+            drop_indecies.append(en)
+        dup_data.drop(dup_data.index[drop_indecies], inplace=True)
+        dup_data["start"]+=interval.len
+        dup_data["end"] += interval.len
+        dup_data["mids"] += interval.len
+        debug = len(dup_data)
+        old_length = len(self.chr_data[interval.chr])
+        data = self.chr_data[interval.chr]
+        self.chr_data[interval.chr].iloc[en:, data.columns.get_loc("start")] += interval.len
+        self.chr_data[interval.chr].iloc[en:, data.columns.get_loc("end")] += interval.len
+        self.chr_data[interval.chr].iloc[en:, data.columns.get_loc("mids")] += interval.len
+        self.chr_data[interval.chr] = pd.concat([self.chr_data[interval.chr], dup_data])
+        self.chr_data[interval.chr].sort_values(by=["start"], inplace=True)
+        assert len(self.chr_data[interval.chr]) - debug == old_length
+
     def toXMLDict(self):
         res = OrderedDict([("ProteinName",self.proteinName),
                            ("fname",self.fname),
-                           ("orintation_set",self.orient_data_real),
+                           ("orientation_set",self.orient_data_real),
                            ("only_orient_peaks_kept",self.only_orient_peaks)
                             ])
         return res
+
+    def inverse_region(self, interval,CTCF=False):
+        debug = len(self.chr_data[interval.chr])
+        st, en = self.get_interval(interval, return_ids=True)
+        en-=1 #we do it because we use .loc, not.iloc
+        data_interval = self.get_interval(interval, return_ids=False)   
+        drop_indecies = []
+        if self.chr_data[interval.chr].loc[st, "start"] < interval.start:
+            drop_indecies.append(st)
+            st+=1
+        elif self.chr_data[interval.chr].loc[en,"end"] > interval.end:
+            drop_indecies.append(en)
+            en-=1
+        self.chr_data[interval.chr].drop(drop_indecies, inplace=True)
+        starts = [interval.start+(interval.end-x) if x > (interval.start+interval.len/2)
+                                   else interval.end-(x-interval.start) for x in self.chr_data[interval.chr].loc[st:en,"end"]]
+        ends = [interval.start + (interval.end - x) if x > (interval.start + interval.len / 2)
+                                    else interval.end - (x - interval.start) for x in self.chr_data[interval.chr].loc[st:en, "start"]]
+        self.chr_data[interval.chr].loc[st:en, "start"] = starts
+        self.chr_data[interval.chr].loc[st:en, "end"] = ends
+        if CTCF==True:
+            plus_orient = self.chr_data[interval.chr].loc[st:en, "plus_orientation"].copy()
+            minus_orient=self.chr_data[interval.chr].loc[st:en, "minus_orientation"].copy()
+            self.chr_data[interval.chr].loc[st:en, "plus_orientation"]=minus_orient
+            self.chr_data[interval.chr].loc[st:en, "minus_orientation"] = plus_orient
+        assert len(self.chr_data[interval.chr]) == debug - len(drop_indecies)
+        self.chr_data[interval.chr].sort_values(by=["chr", "start"], inplace=True)
+
+
 

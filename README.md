@@ -1,32 +1,81 @@
-**How to migrate to gitLab**
+**3DPredictor**
 
-1.(optional, for PyCharm users):
+**Dependences:**
+1. To train/validate/use models: python3 (we used 3.5, although any version above 3.4 should work) with: numpy, pandas, 
+dicttoxml, termcolor, sklearn/xgboost, swifter
 
---Commit and push current version to GitHub.
---Install GitLab Project Plugin (https://plugins.jetbrains.com/plugin/7975-gitlab-projects)
---Add GitLab repo in remotes (VCS->Git->Remotes)
---Fetch, Pull, Push (all under VCS control)
+2. To calculate scc: R >= 3.2
 
-2.To migrate with your local copy of GitHub repo, see 
-https://stackoverflow.com/questions/20359936/import-an-existing-git-project-into-gitlab
+3. To dump/export contacts in .hic format: java8, juicer_tools.jar by https://github.com/aidenlab/juicer (also provided in this repo)
 
+**Quick demo reproducing main paper results**
+1. Run 'example_generate_data_K562_train' and '_test' specifying chromosomes for training and source of training/validation 
+information (contacts or observed/expected ratios):
+
+```python
+#Training data for chrms 1,3,5,7,9
+python example_generate_data_K562_train.py 1,3,5,7,9 contacts.gz
+#Validation data for chr 18
+python example_generate_data_K562_test.py 18 contacts.gz
+```
+
+It will be a lot of technickal info in the output. Pay attention to names of the generated files, e.g.:
+
+```python
+DataGenerator: Writing data to file output/K562/chr1_chr3_chr5_chr7_chr9training.RandOncontacts.gz.False.11.1500000.50001.1.1.cont_with_CTCF666406.25000
+DataGenerator: Writing data to file output/K562/Interval_chr18_0_78000000validatingOrient.contacts.gz.False.11.1500000.50001.505429.all_cont.25000.txt
+```
+
+2. Insert names of generated files into the 'example_train_and_validate_K562.py':
+```python
+# set all training files
+training_files = [
+    "output/K562/chr1_chr3_chr5_chr7_chr9training.RandOncontacts.gz.False.11.1500000.50001.1.1.cont_with_CTCF666406.25000",
+        ]
+#....
+    # set all validation files
+    validation_files = [
+        "output/K562/Interval_chr18_0_78000000validatingOrient.contacts.gz.False.11.1500000.50001.505429.all_cont.25000.txt",
+    ]
+```
+
+3. Run 'exampple_train_and_validate_K562.py
+```shell
+python exampple_train_and_validate_K562.py
+```
 
 **How to use the code**
 
-The project contains 2 major modules:
+**0. Prepare your data**
+We use epigenetic data from Encode, but one can use any source of data to train model. If you are using formats other than standard .bed files, you may want to write your own "reader" classes, which are responsible for data parsing (see below).
+
+One can use jucer_tools _dump_ command to obtain Hi-C contacts required for training. We also suggest to normalize contact counts between experiments (otherwise you can’t compare models trained using data from different Hi-C experiments). Normalization coefficient could be obtained running _NormCoef.py_ on particular contacts dataset and used later when creating the contacts_reader object.
+
+
+The model itself contains 2 major modules:
 
 **1. Data Generation module**
 
-The module _GenerateData_new.py_ loads some external files 
-(i.e. file with contacts frequencies, ChipSeq, E1 and etc.) 
-and builds a dataset with predictor values for each contact
-It mainly wraps  DataGenerators classes with specific file name,
-so read comments and code in DataGenerators.py to get idea of
-how it works.
+The module _GenerateData_K562.py_ loads some external files 
+(i.e. file with known contact frequencies, ChipSeq, E1 and etc.)
+and builds a dataset with predictor values for each contact.
+
+The architecture of the data generation is following:
+
+1. Reader object is responsible for parsing of specific data (i.e. ChiP-seq) and store it in pandas dataframe format.
+
+2. Predictor_generator object uses reader object as a proxy to access data and based on epigenetic data provided by reader and coordinates of pair of loci generates specific predictors (in other words, performs parametrization)
+
+3. DataGenerator object uses one contact_reader object and list of predictor_generator objects (each linked to its reader object)  to generate predictors for each contacts accessible by contact_reader object.
+
+Most of predictor_gerenrator classes do not accept vectorized operation, which means that they accept one pair of loci and return predictor for this pair. When you have multiple loci, it's much more computationally efficient to accept all of them at once as a list (or series or array) and calculate predictors using pandas and numpy vector operations. As for now, we have such implementation only for several predictors (those are available in VectPredictorGenerators.py). Contributions are welcome =)
+
+
 Basic usage:
+
 Set variables:
 
-    '''python
+```python
     params.window_size = 25000 #region around contact to be binned for predictors
     params.small_window_size = 12500 #region  around contact ancors to be considered as cis
     params.mindist = 50001 #minimum distance between contacting regions
@@ -35,41 +84,102 @@ Set variables:
     params.binsize = 20000 #when binning regions with predictors, use this binsize
     params.sample_size = 500000 #how many contacts write to file
     params.conttype = "contacts"
-    '''
+```
 
 as well as filenames and genomic intervals of interest 
 (see the code), and run. Data files sholud be located in 
  
-    '''python
+```python
     input_folder = "set/path/to/this/variable"
+```
+
 The data files currently used could be downloaded from 
-http://genedev.bionet.nsc.ru/hic_out/3DPredircor
+http://genedev.bionet.nsc.ru/site/hic_out/3DPredictor/
+
+Few sample data files could be downloaded from
+http://genedev.bionet.nsc.ru/hic_out/3DPredictor/
 
 Note that predictors generation takes ~3h for 500 000 contacts.
+One may change parallelization options by tweak code in DataGenerator.py:
+
+
+```python
+   n_cpus = multiprocessing.cpu_count()
+```
+
+
+There is an example of generating data for K562 cells provided within file _GenerateData_K562.py_
 
 **2. Training and validation module**
 
-Run module train_and_validate2.py to train model.
+Run module _train_and_validate_K562.py_ to train model.
 Set up following variables before running:
 
-lm - learning algorithm
+*training_files* - files with data for training
 
-training_file - file with data for training
+*validation_files* - a list of files with data for validation
 
-validation_files - a list of files with data for validation
+*contact type* - contacts or OE values:
+ 
+```python
+    for contact_type,apply_log in zip(["contacts"],[True]): 
+```
 
 keep - a list with predictors to use. Each entery should 
 contain a list of predictors, or a single string _"all"_
 (for using all avaliable predictors). 
 E.g. with
  
-    '''python
+```python
     keep = ["CTCF_W","contact_dist"] 
-    '''
+```
+
  only CTCF sites inbetween contacting loci and distance between them will be used.
+ 
+learning algorithm - you can change this in the _Predictor.py_ module:
+ 
+```python
+    def train(self,alg = xgboost.XGBRegressor(n_estimators=100,max_depth=9,subsample=0.7 
+```
+
+Also set folders name for validating results in _Predictor.py_ module
+
+```python
+    dump = True, out_dir = "/mnt/scratch/ws/psbelokopytova/201905031108polinaB/3DPredictor/out/models/" 
+    out_dir = "/mnt/scratch/ws/psbelokopytova/201905031108polinaB/3DPredictor/out/pics/",
+```
  Please note that fitting model is time-consuming so fitted model is saved to the file with the name 
  representing model parameters (predictors and algorithm). 
  It is automatically determined wheather such file exists and
  model can be simply loaded without fitting again 
  (to change this behaviour pass _rewriteModel=True_ when calling 
  _trainAndValidate_ function)
+ 
+Choose validators to estimate accuracy of the algorithm. There are 2 main validators: SCC metric and plot_juicebox module for visual assessment of prediction
+Output files:
+
+| file name | definition |
+| --------- | ---------------- |
+| file.xml | model definition |
+| featureImportances.png | histogram of feature importances |
+| featureImportances.txt | list of feature importances scores |
+| file.ssc.out | file with standard metrics and SCC for prediction |
+| file.scc | pre-file for SCC counting which looks like contact_st--contact_end--real_cont_count--predicted_cont_count |
+| data.hic | predicted heatmap |
+| control.hic | heatmap with experimental data |
+
+**Rearrangements**
+If you want to predict contacts after rearrangement you should first generate appropriate predictors. You should apply special rearrangement function for EVERY 'reader' object (see above). There are functions for duplication, deletion and inversion. For example:
+
+```python
+    params.contacts_reader.delete_region(Interval("chr22", 16064000, 16075000))
+```
+
+For prediction of heatmap of contacts in rearranged genome use corresponding validating file and choose transformation option (now it works only for deletion):
+
+```python
+    trained_predictor.validate(validation_file, show_plot = False,cell_type=cell_type,
+                            #use transformation option if you want to return coordinates after rearrangement
+                            #                            transformation=
+                            # [decorate_return_coordinates_after_deletion(return_coordinates_after_deletion, interval=deletion)], 
+```

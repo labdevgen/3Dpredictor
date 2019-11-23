@@ -48,12 +48,7 @@ def MatPlot2HiC(matplot_obj, fname, out_folder):
 
         pandas_df.columns = ["chr1", "start", "end", "count"]
         pandas_df['str1'] = 0
-        # if matplot_obj.apply_log:
-        #     print(pandas_df['count'])
-        #     pandas_df['exp'] = round(np.exp(pandas_df['count'])).astype(int)
-        # else:
-        # print(pandas_df["count"])
-        assert sum(pandas_df['count'].values < 0.000001) < (len(pandas_df['count']) / 10.)
+        assert len(pandas_df.loc[(pandas_df['count'] < 0.000001) & (pandas_df['count'] != 0)]) < (len(pandas_df['count']) / 10)
         pandas_df['exp'] = pandas_df['count'] * ( 1000000 )
         pandas_df['exp'] = round(pandas_df['exp']).astype(int)
 
@@ -104,10 +99,10 @@ def MatPlot2HiC(matplot_obj, fname, out_folder):
     # call the Juicer
     subprocess.call(
         ['java', '-jar', './juicer_tools.jar', 'pre', pre_data_filename, hic_data_filename, chromsizes_filename, '-n',
-         '-r', '25000'])
+         '-r', '5000'])
     print(colored("[SUCCESS]", 'green') + ' DATA HiC file created.\n')
 
     subprocess.call(
         ['java', '-jar', './juicer_tools.jar', 'pre', pre_control_filename, hic_control_filename, chromsizes_filename,
-         '-n', '-r', '25000'])
+         '-n', '-r', '5000'])
     print(colored("[SUCCESS]", 'green') + ' CONTROL HiC file created.\n')

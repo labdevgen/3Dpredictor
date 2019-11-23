@@ -77,6 +77,7 @@ class LoopReader(FileReader):
     def read_loops(self, start_chr_name_with_chr=True):
         logging.getLogger(__name__).info(msg="Reading Loops file "+self.fname)
         data = pd.read_csv(self.fname,sep="\t")
+        print("Read loops file")
 
         if start_chr_name_with_chr:
             #check wheather chr names include "chr"

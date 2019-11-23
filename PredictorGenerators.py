@@ -107,36 +107,44 @@ class SmallChipSeqPredictorGenerator(ChipSeqPredictorGenerator):
         super(SmallChipSeqPredictorGenerator, self).__init__(chipSeq_reader, 0, window_size, **kwargs)
 
     def get_header(self,contact):
-        self.header = [self.name + "_L", self.name + "_W", self.name + "_R"]
-        for side in ["L", "R"]:
-            for metric in ["Sig", "Dist"]:
-                for i in range(self.N_closest):
-                    self.header += [self.name + "_" + side + metric + "_" + str(i)]
+        if self.name == "CTCF_SmallChip":
+            self.header = [self.name + "_L", self.name + "_R"]
+        else:
+            self.header = [self.name + "_L", self.name + "_W", self.name + "_R"]
+            for side in ["L", "R"]:
+                for metric in ["Sig", "Dist"]:
+                    for i in range(self.N_closest):
+                        self.header += [self.name + "_" + side + metric + "_" + str(i)]
         return self.header
 
     def get_predictors(self,contact):
         #print(self.name)
         assert contact.contact_st < contact.contact_en
-        intL,intM,intR = self.intevals_around_ancor(contact)
-        sig_L = self.chipSeq_reader.get_interval(intL).sigVal.sum()
-        sig_R = self.chipSeq_reader.get_interval(intR).sigVal.sum()
-        sig_mid = self.chipSeq_reader.get_interval(intM).sigVal.sum()
-        Left_top = self.chipSeq_reader.get_nearest_peaks(Interval(contact.chr,
-                                                                  contact.contact_st - (self.window_size // 2),
-                                                                  contact.contact_st - (self.window_size // 2)),
-                                                         N=self.N_closest, side="left")
+        if contact.chr not in set(self.chipSeq_reader.chr_data.keys()):
+            return [0]*len(self.header)
+        else:
+            intL,intM,intR = self.intevals_around_ancor(contact)
+            sig_L = self.chipSeq_reader.get_interval(intL).sigVal.sum()
+            sig_R = self.chipSeq_reader.get_interval(intR).sigVal.sum()
+            sig_mid = self.chipSeq_reader.get_interval(intM).sigVal.sum()
+            Left_top = self.chipSeq_reader.get_nearest_peaks(Interval(contact.chr,
+                                                                      contact.contact_st - (self.window_size // 2),
+                                                                      contact.contact_st - (self.window_size // 2)),
+                                                             N=self.N_closest, side="left")
 
-        Left_top = Left_top["sigVal"].values.tolist() + \
-                   (contact.contact_st-Left_top["mids"]).values.tolist()
+            Left_top = Left_top["sigVal"].values.tolist() + \
+                       (contact.contact_st-Left_top["mids"]).values.tolist()
 
-        Right_top = self.chipSeq_reader.get_nearest_peaks(Interval(contact.chr,
-                                                                   contact.contact_en + (self.window_size // 2),
-                                                                   contact.contact_en + (self.window_size // 2)),
-                                                          N=self.N_closest, side="right")
-        Right_top = Right_top["sigVal"].values.tolist() + \
-                    (Right_top["mids"]-contact.contact_en).values.tolist()
-
-        return [sig_L,sig_mid,sig_R]+Left_top+Right_top
+            Right_top = self.chipSeq_reader.get_nearest_peaks(Interval(contact.chr,
+                                                                       contact.contact_en + (self.window_size // 2),
+                                                                       contact.contact_en + (self.window_size // 2)),
+                                                              N=self.N_closest, side="right")
+            Right_top = Right_top["sigVal"].values.tolist() + \
+                        (Right_top["mids"]-contact.contact_en).values.tolist()
+            if self.name == "CTCF_SmallChip":
+                return [sig_L,sig_R]
+            else:
+                return [sig_L,sig_mid,sig_R]+Left_top+Right_top
 
 
 class E1PredictorGenerator(PredictorGenerator):
@@ -296,8 +304,50 @@ class OrientBlocksPredictorGenerator(PredictorGenerator): #this PG
         has_convergent_peak = 0
         if len(L_peaks) > 0 and len(R_peaks) > 0:
             has_convergent_peak = L_peaks.plus_orientation.sum()*R_peaks.minus_orientation.sum()
-
         return [N_blocks_W,has_convergent_peak]
+
+class ConvergentPairPredictorGenerator(PredictorGenerator):
+    def __init__(self, chipSeq_reader,binsize, **kwargs):
+            self.name = chipSeq_reader.proteinName + '_ConvergentPair'
+            self.chipSeq_reader = chipSeq_reader
+            self.binsize=binsize
+            if not self.chipSeq_reader.orient_data_real:
+                logging.error('please set orientation first')
+            if not self.chipSeq_reader.only_orient_peaks:
+                logging.error('please get data with orientations only first')
+            self.vectorizable = False
+    def get_header(self,contact):
+        self.header = [self.name + "_HasConvergentPair"]
+        return self.header
+    def get_predictors(self,contact):
+        assert contact.contact_st < contact.contact_en
+        # get the nearest right and left peak to the start and to the end of contact
+        Left_start_peaks = self.chipSeq_reader.get_nearest_peaks(
+            Interval(contact.chr, contact.contact_st, contact.contact_st),N=1, side="left")
+        Left_start_peak = Left_start_peaks["minus_orientation"].values.tolist()[0] \
+            if abs(Left_start_peaks["mids"].values.tolist()[0]-contact.contact_st) <= self.binsize*2 else 0
+        Right_start_peaks = self.chipSeq_reader.get_nearest_peaks(
+            Interval(contact.chr, contact.contact_st, contact.contact_st), N=1, side="right")
+        Right_start_peak = Right_start_peaks["minus_orientation"].values.tolist()[0] \
+            if abs(Right_start_peaks["mids"].values.tolist()[0]-contact.contact_st) <= self.binsize*2 else 0
+        Left_end_peaks = self.chipSeq_reader.get_nearest_peaks(
+            Interval(contact.chr, contact.contact_en, contact.contact_en), side="left", N=1)
+        Left_end_peak = Left_end_peaks["minus_orientation"].values.tolist()[0] \
+            if abs(Left_end_peaks["mids"].values.tolist()[0] - contact.contact_en) <= self.binsize*2 else 0
+        Right_end_peaks = self.chipSeq_reader.get_nearest_peaks(
+            Interval(contact.chr, contact.contact_en, contact.contact_en), side="right", N=1)
+        Right_end_peak = Right_end_peaks["minus_orientation"].values.tolist()[0] \
+            if abs(Right_end_peaks["mids"].values.tolist()[0] - contact.contact_en) <= self.binsize*2 else 0
+        #minus orientation is orientation of CTCF to the right, plus to the left
+        # 1 if CTCF sites in the end and start of contact have convergent orientation else 0
+        start_minus_orientation = [Left_start_peak,Right_start_peak]
+        end_plus_orientation = [Left_end_peak,Right_end_peak]
+        if len(np.nonzero(start_minus_orientation)[0]) != 0 and len(np.nonzero(end_plus_orientation)[0]) != 0:
+            predictors = [1]
+        else:
+            predictors = [0]
+        return predictors
+
 
 class SitesOnlyOrientPredictorGenerator(PredictorGenerator):
     def __init__(self, chipSeq_reader, N_closest, **kwargs):
@@ -315,6 +365,7 @@ class SitesOnlyOrientPredictorGenerator(PredictorGenerator):
                 for metric in ["+_orient", "-_orient","sigVal", "dist"]:
                     for i in range(self.N_closest):
                         self.header += [self.name + "_" + contact_point + "_" + side + "_" + metric + "_" + str(i)]
+        # print("header", self.header)
         return self.header
     def get_predictors(self,contact):
         assert contact.contact_st < contact.contact_en
@@ -350,3 +401,31 @@ class SitesOnlyOrientPredictorGenerator(PredictorGenerator):
                              contact.contact_en - Window_peaks[1]["mids"]).values.tolist()
         predictors = Left_start_peaks + Right_start_peaks + Left_end_peaks + Right_end_peaks
         return predictors
+
+class Distance_to_TSS_PG(PredictorGenerator):
+    def __init__(self, TSS_reader, **kwargs):
+        self.name = '_Distance_toTSS'
+        self.TSS_reader = TSS_reader
+        self.vectorizable = False
+    def get_header(self,contact):
+        self.header=[]
+        for contact_point in"start", "end":
+            for side in "L", "R":
+                self.header +=[self.name + "_"+contact_point+"_"+side]
+        return self.header
+    def get_predictors(self,contact):
+        assert contact.contact_st < contact.contact_en
+        # get the nearest right and left peak to the start and to the end of contact
+        Left_start_peaks = self.TSS_reader.get_nearest_peaks(
+            Interval(contact.chr, contact.contact_st, contact.contact_st),N=1, side="left")
+        Left_start_peak_dist = (contact.contact_st - Left_start_peaks["TSS"]).values.tolist()
+        Right_start_peaks = self.TSS_reader.get_nearest_peaks(
+            Interval(contact.chr, contact.contact_st, contact.contact_st), N=1, side="right")
+        Right_start_peak_dist = (Right_start_peaks["TSS"] - contact.contact_st).values.tolist()
+        Left_end_peaks = self.TSS_reader.get_nearest_peaks(
+            Interval(contact.chr, contact.contact_en, contact.contact_en), side="left", N=1)
+        Left_end_peak_dist = (contact.contact_en - Left_end_peaks["TSS"]).values.tolist()
+        Right_end_peaks = self.TSS_reader.get_nearest_peaks(
+            Interval(contact.chr, contact.contact_en, contact.contact_en), side="right", N=1)
+        Right_end_peak_dist = (Right_end_peaks["TSS"] - contact.contact_en).values.tolist()
+        return Left_start_peak_dist+Right_start_peak_dist+Left_end_peak_dist+Right_end_peak_dist

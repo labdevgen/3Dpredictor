@@ -1,0 +1,2 @@
+cell_type	coeff	median	std
+Hepat	1721	1701	284

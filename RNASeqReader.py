@@ -71,15 +71,22 @@ class RNAseqReader(ChiPSeqReader):
         gene_idxs = result[interval.chr]["intersection"]
         return self.chr_data[interval.chr].iloc[gene_idxs,:]
 
-     def get_interval(self, interval): #Return all genes that intersect interval
+     def get_interval(self, interval, return_ids=False): #Return all genes that intersect interval
                                        #Also counts partial intersections
-        return intersect_with_interval(self.chr_data,interval)
+        return intersect_with_interval(self.chr_data,interval, return_ids=return_ids)
 
 
      def get_binned_interval(self):
         logging.getLogger(__name__).error("Function not yet ready")
         raise Exception("Not ready")
 
-     def delete_region(self):
-        logging.getLogger(__name__).error("Function not yet ready")
-        raise Exception("Not ready")
+     def delete_region(self, interval):
+         debug = len(self.get_interval(interval))
+         data = self.chr_data[interval.chr]
+         st, en = self.get_interval(interval, return_ids=True)
+         self.chr_data[interval.chr].loc[en:, data.columns.get_loc("start")] -= interval.len
+         self.chr_data[interval.chr].loc[en:, data.columns.get_loc("end")] -= interval.len
+         self.chr_data[interval.chr].loc[en:, data.columns.get_loc("mids")] -= interval.len
+         old_length = len(self.chr_data[interval.chr])
+         self.chr_data[interval.chr].drop(data.index[st:en], inplace=True)
+         assert len(self.chr_data[interval.chr]) + debug == old_length
