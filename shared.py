@@ -41,6 +41,10 @@ class Position(Interval):
             return self.chr > other.chr
         return self.start > other.start
 
+class Genome(object):
+    def __init__(self):
+        pass
+
 class FileReader(object):
     def check_local_path_exist(self,path):
         return os.path.isfile(path)
