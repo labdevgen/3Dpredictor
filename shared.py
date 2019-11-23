@@ -222,11 +222,11 @@ def get_bin_size(data, fields = ["contact_en","contact_st"]):
     assert int(binsize) == binsize
     return int(binsize)
 
-def sparse2dense(data,fields=["st","end","oe"], debug_mode = False):
+def sparse2dense(data,fields=["st","end","oe"], default_value=0, debug_mode = False):
     # Sparse to dense
     # IMPORTANT: 1.) data should be already binned
     # 2.) min(data["st"]) will be subtracted from all coordinates
-    #
+    # 3.) all missing data will be filled with "default_value"
     # assume 'data' is pd.DataFrame
     # describing matrix in sparce format
     # where columns with names
@@ -237,7 +237,7 @@ def sparse2dense(data,fields=["st","end","oe"], debug_mode = False):
     f2 = fields[1]
     f3 = fields[2]
     L = data[f2].max() - data[f1].min() + 1
-    array = np.zeros(shape=(L, L))
+    array = np.zeros(shape=(L, L)) + default_value
     X = (data[f1] - data[f1].min()).values
     Y = (data[f2] - data[f1].min()).values
     array[X, Y] = data[f3]
