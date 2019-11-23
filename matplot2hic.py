@@ -8,6 +8,7 @@ import pickle
 import matplotlib.pyplot as plt
 from matrix_plotter import MatrixPlotter
 from termcolor import colored
+from shared import  get_bin_size
 
 
 #   This func is for visualising Predictor results.
@@ -93,16 +94,18 @@ def MatPlot2HiC(matplot_obj, fname, out_folder):
     time1 = time.time()
     Pandas2Pre(pre_control_filename, matplot_obj.control)
     time2 = time.time()
+    matplot_obj.columns = ["chr1", "start", "end", "count"]
+    binsize = get_bin_size(matplot_obj.control, fields=["start", "start"])
     print('Time: ' + str(round(time2 - time1, 3)) + ' sec\n')
     print(colored("[SUCCESS]", 'green') + ' CONTROL pre-HiC file created.\n')
 
-    # call the Juicer
+    #call juicer
     subprocess.call(
         ['java', '-jar', './juicer_tools.jar', 'pre', pre_data_filename, hic_data_filename, chromsizes_filename, '-n',
-         '-r', '5000'])
+         '-r', binsize])
     print(colored("[SUCCESS]", 'green') + ' DATA HiC file created.\n')
 
     subprocess.call(
         ['java', '-jar', './juicer_tools.jar', 'pre', pre_control_filename, hic_control_filename, chromsizes_filename,
-         '-n', '-r', '5000'])
+         '-n', '-r', binsize])
     print(colored("[SUCCESS]", 'green') + ' CONTROL HiC file created.\n')

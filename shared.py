@@ -229,9 +229,29 @@ def return_coordinates_after_deletion(contacts, data, interval, **kwargs):
             data["contact_st"] = data["contact_st"].apply(lambda x: x if x < interval.start else x + interval.len)
             data["contact_en"] = data["contact_en"].apply(lambda x: x if x < interval.start else x + interval.len)
             return data
-def decorate_return_coordinates_after_deletion(func, interval):
-    result = partial(func, interval=interval)
-    result.__name__ = interval.__repr__()
+
+
+# TODO check this function!
+def return_coordinates_after_duplication(contacts, data, intervals, **kwargs):
+    data["contact_count"] = contacts
+    for interval in intervals:
+        dup_ids = data.query("@interval.start+interval.len < contact_st < @interval.end+interval.len | "
+                             + "@interval.start+interval.len < contact_en < @interval.end+interval.len").index
+        dup_second_copy_ids = data.query("@interval.start+interval.len < contact_st < @interval.end+interval.len | "
+                                         + "@interval.start+interval.len < contact_en+interval.len < @interval.end+interval.len").index
+        assert len(dup_ids) == len(dup_second_copy_ids)
+        data.loc[dup_ids, "contact_count"] += data.loc[dup_second_copy_ids, "contact_count"]
+        data.drop(dup_second_copy_ids, inplace=True)
+        data["contact_st"] = data["contact_st"].apply(lambda x: x if x < interval.start else x - interval.len)
+        data["contact_en"] = data["contact_en"].apply(lambda x: x if x < interval.start else x - interval.len)
+    if kwargs['data_type'] == 'predicted':
+        return data["contact_count"]
+    elif kwargs['data_type'] == 'validation':
+        return data
+
+def decorate_return_coordinates_after_rearrangements(func, intervals):
+    result = partial(func, intervals=intervals)
+    result.__name__ = intervals.__repr__()
     return result
 
 def get_bin_size(data, fields = ["contact_en","contact_st"]):
