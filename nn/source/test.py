@@ -74,9 +74,11 @@ def test_hicReader():
     print (hic.norms)
     print (datetime.datetime.now() - now)
 
+now = datetime.datetime.now()
 mem = memory_usage((test_hicReader),interval=.5)
 print ("Max memory: ",max(mem))
 print("Memory log: ",mem)
+print("Total time: ",datetime.datetime.now() - now)
 
 #mem = memory_usage((get_hic_data),interval=.5)
 #print ("Max memory: ",max(mem))

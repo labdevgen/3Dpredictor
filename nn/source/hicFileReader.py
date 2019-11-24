@@ -45,12 +45,21 @@ class hicReader(FileReader):
                                     new_chr, new_chr, "BP", self.resolution)
                 else:
                     raise TypeError
-            print("Load time: ",datetime.datetime.now() - now)
+            logging.debug("Load time: " + str(datetime.datetime.now() - now))
             now = datetime.datetime.now()
 
-            result = list(map(list,zip(*result)))
+            result = np.array(result).T
+            logging.debug("Transpose time: " + str(datetime.datetime.now() - now))
+            now = datetime.datetime.now()
+
             result = pd.DataFrame(result, columns = ["st", "en", "count"], copy=False)
+            logging.debug("DF conversion time: " + str(datetime.datetime.now() - now))
+            now = datetime.datetime.now()
+
             result = result.loc[pd.notnull(result["count"])]
+            logging.debug("N/A filtering time: " + str(datetime.datetime.now() - now))
+            now = datetime.datetime.now()
+
             # Let's normalize data to have sum over each contact within chrm ~1.0
             subsample_size = 100
             subsample = np.unique(result.st.values)
@@ -68,6 +77,9 @@ class hicReader(FileReader):
                 logging.warning("Sums of contacs for loci are very different. Examples: ")
                 logging.warning(str(s))
                 logging.warning("Using average for 'magic normalization coefficient' might be not correct")
+            logging.debug("Magic coeficient calc time: " + str(datetime.datetime.now() - now))
+            now = datetime.datetime.now()
+
             result.query("(en-st)<@self.maxdist",inplace=True)
             assert len(result) > 0
             #TODO uncomment this after debug tests! It will check consistency with genome
