@@ -1,3 +1,6 @@
+# Code by Minja Fishman
+# Nov 2019, ICG SB RAS
+
 import logging
 import os
 import sys
@@ -24,10 +27,6 @@ class bigWigReader(FileReader): #Reading, processing and storing the data from b
                 self.proteinName = name
             assert self.proteinName != ""
             self.genome = genome
-            if self.genome == None:
-                logging.getLogger(__name__).warning("We HIGLY RECOMEND to provide genome \
-                                                    object to avoid genome version conflicts")
-
             super(bigWigReader, self).__init__(fname)
 
         def readData(self, inMemory = False, chunkSize = 50000000):

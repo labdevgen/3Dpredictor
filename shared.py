@@ -295,7 +295,7 @@ def sparse2dense(data,fields=["st","end","oe"], default_value=0, debug_mode = Fa
     # where columns with names
     # fields[0] and fields[1] are row and column ids of matrix item
     # and column fields[2] is matrix value
-    # sparse2dense will return numpy array corrsponding to dense matrix
+    # sparse2dense will return numpy array corresponding to dense matrix
     f1 = fields[0]
     f2 = fields[1]
     f3 = fields[2]

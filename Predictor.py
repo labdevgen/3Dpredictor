@@ -1,6 +1,6 @@
 # Written by Minja, 2018-09
-# Class Predictor, to tain and validate models
-# Baseic functionality:
+# Class Predictor, to train and validate models
+# Basic functionality:
 # 1. Loading files with predictors
 # 2. Drop different sets of predictors
 # 3. Train and validate models

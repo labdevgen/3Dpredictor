@@ -1,7 +1,13 @@
+# Code by Minja Fishman
+# Nov 2019, ICG SB RAS
+
+import inspect
 import logging
 import os
 import sys
 import gzip
+from collections import OrderedDict
+
 import numpy as np
 
 # Add main directory to import path
@@ -14,6 +20,13 @@ from shared import str2hash
 class fastaReader(object): #Reading, processing and storing the data from
                                 # fasta/multifasta genome files
     def add_file(self,fname):
+        def add_chrm(chrm, seq): # add seq to data and chrmSizes dictionaries
+            assert len(seq) > 0
+            assert not chrm in self.chrmSizes.keys()
+            assert not chrm in self.data.keys()
+            self.chrmSizes[chrm] = len(seq)
+            self.data[chrm] = np.array(seq, dtype=np.uint8)
+
         logging.getLogger(__name__).info("Processing file "+os.path.abspath(fname))
         self.files.append(os.path.abspath(fname))
         if fname.endswith(".gz"):
@@ -23,23 +36,40 @@ class fastaReader(object): #Reading, processing and storing the data from
 
         chrm = None
         seq = []
+        exclude = False
+
         for line in handle:
-            if line[0] == ">":
+            if line[0] == ">": # new chrm starts here
+                if chrm != None and not exclude:
+                    add_chrm(chrm,seq)
+                elif exclude:
+                    logging.getLogger(__name__).info("Skipping chrm "+chrm)
+
                 chrm = line.strip().split()[0][1:]
+                logging.getLogger(__name__).info(str("Found chrm "+chrm))
+
                 if chrm in self.data.keys():
                     raise Exception("chrm "+chrm+" found twise")
-                logging.getLogger(__name__).info(str("Processing chrm "+chrm))
 
-                if chrm != None:
-                    self.chrmSizes[chrm] = len(seq)
-                    self.data[chrm] = np.array(seq,dtype=np.uint8)
                 seq = []
+                if len(self.useOnlyChromosomes) != 0:
+                    exclude = not (chrm in self.useOnlyChromosomes)
+                elif len(self.excludeChr) !=0:
+                    exclude = (chrm in self.excludeChr)
             else:
+               if exclude: continue
                if chrm == None:
                    raise Exception("Not correct fasta format")
                for temp in line.strip():
                     seq.append(self.converter[temp])
         assert chrm != None
+
+        if seq != []:
+            add_chrm(chrm,seq)
+        else:
+            assert exclude # if we found empty seq it should mean last chrm was in exclude list
+
+
         handle.close()
 
 
@@ -66,18 +96,28 @@ class fastaReader(object): #Reading, processing and storing the data from
                                "G":2,"g":2,
                                 "C":3,"c":3,
                                "N":4,"n":4},
+                 excludeChromosomes = [],
+                 useOnlyChromosomes = [],
                  name=None):
         #fpath could be:
         #1.) path to single fasta/multifasta file
         #2.) path to folder with fasta/multifasta file(s) - in this case all files will be used
         #3.) iterable with files/folders
         # converter is used to converts letters to integers
+        # One can provide either excludeChromsomes or useOnlyChromosomes list. Names are self-explanatory =(
 
         # initialize variables
         self.chrmSizes = {}
         self.files = []
         self.data = {}
         self.converter = converter
+
+        if len(excludeChromosomes)*len(useOnlyChromosomes) != 0:
+            logging.getLogger(__name__).error(
+                "You can only provide one of these list: useOnlyChromosomes/excludeChromosomes")
+            raise Exception("Wrong input")
+        self.excludeChr = excludeChromosomes
+        self.useOnlyChromosomes = useOnlyChromosomes
 
         if type(files)==str: # for single file/dir simply load it
             self.add_fileitem(files)
@@ -91,12 +131,18 @@ class fastaReader(object): #Reading, processing and storing the data from
         assert len(self.files) != 0
 
         if name == None: # create some meaningful name
-            self.name = str2hash("".join(sorted(self.files)))
+            self.name = str2hash("".join(sorted(list(map(str,self.chrmSizes.items())))))
         else:
             self.name = name
 
     def get_interval(self, interval):
         return self.data[interval.chr][interval.start:interval.end]
+
+    def toXMLDict(self):
+        members = inspect.getmembers(self, lambda a: not (inspect.isroutine(a)))
+        members = OrderedDict(a for a in members if not (a[0].startswith('__') and a[0].endswith('__')) and \
+                                  (a[0])!="data")
+        return members
 
     def __repr__(self):
         s="genome "+self.name+"\n"

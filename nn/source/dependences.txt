@@ -1,2 +1,2 @@
 pyBigWig https://github.com/deeptools/pyBigWig
-biopython
+hic-straw
