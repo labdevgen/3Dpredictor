@@ -50,6 +50,7 @@ class hicReader(FileReader):
 
             result = list(map(list,zip(*result)))
             result = pd.DataFrame(result, columns = ["st", "en", "count"], copy=False)
+            result = result.loc[pd.notnull(result["count"])]
             # Let's normalize data to have sum over each contact within chrm ~1.0
             subsample_size = 100
             subsample = np.unique(result.st.values)

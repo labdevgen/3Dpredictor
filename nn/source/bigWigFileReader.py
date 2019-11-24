@@ -72,6 +72,7 @@ class bigWigReader(FileReader): #Reading, processing and storing the data from b
                     for st,en in zip(chunkStatrs,chunkStops):
                         logging.debug("Filling chunk "+str(st))
                         self.data[chr][st:en] = self.dataPointer.values(chr,st,en)
+                        assert np.all(np.isfinite(self.data[chr][st:en]))
 
         def get_interval(self, interval):
             if self.inMemory:
