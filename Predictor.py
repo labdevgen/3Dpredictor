@@ -403,6 +403,17 @@ class Predictor(object):
     # Read available predictors, drop non-predictors
     # Fill self.predictors
     def read_data_predictors(self,inp_file):
+        # here we set  self.predictors variable based on input file header
+        # it's very important that order and number of predictor is same between training and validation data
+        # thus we assert that this setting is done BEFORE training model
+        try:
+            self.trained_model # trained model exists
+            logging.error("""One can not change self.predictors on the trained model\n
+                    Otherwise, we can obtain different order of predictors in training and validation""")
+            raise Exception()
+        except: # trained model does not exist
+            pass
+
         header = self.get_avaliable_predictors(inp_file)
         self.predictors = [h for h in header if not h in self.constant_nonpredictors]
         # print(self.predictors)
