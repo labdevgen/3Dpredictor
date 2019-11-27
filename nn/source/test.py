@@ -1,10 +1,11 @@
 from bigWigFileReader import bigWigReader
 from fastaFileReader import fastaReader
 from hicFileReader import hicReader
+from shared import Interval, Genome
+
 from straw import straw
 import numpy as np
 
-from shared import Interval, Genome
 from memory_profiler import memory_usage
 import datetime
 import logging

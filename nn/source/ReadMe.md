@@ -23,6 +23,17 @@ https://data.4dnucleome.org/files-processed/4DNFI2TK7L2F/
 
 II)
 
+0.) requered imports:
+
+'''python
+
+    from bigWigFileReader import bigWigReader
+    from fastaFileReader import fastaReader
+    from hicFileReader import hicReader
+    from shared import Interval, Genome
+
+'''
+
 1.) to generate genome sequence:
 
 '''python
