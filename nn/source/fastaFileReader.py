@@ -138,6 +138,9 @@ class fastaReader(object): #Reading, processing and storing the data from
     def get_interval(self, interval):
         return self.data[interval.chr][interval.start:interval.end]
 
+    def get_chr_sizes(self):
+        return self.chrmSizes
+
     def toXMLDict(self):
         members = inspect.getmembers(self, lambda a: not (inspect.isroutine(a)))
         members = OrderedDict(a for a in members if not (a[0].startswith('__') and a[0].endswith('__')) and \

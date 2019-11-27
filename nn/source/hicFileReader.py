@@ -56,28 +56,31 @@ class hicReader(FileReader):
             logging.debug("DF conversion time: " + str(datetime.datetime.now() - now))
             now = datetime.datetime.now()
 
-            result = result.loc[pd.notnull(result["count"])]
-            logging.debug("N/A filtering time: " + str(datetime.datetime.now() - now))
+            #result = result.loc[pd.notnull(result["count"])]
+            #logging.debug("N/A filtering time: " + str(datetime.datetime.now() - now))
             now = datetime.datetime.now()
 
             # Let's normalize data to have sum over each contact within chrm ~1.0
-            subsample_size = 100
-            subsample = np.unique(result.st.values)
-            subsample = np.random.choice(subsample,size=subsample_size,replace=False)
+            subsample_size = 1000
+            subsample = np.random.choice(result.st.values,size=subsample_size,replace=False)
+            subsample = np.unique(subsample)
+            assert len(subsample) >= subsample_size / 10
             s = []
             for i in subsample:
                 local_count = result.query("st==@i | en==@i")["count"].sum()
                 if local_count == 0:
-                    logging.error("zero count for region ", i)
-                    logging.debug(str(result.query("st==@i | en==@i")))
+                    # these are probably NAN samples
+                    continue
+                    #logging.error("zero count for region ", i)
+                    #logging.debug(str(result.query("st==@i | en==@i")))
                 else:
                     s.append(local_count)
-            assert len(s) >= subsample_size / 2
+            assert len(s) >= len(subsample) / 2
             if np.std(s) / np.average(s) >= 0.2:
                 logging.warning("Sums of contacs for loci are very different. Examples: ")
                 logging.warning(str(s))
                 logging.warning("Using average for 'magic normalization coefficient' might be not correct")
-            logging.debug("Magic coeficient calc time: " + str(datetime.datetime.now() - now))
+            logging.debug("Magic coefficient calc time: " + str(datetime.datetime.now() - now))
             now = datetime.datetime.now()
 
             result.query("(en-st)<@self.maxdist",inplace=True)
@@ -91,7 +94,19 @@ class hicReader(FileReader):
         assert len(self.data.keys()) > 0
 
     def get_contacts(self, interval):
-        pass
+        raise NotImplementedError
 
     def get_contact(self, interval):
-        pass
+        if interval.start % self.resolution != 0 or interval.end % self.resolution != 0:
+            logging.error("Start or end of the contact does not match resolution")
+            raise Exception()
+        contact = self.data[interval.chr].query("st==@interval.start & en==@interval.end")
+        if len(contact) == 1:
+            return contact["count"]
+        if len(contact) == 0:
+            return None
+        if len(contact) > 1:
+            raise Exception()
+
+    def get_chr_contact(self, chr):
+        return self.data[chr]
