@@ -46,6 +46,7 @@ class fastaReader(object): #Reading, processing and storing the data from
                     logging.getLogger(__name__).info("Skipping chrm "+chrm)
 
                 chrm = line.strip().split()[0][1:]
+                assert len(chrm) > 0
                 logging.getLogger(__name__).info(str("Found chrm "+chrm))
 
                 if chrm in self.data.keys():
