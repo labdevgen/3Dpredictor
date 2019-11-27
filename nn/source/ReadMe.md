@@ -1,6 +1,6 @@
 **How to generate data using new nn modules**
 
-I.) where to get data
+**I.) where to get data**
 
 1.) download genomic sequence (letters) in fasta format for hg38 genome:
 
@@ -21,22 +21,16 @@ https://www.encodeproject.org/files/ENCFF795YDZ/@@download/ENCFF795YDZ.bigWig --
 
 https://data.4dnucleome.org/files-processed/4DNFI2TK7L2F/
 
-II)
+**II) How to run the code**
 
 0.) requered imports:
-
-'''python
 
     from bigWigFileReader import bigWigReader
     from fastaFileReader import fastaReader
     from hicFileReader import hicReader
     from shared import Interval, Genome
 
-'''
-
 1.) to generate genome sequence:
-
-'''python
 
     faReader = fastaReader(path="../input/hg38/hg38.fa",useOnlyChromosomes=["chr1"])
     # path - path to fasta file(s) with sequence
@@ -49,11 +43,8 @@ II)
 
     sizes = faReader.get_chr_sizes()
     # sizes = dict{"chr1":len_of_chr_1, "chr2":len_of_chr_2 ... }
-'''
 
 2.) to generate ChipSeq-data, storing whole dataset in-memory:
-
-'''python
 
     path = "../input/ENCFF966IHQ.bigWig"
     bwReader = bigWigReader(path,genome=faReader)
@@ -70,15 +61,9 @@ II)
 
 Same as above, but use:
 
-'''python
-
     bwReader.readData(inMemory=False)
 
-'''
-
 4.) to load Hi-C contacts:
-
-'''python
 
     hic = hicReader(path, genome=faReader, resolution = 5000)
     # path and genome - same as above
@@ -91,4 +76,3 @@ Same as above, but use:
                                                          # None probably means contact was equal to 0 (absent in original sparce matrix)
     result = hic.get_chr_contact("chr1") # returns sparse matrix of the whole chrm as pandas dataframe
     # fields: ["st", "en", "count"]
-'''
