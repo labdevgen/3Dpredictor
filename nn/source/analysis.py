@@ -17,8 +17,8 @@ def calc_corr():
     faReader = fastaReader("../input/hg38/hg38.fa",useOnlyChromosomes=[chr])
     faReader = faReader.read_data()
 
-    # load chipSeq
-    bwReader1 = bigWigReader("../input/ENCFF966IHQ.bigWig", genome = faReader, inMemory=True)
+    # load chipSeq1
+    bwReader1 = bigWigReader("../input/ENCFF473IZV_H1_CTCF.bigWig", genome = faReader, inMemory=True)
     bwReader1 = bwReader1.readData()
 
 
@@ -34,7 +34,7 @@ def calc_corr():
     total_length = faReader.get_chr_sizes()[chr]
 
     window_size = 10*resolution # distance between intercting regions in this particular test, in units of resolution
-    sample_size = 1000
+    sample_size = 5000
 
     # select random points on chr1
     random_points_starts = np.random.random_integers(0,
@@ -59,7 +59,11 @@ def calc_corr():
         if contact == None:
             contact = 0
         if np.isfinite(contact):
-            chipSignal = np.nansum(bwReader1.get_interval(window))
+            chipSignal = np.concatenate((bwReader1.get_interval(Interval(chr,int(start-resolution),int(start+resolution))),
+                                        bwReader1.get_interval(
+                                            Interval(chr, int(end - resolution), int(end + resolution)))))
+            chipSignal = np.nan_to_num(chipSignal)
+            chipSignal = np.sum(chipSignal)
             if np.isfinite(chipSignal):
                 chipSignals.append(chipSignal)
                 seqSignal = np.sum(faReader.get_interval(interval))
@@ -75,3 +79,26 @@ def calc_corr():
     # import matplotlib.pyplot as plt
     # plt.scatter(contacts,chipSignals)
     # plt.show()
+
+def calc_sparsity():
+    logging.basicConfig(level=logging.DEBUG) # set to INFO for less detailed output
+
+    ### load data ###
+    # load genome
+    chr = "chr2"
+    faReader = fastaReader("../input/hg38/hg38.fa",useOnlyChromosomes=[chr])
+    faReader = faReader.read_data()
+
+    # load chipSeq
+    bwReader1 = bigWigReader("../input/ENCFF473IZV_H1_CTCF.bigWig", genome = faReader, inMemory=True)
+    bwReader1 = bwReader1.readData()
+
+    arr = bwReader1.data[chr]
+    print(len(arr))
+    nonzero = arr[np.nonzero(arr)]
+    print(len(nonzero))
+    finite = nonzero[np.isfinite(nonzero)]
+    print(len(finite))
+
+calc_corr()
+#calc_sparsity()

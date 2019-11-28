@@ -15,10 +15,12 @@ import pickle
 class Interval:
     def __init__(self,chr,start,end=None,strand=0):
         self.chr = chr
-        self.start = start
+        assert int(start) == start
+        self.start = int(start)
         if end == None:
-            end = start
-        self.end = end
+            end = int(start)
+        assert int(end) == end
+        self.end = int(end)
         self.len = end - start
         assert self.len >= 0
     def __eq__(self, other):
