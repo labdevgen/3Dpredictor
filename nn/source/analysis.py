@@ -15,10 +15,7 @@ def calc_corr():
     # load genome
     chr = "chr2"
     faReader = fastaReader("../input/hg38/hg38.fa",useOnlyChromosomes=[chr])
-
-    import pickle
-    pickle.dump(faReader,open(chr+"temp.data","wb"))
-    #faReader = pickle.load(open(chr+"temp.data","rb"))
+    faReader = faReader.read_data()
 
     # load chipSeq
     bwReader1 = bigWigReader("../input/ENCFF966IHQ.bigWig", genome = faReader, inMemory=True)

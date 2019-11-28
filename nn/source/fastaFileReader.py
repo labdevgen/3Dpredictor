@@ -20,6 +20,9 @@ from shared import str2hash, FileReader
 class fastaReader(FileReader): #Reading, processing and storing the data from
                                 # fasta/multifasta genome files
     def add_file(self,fname):
+        self.files.append(fname)
+
+    def read_file(self,fname):
         def add_chrm(chrm, seq): # add seq to data and chrmSizes dictionaries
             assert len(seq) > 0
             assert not chrm in self.chrmSizes.keys()
@@ -28,7 +31,6 @@ class fastaReader(FileReader): #Reading, processing and storing the data from
             self.data[chrm] = np.array(seq, dtype=np.uint8)
 
         logging.getLogger(__name__).info("Processing file "+os.path.abspath(fname))
-        self.files.append(os.path.abspath(fname))
         if fname.endswith(".gz"):
             handle = gzip.open(fname)
         else:
@@ -95,11 +97,11 @@ class fastaReader(FileReader): #Reading, processing and storing the data from
             raise Exception("Item " + f + " is neither file nor folder")
 
     def __init__(self,files,
-                 converter =  {"A":0,"a":0,
+                 converter =  OrderedDict({"A":0,"a":0,
                                "T":1,"t":1,
                                "G":2,"g":2,
                                 "C":3,"c":3,
-                               "N":4,"n":4},
+                               "N":4,"n":4}),
                  excludeChromosomes = [],
                  useOnlyChromosomes = [],
                  name=None):
@@ -125,6 +127,7 @@ class fastaReader(FileReader): #Reading, processing and storing the data from
 
         if type(files)==str: # for single file/dir simply load it
             self.add_fileitem(files)
+            self.fname = files
         else: # for lists iter over list and load each dir/tree
             try:
                 for f in files:
@@ -138,11 +141,24 @@ class fastaReader(FileReader): #Reading, processing and storing the data from
             if len(self.files) == 1:
                 self.name = os.path.basename(self.files[0])
             else:
-                self.name = str2hash("".join(sorted(list(map(str,self.chrmSizes.items())))))
+                self.name = "".join(sorted(self.files))
         else:
             self.name = name
 
-        self.full_name = "".join(sorted(list(map(str,self.chrmSizes.items()))))
+        self.full_name = "".join(sorted(self.files)+sorted(self.excludeChr)+sorted(self.useOnlyChromosomes)+\
+                                 [str(self.converter)])
+
+    def read_data(self):
+        if os.path.exists(self.get_dump_path()):
+            return self.load()
+
+        for i in self.files:
+            self.read_file(i)
+
+        XML = self.toXMLDict(exludedMembers=("data"))
+        header = self.name
+        self.dump(descriptiveXML={"XML":XML,"header":header})
+        return self
 
     def get_interval(self, interval):
         return self.data[interval.chr][interval.start:interval.end]

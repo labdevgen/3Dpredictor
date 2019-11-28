@@ -41,6 +41,7 @@ Or read instructions below:
 1.) to generate genome sequence:
 
     faReader = fastaReader(path="../input/hg38/hg38.fa",useOnlyChromosomes=["chr1"])
+    faReader = faReader.read_data()
     # path - path to fasta file(s) with sequence
     # useOnlyChromosomes - a list of chromsomes to use. Other chromosomes in file(s) will be ignored
     # excludeChromosomes - a list of chromsomes to exclude. These chromosomes will not be load from file
@@ -85,4 +86,5 @@ Same as above, but use:
     result = hic.get_chr_contact("chr1") # returns sparse matrix of the whole chrm as pandas dataframe
     # fields: ["st", "en", "count"], index ["st","en"]
     
-Note that both hic- and ChipSeq readers will dump pre-processed data after first run, to reduce preprocessing time in future
+Note that all readers will dump pre-processed data after first run, 
+to reduce loading time (and sometimes memory) in future.

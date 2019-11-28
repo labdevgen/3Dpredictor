@@ -44,6 +44,7 @@ def test_fastaReader():
     now = datetime.datetime.now()
     path = "../input/hg38/test.fa"
     faReader = fastaReader(path,name="hg38",useOnlyChromosomes=["chr1"])
+    faReader = faReader.read_data()
     print (faReader)
     print ("Time:",datetime.datetime.now() - now)
 
@@ -69,6 +70,7 @@ def get_hic_data():
 
 def test_hicReader():
     genome = fastaReader("../input/hg38/test.fa",name="hg38")
+    faReader = genome.read_data()
     now = datetime.datetime.now()
     hic = hicReader(fname="../input/4DNFI2TK7L2F.hic", genome=genome, resolution = 100000)
     hic = hic.read_data()
@@ -85,6 +87,7 @@ def simple_test():
     ### load data ###
     # load genome
     faReader = fastaReader("../input/hg38/hg38.fa",useOnlyChromosomes=["chr1"])
+    faReader = faReader.read_data()
     # load chipSeq
     bwReader1 = bigWigReader("../input/ENCFF966IHQ.bigWig", genome = faReader, inMemory=True)
     bwReader1 = bwReader1.readData()
@@ -164,24 +167,26 @@ def simple_test():
     plt.show()
 
 def test_dump():
-    faReader = fastaReader("../input/hg38/test.fa",useOnlyChromosomes=["chr1"])
-    bwReader = bigWigReader("../input/ENCFF966IHQ.bigWig", genome = faReader, inMemory=True)
-    bwReader = bwReader.readData(debugMode=True)
-    bwReader.get_interval(Interval("chr1",100,10000))
-    print (bwReader.genome.name)
+    faReader = fastaReader("../input/hg38/test.fa",useOnlyChromosomes=["chr2"])
+    faReader = faReader.read_data()
+    print (faReader.get_chr_sizes())
+    # bwReader = bigWigReader("../input/ENCFF966IHQ.bigWig", genome = faReader, inMemory=True)
+    # bwReader = bwReader.readData(debugMode=True)
+    # bwReader.get_interval(Interval("chr1",100,10000))
+    # print (bwReader.genome.name)
+    #
+    # hic = hicReader(fname="../input/4DNFI2TK7L2F.hic", genome=faReader, resolution = 100000)
+    # hic = hic.read_data(debug_mode = True)
+    # print(hic.get_contact(Interval("chr1",300000,500000)))
 
-    hic = hicReader(fname="../input/4DNFI2TK7L2F.hic", genome=faReader, resolution = 100000)
-    hic = hic.read_data(debug_mode = True)
-    print(hic.get_contact(Interval("chr1",300000,500000)))
+test_dump()
 
-#test_dump()
-
-now = datetime.datetime.now()
-mem = memory_usage((simple_test),interval=.5)
-print ("Max memory: ",max(mem))
-print("Memory log: ",mem)
-print("Total time: ",datetime.datetime.now() - now)
-
+# now = datetime.datetime.now()
+# mem = memory_usage((simple_test),interval=.5)
+# print ("Max memory: ",max(mem))
+# print("Memory log: ",mem)
+# print("Total time: ",datetime.datetime.now() - now)
+#
 
 # now = datetime.datetime.now()
 # mem = memory_usage((test_hicReader),interval=.5)
