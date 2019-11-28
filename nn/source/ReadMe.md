@@ -83,6 +83,6 @@ Same as above, but use:
                                                          # NaN means contact was not defined (NaN in original data)
                                                          # None probably means contact was equal to 0 (absent in original sparce matrix)
     result = hic.get_chr_contact("chr1") # returns sparse matrix of the whole chrm as pandas dataframe
-    # fields: ["st", "en", "count"]
+    # fields: ["st", "en", "count"], index ["st","en"]
     
 Note that both hic- and ChipSeq readers will dump pre-processed data after first run, to reduce preprocessing time in future

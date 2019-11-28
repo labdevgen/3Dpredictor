@@ -108,7 +108,7 @@ def simple_test():
 
     window_size = 20*resolution # distance between intercting regions in this particular test, in units of resolution
 
-    sample_size = 1000
+    sample_size = 100000
 
     # select random points on chr1
     random_points_starts = np.random.random_integers(0,
@@ -121,6 +121,7 @@ def simple_test():
     # for each of selected points get contact between this point and (point + window_size*resolution)
     contacts = []
     chipSignals = []
+    seqSignals = []
     now = datetime.datetime.now() # start timer
 
     logging.info("Starting data generation")
@@ -133,23 +134,29 @@ def simple_test():
             chipSignal = np.nansum(bwReader1.get_interval(interval))
             if np.isfinite(chipSignal):
                 chipSignals.append(chipSignal)
+                seqSignal = np.sum(faReader.get_interval(interval))
+                seqSignals.append(seqSignal)
                 contacts.append(contact)
 
     logging.info("Time for data generation1: " + str(datetime.datetime.now() - now))
-    now = datetime.datetime.now()
-
-    for start,end in zip(random_points_starts,random_points_ends):
-        interval = Interval("chr1",start,end)
-        contact = hic.get_contact(interval)
-        if contact == None:
-            continue
-        else:
-            chipSignal = np.nansum(bwReader2.get_interval(interval))
-            if np.isfinite(chipSignal):
-                chipSignals.append(chipSignal)
-                contacts.append(contact)
-
-    logging.info("Time for data generation2: " + str(datetime.datetime.now() - now))
+    # now = datetime.datetime.now()
+    # chipSignals = []
+    # seqSignals = []
+    # contacts = []
+    # for start,end in zip(random_points_starts,random_points_ends):
+    #     interval = Interval("chr1",start,end)
+    #     contact = hic.get_contact(interval)
+    #     if contact == None:
+    #         continue
+    #     else:
+    #         chipSignal = np.nansum(bwReader2.get_interval(interval))
+    #         if np.isfinite(chipSignal):
+    #             chipSignals.append(chipSignal)
+    #             seqSignal = np.sum(faReader.get_interval(interval))
+    #             seqSignals.append(seqSignal)
+    #             contacts.append(contact)
+    #
+    # logging.info("Time for data generation2: " + str(datetime.datetime.now() - now))
     from scipy.stats import spearmanr
     import matplotlib.pyplot as plt
 
