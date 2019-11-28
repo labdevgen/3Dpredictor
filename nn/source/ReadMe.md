@@ -21,7 +21,15 @@ https://www.encodeproject.org/files/ENCFF795YDZ/@@download/ENCFF795YDZ.bigWig --
 
 https://data.4dnucleome.org/files-processed/4DNFI2TK7L2F/
 
+**Note that both ChipSeq and HiC data contain NaNs!!!**
+
 **II) How to run the code**
+
+Follow example in the test.py (function)
+    
+    simple_test()
+
+Or read instructions below:
 
 0.) requered imports:
 
@@ -47,8 +55,8 @@ https://data.4dnucleome.org/files-processed/4DNFI2TK7L2F/
 2.) to generate ChipSeq-data, storing whole dataset in-memory:
 
     path = "../input/ENCFF966IHQ.bigWig"
-    bwReader = bigWigReader(path,genome=faReader)
-    bwReader.readData(inMemory=True)
+    bwReader = bigWigReader(path,genome=faReader, inMemory=True)
+    bwReader = bwReader.readData()
 
     # path - name of file with row ChipSeq-data
     # faReader - fastaReader object (see above)
@@ -61,7 +69,7 @@ https://data.4dnucleome.org/files-processed/4DNFI2TK7L2F/
 
 Same as above, but use:
 
-    bwReader.readData(inMemory=False)
+    bwReader = bigWigReader(path,genome=faReader, inMemory=False)
 
 4.) to load Hi-C contacts:
 
@@ -70,9 +78,11 @@ Same as above, but use:
     # resolution - size of the bin of Hi-C matrix.
     # I recommend to use 100000 for tests (low memory, but not much biological scense), 1000 or 5000 for real trainings
     # Again, only data for chromsomes in genome object will be loaded
-    hic.read_data()
+    hic = hic.read_data()
     result = hic.get_contact(Interval("chr1",start,end)) # single float value, NaN or None
                                                          # NaN means contact was not defined (NaN in original data)
                                                          # None probably means contact was equal to 0 (absent in original sparce matrix)
     result = hic.get_chr_contact("chr1") # returns sparse matrix of the whole chrm as pandas dataframe
     # fields: ["st", "en", "count"]
+    
+Note that both hic- and ChipSeq readers will dump pre-processed data after first run, to reduce preprocessing time in future

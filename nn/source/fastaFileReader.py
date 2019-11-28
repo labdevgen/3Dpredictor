@@ -15,9 +15,9 @@ import_path = os.path.dirname(os.path.dirname(os.getcwd()))
 logging.getLogger(__name__).info("Appending import path: "+import_path)
 sys.path.append(import_path)
 
-from shared import str2hash
+from shared import str2hash, FileReader
 
-class fastaReader(object): #Reading, processing and storing the data from
+class fastaReader(FileReader): #Reading, processing and storing the data from
                                 # fasta/multifasta genome files
     def add_file(self,fname):
         def add_chrm(chrm, seq): # add seq to data and chrmSizes dictionaries
@@ -50,13 +50,16 @@ class fastaReader(object): #Reading, processing and storing the data from
                 logging.getLogger(__name__).info(str("Found chrm "+chrm))
 
                 if chrm in self.data.keys():
-                    raise Exception("chrm "+chrm+" found twise")
+                    raise Exception("chrm "+chrm+" found twice")
 
                 seq = []
                 if len(self.useOnlyChromosomes) != 0:
                     exclude = not (chrm in self.useOnlyChromosomes)
                 elif len(self.excludeChr) !=0:
                     exclude = (chrm in self.excludeChr)
+                if len(self.chrmSizes) == len(self.useOnlyChromosomes): # we have read all chromosomes required
+                    seq = []
+                    break
             else:
                if exclude: continue
                if chrm == None:
@@ -132,9 +135,14 @@ class fastaReader(object): #Reading, processing and storing the data from
         assert len(self.files) != 0
 
         if name == None: # create some meaningful name
-            self.name = str2hash("".join(sorted(list(map(str,self.chrmSizes.items())))))
+            if len(self.files) == 1:
+                self.name = os.path.basename(self.files[0])
+            else:
+                self.name = str2hash("".join(sorted(list(map(str,self.chrmSizes.items())))))
         else:
             self.name = name
+
+        self.full_name = "".join(sorted(list(map(str,self.chrmSizes.items()))))
 
     def get_interval(self, interval):
         return self.data[interval.chr][interval.start:interval.end]
@@ -142,16 +150,6 @@ class fastaReader(object): #Reading, processing and storing the data from
     def get_chr_sizes(self):
         return self.chrmSizes
 
-    def toXMLDict(self):
-        members = inspect.getmembers(self, lambda a: not (inspect.isroutine(a)))
-        members = OrderedDict(a for a in members if not (a[0].startswith('__') and a[0].endswith('__')) and \
-                                  (a[0])!="data")
-        return members
-
     def __repr__(self):
-        s="genome "+self.name+"\n"
-        for (chr,size) in self.chrmSizes.items():
-            s+=chr+"\t"+str(size)+"\n"
-        s+="Data loader from files: "
-        s+="\n".join(self.files)
-        return s
+        XMLrepresentation  = self.toXMLDict(exludedMembers=("data"))
+        return "\n".join([key+"\t"+str(val) for key,val in XMLrepresentation.items()])

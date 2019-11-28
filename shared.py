@@ -9,6 +9,7 @@ import dicttoxml
 from xml.dom.minidom import parseString
 from collections import OrderedDict
 from functools import partial
+import pickle
 
 
 class Interval:
@@ -64,6 +65,55 @@ class FileReader(object):
             logging.error("File "+fname+" does not exists")
             sys.exit(11)
 
+    def toXMLDict(self, exludedMembers = ()):
+        # how it works:
+        # first, we get all class members, excluding only routine function, such as __eq__, __str__ and etc
+        members = inspect.getmembers(self, lambda a: not (inspect.isroutine(a)))
+
+        # next, we filter these items exclude those provided in excludeMembers
+        members = OrderedDict((a[0],str(a[1])) for a in members if not (a[0].startswith('__') and a[0].endswith('__')) and \
+             not (a[0] in exludedMembers))
+
+        # this gives a dict key--val of all members of class
+        return members
+
+    def get_full_name(self):
+        # full name is id, which should represent file reader with all its paramters
+        # if any of paramters changed, is should change full name
+        try:
+            return self.full_name
+        except:
+            raise Exception("Dump is only possible if full name defined")
+
+    def get_dump_path(self):
+        # construct dump path based on fname and full_name
+        # full name is id, which should represent file reader with all its parameters
+
+        if os.path.isfile(self.fname):
+            self.dump_path = self.fname + "." + str2hash(self.get_full_name())
+            return self.dump_path
+        elif os.path.isdir(self.fname):
+            self.dump_path = os.path.join(self.fname, str2hash(self.get_full_name()))
+            return self.dump_path
+        else:
+            logging.getLogger(__name__).error("Cann't create dump: reader fileName is neither file nor dir: " + self.fname)
+            raise Exception()
+
+    def dump(self, descriptiveXML = None):
+        dump_path = self.get_dump_path()
+        if os.path.exists(dump_path):
+            logging.warning("Overwriting file "+dump_path)
+        logging.getLogger(__name__).debug("Saving dump to the file "+dump_path)
+        pickle.dump(self,open(dump_path,"wb"))
+        if descriptiveXML != None:
+            XML = descriptiveXML["XML"]
+            header = descriptiveXML["header"]
+            write_XML(XML,header,dump_path+".xml")
+
+    def load(self):
+        logging.getLogger(__name__).debug("Loading dump from the file"+self.get_dump_path())
+        return pickle.load(open(self.get_dump_path(),"rb"))
+
 def expand_lnk_path(lnk):
     try:
         os.listdir(lnk)
@@ -99,7 +149,7 @@ def str2hash(s,maxlen=100): # Used to hash long file names into shorter ones.
         return s
     else:
         h = str(int(sha224(s.encode()).hexdigest(), 16) % (10 ** 10))
-        logging.getLogger(__name__).warning("Hashing string \n"+s+"\n to string "+h)
+        #logging.getLogger(__name__).debug("Hashing string \n"+s+"\n to string "+h)
         return h
 
 def intersect_intervals(chr_int_data1, chr_int_data2, suppreseChrNumberCheck=False): #input: chr_int_datas are 2 dictionaries of pd.dataframes where 1,2,3 columns == chr, start, end,
