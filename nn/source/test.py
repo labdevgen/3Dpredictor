@@ -5,7 +5,6 @@ from shared import Interval, Genome
 
 from straw import straw
 import numpy as np
-import pandas as pd
 
 from memory_profiler import memory_usage
 import datetime
