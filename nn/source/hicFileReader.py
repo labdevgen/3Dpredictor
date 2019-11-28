@@ -138,11 +138,11 @@ class hicReader(FileReader):
             raise Exception()
         chr_contacts = self.data[interval.chr]
         try:
-            contacts = chr_contacts[(interval.start,interval.end)]
-        except KeyError or TypeError:
-            return None
+            contacts = chr_contacts.loc(axis=0)[(interval.start,interval.end)]
+        except KeyError:
+            return None # TODO maybe should change this to 0
         if len(contacts) == 1:
-            return contacts.iloc[0]["count"]
+            return contacts.iloc[0]
         elif len(contacts) > 1:
             logging.getLogger(__name__).error("More than 1 contact for region "+str(interval))
             raise Exception()

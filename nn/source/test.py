@@ -96,7 +96,7 @@ def simple_test():
 
 
     #load contacts
-    resolution = 100000
+    resolution = 5000
     hic = hicReader("../input/4DNFI2TK7L2F.hic", genome=faReader, resolution = resolution)
     hic = hic.read_data()
 
@@ -106,9 +106,9 @@ def simple_test():
     # get size of the chr1
     total_length = faReader.get_chr_sizes()["chr1"]
 
-    window_size = 10*resolution # distance between intercting regions in this particular test, in units of resolution
+    window_size = 20*resolution # distance between intercting regions in this particular test, in units of resolution
 
-    sample_size = 100
+    sample_size = 1000
 
     # select random points on chr1
     random_points_starts = np.random.random_integers(0,
