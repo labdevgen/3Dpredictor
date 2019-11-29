@@ -13,7 +13,7 @@ def calc_corr():
 
     ### load data ###
     # load genome
-    chr = "chr2"
+    chr = "chr1"
     faReader = fastaReader("../input/hg38/hg38.fa",useOnlyChromosomes=[chr])
     faReader = faReader.read_data()
 
