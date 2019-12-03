@@ -23,7 +23,7 @@ conttype = sys.argv[2]  # contacts.gz or oe.gz
 # chr_num="12,13,14"
 # conttype = "contacts.gz"
 
-if __name__ == '__main__':  # Required for parallelization, at least on Windows
+if __name__ == '__main__':  # Requiered for parallelization, at least on Windows
     for conttype in [conttype]:
         logging.basicConfig(format='%(asctime)s %(name)s: %(message)s', datefmt='%I:%M:%S', level=logging.DEBUG)
         input_folder = "input/K562/"

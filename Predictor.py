@@ -268,16 +268,17 @@ class Predictor(object):
         else:
             add_loop(validation_data, kwargs["loop_file"])
             d = pd.concat([validation_data["contact_st"],validation_data["contact_en"],validation_data["contact_count"],pd.DataFrame(predicted),validation_data["IsLoop"]], axis=1)
-        out_fname = os.path.join(out_dir+"scc/",chromosome + "." + binsize+"."+ self.__represent_validation__()) + ".scc"
-        pd.DataFrame.to_csv(d, out_fname, sep=" ", index=False)
+        in_fname = os.path.join(out_dir+"scc/",chromosome + "." + binsize+"."+ self.__represent_validation__()) + ".scc"
+        out_fname = in_fname+".out"
+        pd.DataFrame.to_csv(d, in_fname, sep=" ", index=False)
         logging.info(datetime.datetime.now())
         if "p_file" not in kwargs or "e_file" not in kwargs:
             if "interact_pr_en"  not in kwargs:
-                out = subprocess.check_output(["Rscript", kwargs["scc_file"], out_fname, str(kwargs["h"]), chromosome])
+                out = subprocess.check_output(["Rscript", kwargs["scc_file"], in_fname,out_fname, str(kwargs["h"]), chromosome])
             else:
-                out = subprocess.check_output(["Rscript", kwargs["scc_file"], out_fname,str(kwargs["h"]), chromosome, kwargs["interact_pr_en"]])
+                out = subprocess.check_output(["Rscript", kwargs["scc_file"], in_fname,out_fname,str(kwargs["h"]), chromosome, kwargs["interact_pr_en"]])
         else:
-            out = subprocess.check_output(["Rscript", kwargs["scc_file"], out_fname, str(kwargs["h"]), chromosome, kwargs["p_file"], kwargs["e_file"]])
+            out = subprocess.check_output(["Rscript", kwargs["scc_file"], in_fname,out_fname, str(kwargs["h"]), chromosome, kwargs["p_file"], kwargs["e_file"]])
         print(str(out))
 
 

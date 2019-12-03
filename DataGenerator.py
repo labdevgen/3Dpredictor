@@ -46,8 +46,9 @@ def initializer(_main_data, _DataGeneratorObj):
     DataGeneratorObj = _DataGeneratorObj # same for _DataGeneratorObj
 
 def _apply_df(args):
-    # main_data, DataGeneratorObj come from shared memory
-    # main_data is a big df with all contacts
+    #df, DataGeneratorObj = args
+
+    # main data is a big df with all contacts
     # args is a tuple with 2 numbers (from,two), which indicates which part of main data to process in current child process
     df = main_data.iloc[args[0]:args[1]]
     df.reset_index(inplace=True,drop=True) # To allow concat
@@ -106,61 +107,60 @@ class DataGenerator():
         for (k,v) in kwargs:
             self.__setattr__(self,k,v)
         self.prepared = False
-
     def prepareMyself(self,contact,params):
-
-        assert not self.prepared
-
-        # set prepared state to True so this func is not called twice
         self.prepared = True
-
         #Save some variables if we would like to have stats later on
         self.not_vect_predictor_generators = [p for p in params.pgs if not p.vectorizable]
         self.vect_predictor_generators = [p for p in params.pgs if p.vectorizable]
         self.predictor_generators = self.not_vect_predictor_generators + self.vect_predictor_generators
         self.params = params
-
         #Check that predictor names are unique
         pg_names = [pg.name for pg in self.predictor_generators]
-
-        self.header = []
-        for pg in self.vect_predictor_generators:
-            self.header += pg.get_header(contact.iloc[0, :])
-        self.N_notVect_fields = len(self.header)
-
         assert len(pg_names) == len(set(pg_names))
-        assert len(self.header) == len(set(self.header))
 
     def contact2predictors(self,contact,params):
-        # generate predictors for single contact
         if not self.prepared:
             self.prepareMyself(contact, params)
 
-        if len(self.vect_predictor_generators) > 0:
-            logging.error("Vectorizable predictors are not implemented in contact2predictors function yet")
-            raise Exception()
-
+        # Get header row and calculate number of fields
+        header = []
+        for pg in self.not_vect_predictor_generators:
+            header += pg.get_header(contact.iloc[0, :])
+        self.N_notVect_fields = len(header)
+        # print(contact.keys())
+        header =header
+        # header = ["chr", "contact_st", "contact_en", "contact_dist"] + header
+        for pg in self.vect_predictor_generators:
+            header += pg.get_header(contact.iloc[0, :])
+        assert len(header) == len(set(header))
+        # print("header", header)
         logging.getLogger(__name__).debug("Going to generate predictors for " +str(len(contact)) + " contacts")
+        # print(self.N_notVect_fields)
         result = contact.apply(contact2file, DataGeneratorObj=self, returnStr=False,
                                         axis="columns")
+        # print(result.keys())
         result=result[0]
-        assert len(result)==len(self.header)
-        return self.header,result
+        # print(result)
+        # print(len(result), len(header))
+        assert len(result)==len(header)
+        return header,result										   
 
     def contacts2file(self,contacts,params):
-        # generate predictors for multiple contacts
-        # contacts - dataframe with contact counts
-        # could be obtained from contact reader
-
         assert self.prepared == False
-
         global processed
         processed = 0
+        #contacts - dataframe with contact counts
         #predictor_generators - list, each item is an instance of PredictorGenerator
         if len(contacts) == 0:
             logging.error("Empty contacts dataset")
             raise Exception("Empty contacs dataset")
         logging.getLogger(__name__).info("Writing data to file " + params.out_file)
+
+        #Save some variables if we would like to have stats later on
+        self.not_vect_predictor_generators = [p for p in params.pgs if not p.vectorizable]
+        self.vect_predictor_generators = [p for p in params.pgs if p.vectorizable]
+
+        self.predictor_generators = self.not_vect_predictor_generators + self.vect_predictor_generators
 
         # example of contact df row
         # needed for toXML_dict funct
@@ -181,13 +181,18 @@ class DataGenerator():
             out_file = open(params.out_file, "w")
             write_header=True
 
-        # Get header row and calculate number of fields
-        # after prepare_myself function call self.header already contains part of header
-        # corresponding to vect_predictors fields
-        self.N_notVect_fields = len(self.header)
-        header = ["chr", "contact_st", "contact_en", "contact_dist", "contact_count"] + self.header
+        #Check that predictor names are unique
+        pg_names = [pg.name for pg in self.predictor_generators]
+        assert len(pg_names) == len(set(pg_names))
+
+        #Get header row and calculate number of fields
+        header = []
+        for pg in self.not_vect_predictor_generators:
+            header += pg.get_header(contacts.iloc[0,:])
+        self.N_notVect_fields = len(header)
+        header = ["chr", "contact_st", "contact_en", "contact_dist", "contact_count"] + header
         for pg in self.vect_predictor_generators:
-            header += pg.get_header(self.contact_example)
+            header += pg.get_header(contacts.iloc[0,:])
         assert len(header) == len(set(header))
         if write_header:
             out_file.write("\t".join(header) + "\n")
