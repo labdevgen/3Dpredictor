@@ -46,9 +46,8 @@ def initializer(_main_data, _DataGeneratorObj):
     DataGeneratorObj = _DataGeneratorObj # same for _DataGeneratorObj
 
 def _apply_df(args):
-    #df, DataGeneratorObj = args
-
-    # main data is a big df with all contacts
+    # main_data, DataGeneratorObj come from shared memory
+    # main_data is a big df with all contacts
     # args is a tuple with 2 numbers (from,two), which indicates which part of main data to process in current child process
     df = main_data.iloc[args[0]:args[1]]
     df.reset_index(inplace=True,drop=True) # To allow concat
@@ -142,11 +141,11 @@ class DataGenerator():
         #Get header row and calculate number of fields
         header = []
         for pg in self.not_vect_predictor_generators:
-            header += pg.get_header(contacts.iloc[0,:])
+            header += pg.get_header(self.contact_example)
         self.N_notVect_fields = len(header)
         header = ["chr", "contact_st", "contact_en", "contact_dist", "contact_count"] + header
         for pg in self.vect_predictor_generators:
-            header += pg.get_header(contacts.iloc[0,:])
+            header += pg.get_header(self.contact_example)
         assert len(header) == len(set(header))
         if write_header:
             out_file.write("\t".join(header) + "\n")
