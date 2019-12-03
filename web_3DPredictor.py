@@ -18,7 +18,7 @@ interval_end = "101500000"
 resolution = "5000"
 model_path = "/mnt/scratch/ws/psbelokopytova/202001051010polina_data/3DPredictor/out/models/models up to 15.11.19/5662021667"
 
-out_dir="/mnt/scratch/ws/psbelokopytova/202001051010polina_data/3DPredictor/out/test/"
+out_dir="/mnt/scratch/ws/psbelokopytova/202001051010polina_data/3DPredictor/out/"
 
 params = Parameters()
 params.window_size = int(resolution) #region around contact to be binned for predictors
