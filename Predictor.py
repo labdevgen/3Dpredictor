@@ -175,10 +175,8 @@ class Predictor(object):
             # read data
             self.input_data = self.read_file(self.input_file)
             self.train_chrms = set(self.input_data["chr"].values)
-            print("!!!!!!!!1", self.train_chrms)
             self.input_data.fillna(value=0, inplace=True)
             self.contacts = np.array(self.input_data["contact_count"].values)
-            print("train contacts", self.contacts)
 
             # fit new model
             if apply_log:
@@ -324,6 +322,7 @@ class Predictor(object):
                  validators = None,
                  transformation = [equal],
                  cell_type=None,
+                 df_input=False,
                  **kwargs):
         # validation_file - file with validation data
         # out_dir - directory to save output produced during validation
@@ -332,34 +331,34 @@ class Predictor(object):
         # i.e. if using o/e values it can transform it back to contacts based on expected values
         # kwargs will be passed to validation functions
 
-        validators = validators if validators is not None else [self.r2score,self.plot_matrix,self.scc]
+        validators = validators #if validators is not None else [self.r2score,self.plot_matrix,self.scc]
         self.cell_type = cell_type
-        self.validation_file = validation_file
-        self.validation_data = self.read_file(validation_file)
+        if not df_input:
+            self.validation_data = self.read_file(validation_file)
+        else:
+            self.validation_data = validation_file
         self.validation_data.fillna(value=0, inplace=True)
         # check that train chrms not in validate
         validate_chrms = set(self.validation_data["chr"].values)
         assert [chr not in self.train_chrms for chr in validate_chrms]
         self.transformation_for_validation_data = ""
         self.predicted = self.trained_model.predict(self.validation_data[self.predictors])
-        print("!!!!!!!!!!!predicted", self.predicted)
         for transformation_function in transformation:
             print(transformation_function.__name__)
-            print(self.validation_data)
             self.transformation_for_validation_data+=transformation_function.__name__
             self.predicted = transformation_function(self.predicted,
                                         data=self.validation_data, data_type="predicted")
             self.validation_data = transformation_function(self.validation_data["contact_count"].values,
                                                                data=self.validation_data, data_type="validation")
 
-        print(self.validation_data)
         #do this for validation with observed contacts
         if self.apply_log:
             self.predicted = np.exp(self.predicted)
 
-        for validataion_function in validators:
-            validataion_function(self.validation_data.copy(),self.predicted.copy(),
-                                 out_dir = out_dir, **kwargs)
+        if validators is not None:
+            for validataion_function in validators:
+                validataion_function(self.validation_data.copy(),self.predicted.copy(),
+                                     out_dir = out_dir, **kwargs)
 
 
     # Read header of predictors file, get list of avaliable predictors
