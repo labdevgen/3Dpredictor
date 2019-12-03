@@ -175,10 +175,8 @@ class Predictor(object):
             # read data
             self.input_data = self.read_file(self.input_file)
             self.train_chrms = set(self.input_data["chr"].values)
-            print("!!!!!!!!1", self.train_chrms)
             self.input_data.fillna(value=0, inplace=True)
             self.contacts = np.array(self.input_data["contact_count"].values)
-            print("train contacts", self.contacts)
 
             # fit new model
             if apply_log:
@@ -342,17 +340,14 @@ class Predictor(object):
         assert [chr not in self.train_chrms for chr in validate_chrms]
         self.transformation_for_validation_data = ""
         self.predicted = self.trained_model.predict(self.validation_data[self.predictors])
-        print("!!!!!!!!!!!predicted", self.predicted)
         for transformation_function in transformation:
             print(transformation_function.__name__)
-            print(self.validation_data)
             self.transformation_for_validation_data+=transformation_function.__name__
             self.predicted = transformation_function(self.predicted,
                                         data=self.validation_data, data_type="predicted")
             self.validation_data = transformation_function(self.validation_data["contact_count"].values,
                                                                data=self.validation_data, data_type="validation")
 
-        print(self.validation_data)
         #do this for validation with observed contacts
         if self.apply_log:
             self.predicted = np.exp(self.predicted)
