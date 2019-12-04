@@ -6,53 +6,56 @@ from PredictorGenerators import SmallChipSeqPredictorGenerator, SitesOrientPredi
 from shared import Interval, Parameters
 from RNASeqReader import RNAseqReader
 from DataGenerator import DataGenerator
-
+from check_file_formats import check_file_formats
 import sys
 import argparse
 
-def createParser():
-    parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter, description="3DPredictor: A tool for 3D chromatin structure prediction.", epilog="GitHub: https://github.com/labdevgen/3Dpredictor")
-    parser.add_argument('--version', action='version', version="beta")
-    subparsers = parser.add_subparsers (title='Commands', dest='command')
-    Default_parser = subparsers.add_parser ('Predictor', help='3D Predictor')
-    Default_parser.add_argument ('-N', '--rna-seq', required=True, dest="RNA_seq_file", help='RNA-Seq File')
-    Default_parser.add_argument ('-C', '--ctcf', required=True, dest="CTCF_file", help='CTCF File')
-    Default_parser.add_argument ('-O', '--orient', required=True, dest="CTCF_orient_file", help='CTCF Orientation File')
-    Default_parser.add_argument ('-c', '--chrom', required=True, dest="chr", help='Chromosome')
-    Default_parser.add_argument ('-s', '--start', required=True, dest="interval_start", help='Start Position')
-    Default_parser.add_argument ('-e', '--end', required=True, dest="interval_end", help='End Position')
-    Default_parser.add_argument ('-r', '--resolution', required=True, choices=("5000", "25000"), dest="resolution", help='Resolution')
-    Default_parser.add_argument ('-d', '--destination', required=True, dest="out_dir", help='Output Folder')
-    Default_parser.add_argument ('-m', '--model', required=True, dest="model_path", help='Model Path')
-    return parser
+# def createParser():
+#     parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter, description="3DPredictor: A tool for 3D chromatin structure prediction.", epilog="GitHub: https://github.com/labdevgen/3Dpredictor")
+#     parser.add_argument('--version', action='version', version="beta")
+#     subparsers = parser.add_subparsers (title='Commands', dest='command')
+#     Default_parser = subparsers.add_parser ('Predictor', help='3D Predictor')
+#     Default_parser.add_argument ('-N', '--rna-seq', required=True, dest="RNA_seq_file", help='RNA-Seq File')
+#     Default_parser.add_argument ('-C', '--ctcf', required=True, dest="CTCF_file", help='CTCF File')
+#     Default_parser.add_argument ('-O', '--orient', required=True, dest="CTCF_orient_file", help='CTCF Orientation File')
+#     Default_parser.add_argument ('-c', '--chrom', required=True, dest="chr", help='Chromosome')
+#     Default_parser.add_argument ('-s', '--start', required=True, dest="interval_start", help='Start Position')
+#     Default_parser.add_argument ('-e', '--end', required=True, dest="interval_end", help='End Position')
+#     # Default_parser.add_argument ('-r', '--resolution', required=True, choices=("5000", "25000"), dest="resolution", help='Resolution')
+#     Default_parser.add_argument ('-d', '--destination', required=True, dest="out_dir", help='Output Folder')
+#     Default_parser.add_argument ('-m', '--model', required=True, dest="model_path", help='Model Path')
+#     return parser
 
 logging.basicConfig(format='%(asctime)s %(message)s', datefmt='%I:%M:%S', level=logging.DEBUG)
 
 if __name__ == '__main__':
-    parser = createParser()
-    namespace = parser.parse_args(sys.argv[1:])
-    
-    # здесь должна быть проверка
-    
-    RNA_seq_file = namespace.RNA_seq_file
-    CTCF_file = namespace.CTCF_file
-    CTCF_orient_file = namespace.CTCF_orient_file
-    chr= namespace.chr
-    interval_start = namespace.interval_start
-    interval_end = namespace.interval_end
-    resolution = namespace.resolution
-    model_path = namespace.model_path
-    out_dir=namespace.out_dir
+    # parser = createParser()
+    # namespace = parser.parse_args(sys.argv[1:])
+    #
+    # # здесь должна быть проверка
+    #
+    # RNA_seq_file = namespace.RNA_seq_file
+    # CTCF_file = namespace.CTCF_file
+    # CTCF_orient_file = namespace.CTCF_orient_file
+    # chr= namespace.chr
+    # interval_start = namespace.interval_start
+    # interval_end = namespace.interval_end
+    # resolution = 5000
+    # model_path = namespace.model_path
+    # out_dir=namespace.out_dir
 
-    #RNA_seq_file = "/mnt/scratch/ws/psbelokopytova/202001051010polina_data/3DPredictor/input/K562/RNA-seq/rna-seqPolyA.tsvpre.txt"
-    #CTCF_file = "/mnt/scratch/ws/psbelokopytova/202001051010polina_data/3DPredictor/input/K562/CTCF/wgEncodeAwgTfbsHaibK562CtcfcPcr1xUniPk.narrowPeak.gz"
-    #CTCF_orient_file = "/mnt/scratch/ws/psbelokopytova/202001051010polina_data/3DPredictor/input/K562/CTCF/wgEncodeAwgTfbsHaibK562CtcfcPcr1xUniPk.narrowPeak-orient.bed"
-    #chr= "chr14"
-    #interval_start = "101000000"
-    #interval_end = "101500000"
-    #resolution = "5000"
-    #model_path = "/mnt/scratch/ws/psbelokopytova/202001051010polina_data/3DPredictor/out/models/models up to 15.11.19/5662021667"
-    #out_dir="/mnt/scratch/ws/psbelokopytova/202001051010polina_data/3DPredictor/out/"
+    RNA_seq_file = "/mnt/scratch/ws/psbelokopytova/202001051010polina_data/3DPredictor/input/K562/RNA-seq/test_rna-seqPolyA.tsvpre.txt"
+    CTCF_file = "/mnt/scratch/ws/psbelokopytova/202001051010polina_data/3DPredictor/input/K562/CTCF/wgEncodeAwgTfbsHaibK562CtcfcPcr1xUniPk.narrowPeak.gz"
+    CTCF_orient_file = "/mnt/scratch/ws/psbelokopytova/202001051010polina_data/3DPredictor/input/K562/CTCF/wgEncodeAwgTfbsHaibK562CtcfcPcr1xUniPk.narrowPeak-orient.bed"
+    chr= "chr14"
+    interval_start = "101000000"
+    interval_end = "101500000"
+    resolution = "5000"
+    model_path = "/mnt/scratch/ws/psbelokopytova/202001051010polina_data/3DPredictor/out/models/models up to 15.11.19/5662021667"
+    out_dir="/mnt/scratch/ws/psbelokopytova/202001051010polina_data/3DPredictor/out/"
+
+    # Check file formats
+    check_file_formats(RNA_seq_file, CTCF_file, CTCF_orient_file)
 
     params = Parameters()
     params.window_size = int(resolution) #region around contact to be binned for predictors
@@ -87,11 +90,7 @@ if __name__ == '__main__':
     #you can rename table fields below
     params.RNAseqReader = RNAseqReader(RNA_seq_file,name="RNA")
     #read RNA-seq data and rename table fields
-    params.RNAseqReader.read_file(rename={"Gene name": "gene",
-                                  "Gene start (bp)": "start",
-                                  "Gene end (bp)": "end",
-                                  "Chromosome/scaffold name": "chr",
-                                  "FPKM": "sigVal"},
+    params.RNAseqReader.read_file(rename=None,
                                           sep="\t")
     # set corresponding predictor generators and its options:
     RNAseqPG = SmallChipSeqPredictorGenerator(params.RNAseqReader,window_size=params.window_size,N_closest=3)
