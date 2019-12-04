@@ -166,8 +166,11 @@ class Predictor(object):
             pass
 
         # First try to load model dump
+        print(str(self))
         self.representation = str(self)
         dump_path = os.path.join(out_dir,self.representation)
+        print("!!!!!!")
+        print(dump_path)
         if os.path.exists(dump_path):
             logging.info("Found dump for model " + dump_path)
             return pickle.load(open(dump_path,"rb"))
