@@ -348,7 +348,7 @@ class Predictor(object):
         self.transformation_for_validation_data = ""
         self.predicted = self.trained_model.predict(self.validation_data[self.predictors])
         for transformation_function in transformation:
-            print(transformation_function.__name__)
+            # print(transformation_function.__name__)
             self.transformation_for_validation_data+=transformation_function.__name__
             self.predicted = transformation_function(self.predicted,
                                         data=self.validation_data, data_type="predicted")

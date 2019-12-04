@@ -127,21 +127,15 @@ class DataGenerator():
         for pg in self.not_vect_predictor_generators:
             header += pg.get_header(contact.iloc[0, :])
         self.N_notVect_fields = len(header)
-        # print(contact.keys())
         header =header
-        # header = ["chr", "contact_st", "contact_en", "contact_dist"] + header
+
         for pg in self.vect_predictor_generators:
             header += pg.get_header(contact.iloc[0, :])
         assert len(header) == len(set(header))
-        # print("header", header)
-        logging.getLogger(__name__).debug("Going to generate predictors for " +str(len(contact)) + " contacts")
-        # print(self.N_notVect_fields)
+        # logging.getLogger(__name__).debug("Going to generate predictors for " +str(len(contact)) + " contacts")
         result = contact.apply(contact2file, DataGeneratorObj=self, returnStr=False,
                                         axis="columns")
-        # print(result.keys())
         result=result[0]
-        # print(result)
-        # print(len(result), len(header))
         assert len(result)==len(header)
         return header,result										   
 

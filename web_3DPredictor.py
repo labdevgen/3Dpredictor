@@ -9,6 +9,7 @@ from DataGenerator import DataGenerator
 from check_file_formats import check_file_formats
 import sys
 import argparse
+import datetime
 
 # def createParser():
 #     parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter, description="3DPredictor: A tool for 3D chromatin structure prediction.", epilog="GitHub: https://github.com/labdevgen/3Dpredictor")
@@ -48,9 +49,9 @@ if __name__ == '__main__':
     CTCF_file = "/mnt/scratch/ws/psbelokopytova/202001051010polina_data/3DPredictor/input/K562/CTCF/wgEncodeAwgTfbsHaibK562CtcfcPcr1xUniPk.narrowPeak.gz"
     CTCF_orient_file = "/mnt/scratch/ws/psbelokopytova/202001051010polina_data/3DPredictor/input/K562/CTCF/wgEncodeAwgTfbsHaibK562CtcfcPcr1xUniPk.narrowPeak-orient.bed"
     chr= "chr14"
-    interval_start = "101000000"
-    interval_end = "101500000"
-    resolution = "5000"
+    interval_start = "60600000"
+    interval_end = "61200000"
+
     model_path = "/mnt/scratch/ws/psbelokopytova/202001051010polina_data/3DPredictor/out/models/models up to 15.11.19/5662021667"
     out_dir="/mnt/scratch/ws/psbelokopytova/202001051010polina_data/3DPredictor/out/"
 
@@ -58,6 +59,7 @@ if __name__ == '__main__':
     check_file_formats(RNA_seq_file, CTCF_file, CTCF_orient_file)
 
     params = Parameters()
+    resolution = "5000"
     params.window_size = int(resolution) #region around contact to be binned for predictors
     params.mindist = int(resolution)*2+1 #minimum distance between contacting regions
     params.maxdist = 1500000 #maximum distance between contacting regions
@@ -90,8 +92,7 @@ if __name__ == '__main__':
     #you can rename table fields below
     params.RNAseqReader = RNAseqReader(RNA_seq_file,name="RNA")
     #read RNA-seq data and rename table fields
-    params.RNAseqReader.read_file(rename=None,
-                                          sep="\t")
+    params.RNAseqReader.read_file(rename={"FPKM": "sigVal"},sep="\t")
     # set corresponding predictor generators and its options:
     RNAseqPG = SmallChipSeqPredictorGenerator(params.RNAseqReader,window_size=params.window_size,N_closest=3)
     params.pgs = [OrientCtcfpg, NotOrientCTCFpg, OrientBlocksCTCFpg, RNAseqPG, ConvergentPairPG]
@@ -101,11 +102,12 @@ if __name__ == '__main__':
 
     logging.info("dump trained model")
     trained_predictor = pickle.load(open(model_path, "rb"))
-    outfile = open(out_dir+"predicted_contacts_"+chr+"_"+interval_start+"_"+"interval_end"+"_"+resolution, "w")
+    outfile = open(out_dir+"predicted_contacts_"+chr+"_"+interval_start+"_"+interval_end+"_"+resolution, "w")
     outfile.write("chr"+"\t"+"contact_st"+"\t"+"contact_en"+"\t"+"predicted_contact_count"+"\n")
 
-    for contact_st in range(interval_start_bin, interval_end_bin + params.maxdist+1, int(resolution)):
-        for contact_en in range (contact_st, interval_end_bin + params.maxdist+1, int(resolution)):
+    for contact_st in range(interval_start_bin, interval_end_bin+resolution, int(resolution)):
+        logging.info(str(datetime.datetime.now()) +" " +str(contact_st))
+        for contact_en in range (contact_st, interval_end_bin+resolution, int(resolution)):
             if (contact_en - contact_st) <= params.maxdist and (contact_en - contact_st) >= params.mindist:
                 contact_df = pd.DataFrame([[chr, contact_st, contact_en, contact_en-contact_st]],columns=['chr', 'contact_st', 'contact_en', 'dist'])
                 generator = DataGenerator()
