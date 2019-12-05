@@ -15,7 +15,15 @@ import_path = os.path.dirname(os.path.dirname(os.getcwd()))
 logging.getLogger(__name__).info("Appending import path: "+import_path)
 sys.path.append(import_path)
 
-from shared import str2hash, FileReader
+from shared import FileReader
+
+
+def rm_chr_from_chrName(chr):
+    if chr.startswith("chr"):
+        return chr[3:]
+    else:
+        return chr
+
 
 class fastaReader(FileReader): #Reading, processing and storing the data from
                                 # fasta/multifasta genome files
@@ -121,6 +129,7 @@ class fastaReader(FileReader): #Reading, processing and storing the data from
         self.data = {}
         self.converter = converter
         self.chrm_names_renamer = chrm_names_renamer
+        self.chrm_names_renamer_function = chrm_names_renamer.__name__
 
         if len(excludeChromosomes)*len(useOnlyChromosomes) != 0:
             logging.getLogger(__name__).error(
@@ -150,7 +159,7 @@ class fastaReader(FileReader): #Reading, processing and storing the data from
             self.name = name
 
         self.full_name = "".join(sorted(self.files)+sorted(self.excludeChr)+sorted(self.useOnlyChromosomes)+\
-                                 [str(self.converter)])
+                                 [str(sorted(self.converter))]+[self.chrm_names_renamer.__name__])
 
     def read_data(self):
         if os.path.exists(self.get_dump_path()):

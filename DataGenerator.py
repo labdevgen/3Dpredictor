@@ -206,9 +206,9 @@ class DataGenerator():
         # Now get predictors
         pool = multiprocessing.Pool(processes=n_cpus,initializer=initializer,initargs=(contacts,self))
         start_points,end_points = get_split_array_indexes(contacts,n_cpus)
-        result = pool.map(_apply_df, [(st, end) for st,end in zip(start_points,end_points)])
-        #result = pool.map(_apply_df, [(d, self) for d in np.array_split(contacts, n_cpus+10)])
-        #result = list(map(_apply_df, [(d, self) for d in np.array_split(contacts, n_cpus)]))
+        #result = pool.map(_apply_df, [(st, end) for st,end in zip(start_points,end_points)])
+        initializer(contacts,self)
+        result = list(map(_apply_df, [(d, self) for d in np.array_split(contacts, n_cpus)]))
         pool.close()
 
         logging.getLogger(__name__).debug("Writing to file")
