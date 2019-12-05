@@ -24,4 +24,4 @@ class SequencePredictorGenerator(PredictorGenerator):
         right_sequence = self.fastaReader.get_interval(right_interval)
         assert len(left_sequence) == self.dist_of_interval
         assert len(right_sequence) == self.dist_of_interval
-        return left_sequence + right_sequence
+        return (left_sequence + right_sequence).tolist()
