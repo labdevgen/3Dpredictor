@@ -233,9 +233,10 @@ chrs_length = c(249250621,243199373,198022430,191154276,180915260,171115067,1591
 
 args = commandArgs(trailingOnly=TRUE)
 in_fname = args[1]
-h = as.numeric(args[2])
+out_file = args[2]
+h = as.numeric(args[3])
 message(c("h=",h))
-chr = args[3]
+chr = args[4]
 promoters = args[4]
 enhancers = args[5]
 message(c("in_fname =:", in_fname))
@@ -406,4 +407,4 @@ out_fname = paste(in_fname,"out",sep=".")
 out1 = paste("corr","scc","MSE","mod_avr","Pr_en_MSE","Pr_en_mod_avr","mod_ps","mod_ps_pr_en", sep = "	")
 out2 = paste(c,as.numeric(j$scc), mse, mod_avr,mse_pr_en,mod_avr_pr_en,mod_ps,mod_ps_pr_en, sep =  "	")
 out = paste(out1,"\n",out2,sep = "")
-write(out,out_fname,sep = " ")
+write(out,out_file,sep = " ")
