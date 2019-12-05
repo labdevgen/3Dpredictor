@@ -53,7 +53,7 @@ if __name__ == '__main__':  # Requiered for parallelization, at least on Windows
         params.pgs = [SequencePG]
         params.out_file = output_folder + "NPC_5000"
 
-        params.sample_size = 10000
+        params.sample_size = 1000
         params.interval = Interval("19", params.contacts_reader.get_min_contact_position("19"),
                                        params.contacts_reader.get_max_contact_position("19"))
         logging.getLogger(__name__).info("Generating dataset for interval " + str(params.interval))
