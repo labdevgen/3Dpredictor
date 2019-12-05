@@ -84,7 +84,9 @@ if __name__ == '__main__':  # Requiered for parallelization, at least on Windows
                                                          params.window_size,
                                                          N_closest=4)
 
-        # Read CTCF data and drop sites w/o known orientation
+        # Read CTCF data and drop sites w/o
+        #
+        # known orientation
         params.ctcf_reader_orientOnly = ChiPSeqReader(
             input_folder + "CTCF/wgEncodeAwgTfbsHaibK562CtcfcPcr1xUniPk.narrowPeak.gz",
             name="CTCF")
