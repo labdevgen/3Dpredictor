@@ -1,5 +1,9 @@
 from fastaFileReader import fastaReader
 from shared import Interval
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.dirname(os.getcwd())))
+from PredictorGenerators import PredictorGenerator
 
 class SequencePredictorGenerator(PredictorGenerator):
     def __init__(self, fastaReader=fastaReader, binsize=0, dist_from_anchor=0, **kwargs):
@@ -13,6 +17,8 @@ class SequencePredictorGenerator(PredictorGenerator):
     def get_header(self,contact):
         self.header = ["left" + str(i) for i in range(self.dist_of_interval)] + \
         ["right" + str(i) for i in range(self.dist_of_interval)]
+        example_predictor = self.get_predictors(contact)
+        assert len(example_predictor) == len(self.header)
         return self.header
 
     def get_predictors(self,contact):
