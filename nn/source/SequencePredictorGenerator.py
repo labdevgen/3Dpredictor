@@ -15,8 +15,8 @@ class SequencePredictorGenerator(PredictorGenerator):
         super(SequencePredictorGenerator, self).__init__(**kwargs)
 
     def get_header(self,contact):
-        self.header = ["left" + str(i) for i in range(self.dist_of_interval)] + \
-        ["right" + str(i) for i in range(self.dist_of_interval)]
+        self.header = ["left" + str(i) for i in range(1, self.dist_of_interval+1)] + \
+        ["right" + str(i) for i in range(1, self.dist_of_interval+1)]
         example_predictor = self.get_predictors(contact)
         assert len(example_predictor) == len(self.header)
         return self.header

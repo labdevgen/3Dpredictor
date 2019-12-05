@@ -8,24 +8,25 @@ path2 = path1 + "\\nn\source"
 sys.path.append(path1)
 sys.path.append(path2)
 from fastaFileReader import fastaReader
+from fastaFileReader import rm_chr_from_chrName
 from SequencePredictorGenerator import SequencePredictorGenerator
 from DataGenerator import generate_data
 from Contacts_reader import ContactsReader
 from shared import Parameters
 from shared import Interval
 
-chr_num = sys.argv[1]  # comma separated number of chromosomes for predictor generation
+chr_num = "chr19"  # comma separated number of chromosomes for predictor generation
 chr_nums = chr_num.split(",")
-conttype = sys.argv[2]  # contacts.gz or oe.gz
+conttype = "contacts.gz"  # contacts.gz or oe.gz
 
 # chr_num="12,13,14"
 # conttype = "contacts.gz"
-
+logging.basicConfig(format='%(asctime)s %(name)s: %(message)s', datefmt='%I:%M:%S', level=logging.DEBUG)
 if __name__ == '__main__':  # Requiered for parallelization, at least on Windows
     for conttype in [conttype]:
         logging.basicConfig(format='%(asctime)s %(name)s: %(message)s', datefmt='%I:%M:%S', level=logging.DEBUG)
-        input_folder =  os.getcwd() + "/input/chr19_mm10/"
-        output_folder = os.getcwd() + "/output/chr19_mm10/"
+        input_folder = path1 + "/input/chr19_mm10/"
+        output_folder = path1 + "/output/chr19_mm10/"
         cell_type = "NPC"
         params = Parameters()
         params.window_size = 25000  # region around contact to be binned for predictors
@@ -51,12 +52,14 @@ if __name__ == '__main__':  # Requiered for parallelization, at least on Windows
         params.contacts_reader.read_files(contacts_files, coeff_fname,
                                           max_cpus=params.max_cpus,
                                           fill_empty_contacts=fill_empty_contacts, maxdist=params.maxdist)
-        params.fastaReader = fastaReader(input_folder + "chr19.fa")
+        params.fastaReader = fastaReader(input_folder + "chr19.fa",chrm_names_renamer = rm_chr_from_chrName)
+        params.fastaReader.read_data()
+        print(params.fastaReader.data)
         SequencePG = SequencePredictorGenerator(fastaReader=params.fastaReader, binsize=params.contacts_reader.binsize)
         params.pgs = [SequencePG]
         params.out_file = output_folder + "NPC_5000"
 
-        params.sample_size = 1000
+        params.sample_size = 100
         params.interval = Interval("19", params.contacts_reader.get_min_contact_position("19"),
                                        params.contacts_reader.get_max_contact_position("19"))
         logging.getLogger(__name__).info("Generating dataset for interval " + str(params.interval))
