@@ -169,7 +169,6 @@ class Predictor(object):
         print(str(self))
         self.representation = str(self)
         dump_path = os.path.join(out_dir,self.representation)
-        print("!!!!!!")
         print(dump_path)
         if os.path.exists(dump_path):
             logging.info("Found dump for model " + dump_path)
@@ -304,19 +303,19 @@ class Predictor(object):
         result.__name__ = str(h) + cell_type+ func.__name__
         return result
 
-    def plot_juicebox(self,validation_data,predicted,out_dir,**kwargs):
-        print("predicted", predicted)
-        print("validation cont_count", validation_data["contact_count"])
+    def plot_juicebox(self,validation_data,predicted,out_dir="output/hic_files",**kwargs):
+        # print("predicted", predicted)
+        # print("validation cont_count", validation_data["contact_count"])
+        # print(out_dir)
         predicted_data = validation_data.copy(deep=True)
         predicted_data["contact_count"] = predicted
         # print(predicted_data.query("contact_count >10000")['contact_count'])
-        out_dir = "output/hic_files"
         mp = MatrixPlotter()
         mp.set_data(predicted_data)
         mp.set_control(validation_data)
         chromosome = str(validation_data["chr"][1])
         #mp.set_apply_log(self.apply_log)
-        MatPlot2HiC(mp, chromosome + "." + self.__represent_validation__(), out_dir)
+        MatPlot2HiC(mp, chromosome + "." + self.__represent_validation__(), out_dir+"hic_files/")
 
     def return_predicted(self, validation_data,predicted,out_dir,**kwargs):
         return [validation_data, predicted]
@@ -338,6 +337,7 @@ class Predictor(object):
         validators = validators #if validators is not None else [self.r2score,self.plot_matrix,self.scc]
         self.cell_type = cell_type
         if not df_input:
+            self.validation_file=validation_file
             self.validation_data = self.read_file(validation_file)
         else:
             self.validation_data = validation_file
