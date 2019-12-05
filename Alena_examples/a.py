@@ -1,15 +1,18 @@
 import logging
-from Contacts_reader import ContactsReader
-from shared import Parameters
-from shared import Interval
 import sys
 import os
+import inspect
 
-p=os.getcwd()+"\\nn\source"
-sys.path.append(p)
+path1 = os.path.dirname(os.path.dirname(inspect.getfile(inspect.currentframe())))
+path2 = path1 + "\\nn\source"
+sys.path.append(path1)
+sys.path.append(path2)
 from fastaFileReader import fastaReader
 from SequencePredictorGenerator import SequencePredictorGenerator
 from DataGenerator import generate_data
+from Contacts_reader import ContactsReader
+from shared import Parameters
+from shared import Interval
 
 chr_num = sys.argv[1]  # comma separated number of chromosomes for predictor generation
 chr_nums = chr_num.split(",")
