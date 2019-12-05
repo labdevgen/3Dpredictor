@@ -48,6 +48,7 @@ class fastaReader(FileReader): #Reading, processing and storing the data from
                     logging.getLogger(__name__).info("Skipping chrm "+chrm)
 
                 chrm = line.strip().split()[0][1:]
+                chrm = self.chrm_names_renamer(chrm)
                 assert len(chrm) > 0
                 logging.getLogger(__name__).info(str("Found chrm "+chrm))
 
@@ -59,7 +60,8 @@ class fastaReader(FileReader): #Reading, processing and storing the data from
                     exclude = not (chrm in self.useOnlyChromosomes)
                 elif len(self.excludeChr) !=0:
                     exclude = (chrm in self.excludeChr)
-                if len(self.chrmSizes) == len(self.useOnlyChromosomes): # we have read all chromosomes required
+                if len(self.chrmSizes) == len(self.useOnlyChromosomes) and \
+                        len(self.useOnlyChromosomes)>0: # we have read all chromosomes required
                     seq = []
                     break
             else:
@@ -104,6 +106,7 @@ class fastaReader(FileReader): #Reading, processing and storing the data from
                                "N":4,"n":4}),
                  excludeChromosomes = [],
                  useOnlyChromosomes = [],
+                 chrm_names_renamer = lambda x: x,
                  name=None):
         #fpath could be:
         #1.) path to single fasta/multifasta file
@@ -117,6 +120,7 @@ class fastaReader(FileReader): #Reading, processing and storing the data from
         self.files = []
         self.data = {}
         self.converter = converter
+        self.chrm_names_renamer = chrm_names_renamer
 
         if len(excludeChromosomes)*len(useOnlyChromosomes) != 0:
             logging.getLogger(__name__).error(
