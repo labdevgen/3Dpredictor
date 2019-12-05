@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 from shared import Interval
 import datetime
-import swifter
+#import swifter
 from ChiPSeqReader import ChiPSeqReader
 
 MAX_CHR_DIST = 3000000000
