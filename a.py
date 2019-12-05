@@ -7,7 +7,7 @@ import os
 
 p=os.getcwd()+"\\nn\source"
 sys.path.append(p)
-from fastaFileReader import fastaReader, rm_chr_from_chrName
+from fastaFileReader import fastaReader
 from SequencePredictorGenerator import SequencePredictorGenerator
 from DataGenerator import generate_data
 
@@ -48,7 +48,12 @@ if __name__ == '__main__':  # Requiered for parallelization, at least on Windows
         params.contacts_reader.read_files(contacts_files, coeff_fname,
                                           max_cpus=params.max_cpus,
                                           fill_empty_contacts=fill_empty_contacts, maxdist=params.maxdist)
-        params.fastaReader = fastaReader(input_folder + "chr19.fa",chrm_names_renamer = rm_chr_from_chrName)
+        def chrm_names_renamer(chr):
+            if chr.startswith("chr"):
+                return chr[3:]
+            else:
+                return chr
+        params.fastaReader = fastaReader(input_folder + "chr19.fa",chrm_names_renamer = chrm_names_renamer)
         params.fastaReader.read_data()
         SequencePG = SequencePredictorGenerator(fastaReader=params.fastaReader, binsize=params.contacts_reader.binsize)
         params.pgs = [SequencePG]
