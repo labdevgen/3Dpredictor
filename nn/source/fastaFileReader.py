@@ -11,9 +11,8 @@ from collections import OrderedDict
 import numpy as np
 
 # Add main directory to import path
-import_path = os.path.dirname(os.path.dirname(os.getcwd()))
-logging.getLogger(__name__).info("Appending import path: "+import_path)
-sys.path.append(import_path)
+import sys, os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(sys.argv[0]))))
 
 from shared import FileReader
 

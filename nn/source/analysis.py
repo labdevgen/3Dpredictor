@@ -7,6 +7,8 @@ import datetime
 import logging
 logging.basicConfig(level=logging.DEBUG)
 
+import sys, os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(sys.argv[0]))))
 
 def calc_corr(chr, resolution = 5000, window_size = 20):
     logging.basicConfig(level=logging.DEBUG) # set to INFO for less detailed output

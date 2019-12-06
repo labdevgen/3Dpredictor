@@ -1,6 +1,8 @@
-from bigWigFileReader import bigWigReader
-from fastaFileReader import fastaReader
-from hicFileReader import hicReader
+import sys, os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(sys.argv[0]))))
+#from bigWigFileReader import bigWigReader
+#from fastaFileReader import fastaReader
+#from hicFileReader import hicReader
 from shared import Interval, Genome
 
 from straw import straw
@@ -179,7 +181,7 @@ def test_dump():
     # hic = hic.read_data(debug_mode = True)
     # print(hic.get_contact(Interval("chr1",300000,500000)))
 
-test_dump()
+#test_dump()
 
 # now = datetime.datetime.now()
 # mem = memory_usage((simple_test),interval=.5)

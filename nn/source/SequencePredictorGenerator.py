@@ -1,8 +1,7 @@
+import sys, os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(sys.argv[0]))))
 from fastaFileReader import fastaReader
 from shared import Interval
-import sys
-import os
-sys.path.append(os.path.dirname(os.path.dirname(os.getcwd())))
 from PredictorGenerators import PredictorGenerator
 
 class SequencePredictorGenerator(PredictorGenerator):

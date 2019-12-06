@@ -13,22 +13,23 @@ import logging
 import datetime
 
 # Add main directory to import path
-import_path = os.path.dirname(os.path.dirname(os.getcwd()))
-logging.getLogger(__name__).info("Appending import path: "+import_path)
-sys.path.append(import_path)
+sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(sys.argv[0]))))
 
 from shared import FileReader
 
 
 class hicReader(FileReader):
-    def __init__(self, fname, genome, resolution, maxdist=1000000, normalization = "KR", name = None):
+    def __init__(self, fname, genome, binsize, maxdist=1000000, normalization = "KR", name = None,
+                 indexedData = False):
+        # indexedData - store data in new indexed format
+        # allows fast extraction of single contact, but not compatible with most of contact_reader function
         self.genome = genome
         self.genomeName = genome.name
         self.fname = fname
         self.maxdist = maxdist
-        self.resolution = resolution
+        self.binsize = binsize
         self.normalization = normalization
-        self.data = {}
+        self.indexedData = indexedData
         self.norms = {}
         if name == None:
             self.name = os.path.basename(fname)
@@ -48,9 +49,12 @@ class hicReader(FileReader):
         result.genome = genome
         return result
 
-    def read_data(self, debug_mode = False, noDump = False):
+    def read_data(self, debug_mode = False, noDump = False, fill_empty_contacts = False):
         # if noDump, will not try load data from dump file
         #  debug_mode = False will skip some assertions, useful only for intentionally incorrect input data
+
+        if fill_empty_contacts:
+            raise NotImplemented
 
         # first try to load data from dump
         if os.path.isfile(self.get_dump_path()) and not noDump:
@@ -62,13 +66,13 @@ class hicReader(FileReader):
             load_start_time = datetime.datetime.now()
             try:
                 result = straw.straw(self.normalization, self.fname,
-                                    chr, chr, "BP", self.resolution)
+                                    chr, chr, "BP", self.binsize)
             except TypeError:
                 if "chr" in chr:
                     new_chr = chr.replace("chr","",1)
                     logging.getLogger(__name__).warning("Failed to find chr "+chr+"; trying to find "+new_chr)
                     result = straw.straw(self.normalization, self.fname,
-                                    new_chr, new_chr, "BP", self.resolution)
+                                    new_chr, new_chr, "BP", self.binsize)
                 else:
                     raise TypeError
             logging.getLogger(__name__).debug("Load time: " + str(datetime.datetime.now() - load_start_time))
@@ -77,8 +81,7 @@ class hicReader(FileReader):
             result = np.array(result).T
             logging.getLogger(__name__).debug("Transpose time: " + str(datetime.datetime.now() - now))
             now = datetime.datetime.now()
-
-            result = pd.DataFrame(result, columns = ["st", "en", "count"], copy=False)
+            result = pd.DataFrame(result, columns = ["contact_st", "contact_en", "contact_count"], copy=False)
             logging.getLogger(__name__).debug("DF conversion time: " + str(datetime.datetime.now() - now))
             now = datetime.datetime.now()
 
@@ -88,12 +91,12 @@ class hicReader(FileReader):
 
             # Let's normalize data to have sum over each contact within chrm ~1.0
             subsample_size = 1000
-            subsample = np.random.choice(result.st.values,size=subsample_size,replace=False)
+            subsample = np.random.choice(result.contact_st.values,size=subsample_size,replace=False)
             subsample = np.unique(subsample)
             assert len(subsample) >= subsample_size / 10
             s = []
             for i in subsample:
-                local_count = result.query("st==@i | en==@i")["count"].sum()
+                local_count = result.query("contact_st==@i | contact_en==@i")["contact_count"].sum()
                 if local_count == 0:
                     # these are probably NAN samples
                     continue
@@ -108,13 +111,16 @@ class hicReader(FileReader):
                 logging.getLogger(__name__).warning("Using average for 'magic normalization coefficient' might be not correct")
             logging.getLogger(__name__).debug("Magic coefficient calc time: " + str(datetime.datetime.now() - now))
 
-            result.query("(en-st)<@self.maxdist",inplace=True)
+            result.query("(contact_en-contact_st)<@self.maxdist",inplace=True)
             assert len(result) > 0
 
             if not debug_mode:
-                assert max(result.en.values) <= self.genome.chrmSizes[chr] + self.resolution
-            result["count"] = result["count"] / np.average(s)
-            result = result.set_index(["st","en"])
+                assert max(result.en.values) <= self.genome.chrmSizes[chr] + self.binsize
+            result["count"] = result["contact_count"] / np.average(s)
+            result["dist"] = result["contact_en"] - result["contact_st"]
+            assert np.all(result["dist"].values>=0)
+            if self.indexedData:
+                result = result.set_index(["contact_st","contact_en"])
             self.data[chr] = result
             self.norms[chr] = np.average(s)
             logging.getLogger(__name__).info("Total hic load time: "+str(datetime.datetime.now()-load_start_time))
@@ -128,8 +134,10 @@ class hicReader(FileReader):
         raise NotImplementedError
 
     def get_contact(self, interval):
-        if interval.start % self.resolution != 0 or interval.end % self.resolution != 0:
-            logging.getLogger(__name__).error("Start or end of the contact does not match resolution")
+        # note: this won't work for not-indexed data
+        assert self.indexedData
+        if interval.start % self.binsize != 0 or interval.end % self.binsize != 0:
+            logging.getLogger(__name__).error("Start or end of the contact does not match binsize")
             raise Exception()
         if interval.len >= self.maxdist:
             logging.getLogger(__name__).error("Provided interval: " + str(interval) + "\n" + \
@@ -149,5 +157,9 @@ class hicReader(FileReader):
         else:
             raise NotImplementedError
 
-    def get_chr_contact(self, chr):
-        return self.data[chr]
+    def read_file(self):
+        logging.getLogger(__name__).error("This function is not implemented")
+        raise Exception()
+
+    def get_binsize(self):
+        return self.binsize
