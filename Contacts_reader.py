@@ -13,7 +13,7 @@ class ContactsReader(): #Class process files with contacts
         self.data = {}
         self.binsize = -1
 
-    def read_file(self,chr,fname,coeff_fname,fill_empty_contacts, max_cpus, maxdist):
+    def read_file(self,chr,fname,coeff_fname,fill_empty_contacts, max_cpus, maxdist, expected_binsize):
         logging.getLogger(__name__).info("Reading file "+fname)
         if chr in self.data:
             logging.getLogger(__name__).warning("Chromosome "+chr+" will be rewritten")
@@ -34,6 +34,7 @@ class ContactsReader(): #Class process files with contacts
         data["dist"] = data["contact_en"] - data["contact_st"]
         assert np.all(data["dist"]) >= 0
         binsize = min(data["dist"][data["dist"] > 0])
+        assert binsize==expected_binsize
         if self.binsize != -1 and binsize != self.binsize:
             logging.error("Binsize in file "+str(fname)
                           +"("+binsize+") does not match binsize "
@@ -64,10 +65,10 @@ class ContactsReader(): #Class process files with contacts
 
 
 
-    def read_files(self,fnames, coeff_fname, max_cpus, fill_empty_contacts, maxdist):
+    def read_files(self,fnames, coeff_fname, max_cpus, fill_empty_contacts, maxdist, expected_binsize):
         for f in fnames:
             self.read_file(os.path.basename(f).split(".")[0],f, coeff_fname=coeff_fname, max_cpus=max_cpus, fill_empty_contacts=fill_empty_contacts,
-                           maxdist=maxdist)
+                           maxdist=maxdist, expected_binsize=expected_binsize)
 
     def get_contacts(self,interval,mindist=0,maxdist=MAX_CHR_DIST):
         return self.data[interval.chr].query(

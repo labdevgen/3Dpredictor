@@ -95,7 +95,7 @@ def MatPlot2HiC(matplot_obj, fname, out_folder):
     Pandas2Pre(pre_control_filename, matplot_obj.control)
     time2 = time.time()
     matplot_obj.columns = ["chr1", "start", "end", "count"]
-    binsize = get_bin_size(matplot_obj.control, fields=["start", "start"])
+    binsize = str(get_bin_size(matplot_obj.control, fields=["start", "start"]))
     print('Time: ' + str(round(time2 - time1, 3)) + ' sec\n')
     print(colored("[SUCCESS]", 'green') + ' CONTROL pre-HiC file created.\n')
 

@@ -275,8 +275,6 @@ def oe2obs(contacts, data, expected_folder, cell_type,coeff_fname, **kwargs): # 
     for ind,val in enumerate(contacts):
         result.append(val*expected_dist[dists[ind]]/coeff)
     assert len(result) == len(contacts)
-    print("contacts", contacts)
-    print("result", result)
     if kwargs['data_type']=='predicted':
         return result
     elif kwargs['data_type']=='validation':
@@ -334,6 +332,7 @@ def get_bin_size(data, fields = ["contact_en","contact_st"]):
     dist = dist[np.nonzero(dist)]
     assert len(dist) > 0
     binsize = min(dist)
+
     assert int(binsize) == binsize
     return int(binsize)
 
