@@ -1,2 +1,0 @@
-cell_type	coeff	median	std
-Mcyte	12946	12846	1762

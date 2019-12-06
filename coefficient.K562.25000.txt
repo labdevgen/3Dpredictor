@@ -1,2 +1,0 @@
-cell_type	coeff	median	std
-K562	12765	12515	1996

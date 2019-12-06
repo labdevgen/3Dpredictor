@@ -281,7 +281,6 @@ class Predictor(object):
                 out = subprocess.check_output(["Rscript", kwargs["scc_file"], in_fname,out_fname,str(kwargs["h"]), chromosome, kwargs["interact_pr_en"]])
         else:
             out = subprocess.check_output(["Rscript", kwargs["scc_file"], in_fname,out_fname, str(kwargs["h"]), chromosome, kwargs["p_file"], kwargs["e_file"]])
-        print(str(out))
 
 
     def decorate_scc(self, func, h, scc_file,cell_type,**kwargs):

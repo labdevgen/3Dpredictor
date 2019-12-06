@@ -51,7 +51,6 @@ def _apply_df(args):
     # main data is a big df with all contacts
     # args is a tuple with 2 numbers (from,two), which indicates which part of main data to process in current child process
     df = main_data.iloc[args[0]:args[1]]
-    df.reset_index(inplace=True,drop=True) # To allow concat
     # Get not-vectorizable predicors
     basic_info = [df[["chr", "contact_st", "contact_en"]], df["contact_en"] - df["contact_st"],
                     df["contact_count"]]

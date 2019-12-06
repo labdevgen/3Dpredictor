@@ -1,2 +1,0 @@
-cell_type	coeff	median	std
-NPC	22715	20519	3936

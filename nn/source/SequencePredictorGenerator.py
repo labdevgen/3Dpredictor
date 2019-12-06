@@ -1,5 +1,6 @@
 import sys, os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(sys.argv[0]))))
+print(os.path.dirname(os.path.dirname(os.path.dirname(sys.argv[0]))))
 from fastaFileReader import fastaReader
 from shared import Interval
 from PredictorGenerators import PredictorGenerator
