@@ -229,6 +229,45 @@ def intersect_with_interval(chr_int_data1, interval, return_ids=False):
     elif return_ids:
         return (st_end, end_st)
 
+# input: chr_int_data - dictionaries of pd.dataframes where 1,2,3 columns =
+# chr, start/end, interval_id, label (start or end)
+# key of dict: chr
+# interval - interval object
+#
+# output:
+# returns subset of chr_int_data2 which intersects interval
+def intersect_with_interval_v2(chr_int_data1,
+                               interval,
+                               return_ids=False):
+    chr = interval.chr
+    if not chr in chr_int_data1:
+        logging.getLogger(__name__).warning("No intervals on chr", chr)
+        return pd.DataFrame({}) #Return empty DataFrame
+
+    st_position = np.searchsorted(chr_int_data1[chr]['coordinate'].values,
+                             interval.start,
+                             side="left")
+    if st_position == len(chr_int_data1[chr]['coordinate'].values):
+        #return empty result
+        raise # add code here
+
+    end_position = np.searchsorted(chr_int_data1[chr]['coordinate'].values,
+                                    interval.end,
+                                   side='right')
+    if end_position == 0:
+        #return empty result
+        raise # add code here
+
+    if end_position < st_position:
+        logging.getLogger(__name__).error('st_end_i larger then end_st_i')
+        # As it's an error, I assume raising exception.
+        raise Exception("Exception from intersect_intervals function")
+    elif not return_ids:
+        return chr_int_data1[chr].iloc[st_position:end_position,:]
+    elif return_ids:
+        ids = chr_int_data1[chr].interval_id.iloc[st_position:end_position].values
+        return (min(ids),max(ids))
+
 
 # File descriptions are saved in XML form
 # Description should be dict-like
