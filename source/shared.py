@@ -308,6 +308,7 @@ def intersect_with_interval_v2(chr_int_data1,
         ids = chr_int_data1[chr].interval_id.iloc[st_position:end_position].values
         return (min(ids),max(ids))
 
+
 # File descriptions are saved in XML form
 # Description should be dict-like
 def write_XML(XML_report, header,fname="files_description.xml"):
