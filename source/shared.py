@@ -288,15 +288,18 @@ def intersect_with_interval_v2(chr_int_data1,
                              interval.start,
                              side="left")
     if st_position == len(chr_int_data1[chr]['coordinate'].values):
-        #return empty result
-        raise # add code here
-
+        if return_ids:
+            raise # add code here
+        else:
+            return pd.DataFrame({})
     end_position = np.searchsorted(chr_int_data1[chr]['coordinate'].values,
                                     interval.end,
                                    side='right')
     if end_position == 0:
-        #return empty result
-        raise # add code here
+        if return_ids:
+            raise # add code here
+        else:
+            return pd.DataFrame({})
 
     if end_position < st_position:
         logging.getLogger(__name__).error('st_end_i larger then end_st_i')
@@ -308,6 +311,31 @@ def intersect_with_interval_v2(chr_int_data1,
         ids = chr_int_data1[chr].interval_id.iloc[st_position:end_position].values
         return (min(ids),max(ids))
 
+def intersect_with_interval_v3(chr_int_data1,
+                               interval,
+                               return_ids=False):
+    chr = interval.chr
+    if not chr in chr_int_data1:
+        logging.getLogger(__name__).warning("No intervals on chr", chr)
+        return pd.DataFrame({}) #Return empty DataFrame
+    return chr_int_data1[chr].query(
+        "(@interval.start>=start & @interval.start<=end) | "+
+        "(@interval.end>=start & @interval.end<=end) | " + \
+        "(start>=@interval.start & start<=@interval.end) |" + \
+        "(end>=@interval.start & end<=@interval.end)"
+        )
+
+def intersect_with_interval_v4(chr_int_data1,
+                               interval,
+                               return_ids=False):
+    chr = interval.chr
+    if not chr in chr_int_data1:
+        logging.getLogger(__name__).warning("No intervals on chr", chr)
+        return pd.DataFrame({}) #Return empty DataFrame
+    intersection = chr_int_data1[chr].index.overlaps(pd.Interval(left=interval.start,
+                                                                 right=interval.end,
+                                                                 closed="both"))
+    return  chr_int_data1[chr][intersection]
 
 # File descriptions are saved in XML form
 # Description should be dict-like
