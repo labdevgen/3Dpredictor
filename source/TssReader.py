@@ -9,6 +9,16 @@ class TssReader(ChiPSeqReader):
      #It will set self.data to None
      #And take care about self.fname and self.name
 
+     def process_data(self, data):
+         sorted_data = super(TssReader, self).process_data(data)
+         # set IntervalIndex used by intersect_intervals function
+         for chr in sorted_data.keys():
+             df = sorted_data[chr]
+             sorted_data[chr] = df.set_index(df.apply(
+                 lambda x: pd.Interval(x.start, x.end, closed="both"),
+                 axis="columns"))
+         return sorted_data
+
      #read file
      #rename, if not None, passed to dataframe.rename(columns=rename)
      #As a results, dataframe should get column names
@@ -58,6 +68,11 @@ class TssReader(ChiPSeqReader):
         return intersect_with_interval(self.chr_data,interval, return_ids=return_ids)
 
      def delete_region(self, interval):
+         # TODO
+         # this won't work for long genes. Imagine, we are deleting regions from inside the gene
+         # then, it will, for example, change coordinate of its start
+         # in general, it's not working for datasets with overlapping intervals
+         raise NotImplementedError
          debug = len(self.get_interval(interval))
          data = self.chr_data[interval.chr]
          st, en = self.get_interval(interval, return_ids=True)

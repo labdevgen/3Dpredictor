@@ -1,3 +1,9 @@
+import os
+import sys
+# add source directory into path to allow import
+sourcedir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(sys.argv[0]))),
+                         "source")
+sys.path.append(sourcedir)
 import logging
 from ChiPSeqReader import ChiPSeqReader
 from Contacts_reader import ContactsReader
@@ -12,7 +18,6 @@ from PredictorGenerators import E1PredictorGenerator,ChipSeqPredictorGenerator, 
 from VectPredictorGenerators import loopsPredictorGenerator
 from LoopReader import LoopReader
 import pandas as pd
-import os
 import sys
 import pickle
 chr_num=sys.argv[1] #comma separated number of chromosomes for predictor generation

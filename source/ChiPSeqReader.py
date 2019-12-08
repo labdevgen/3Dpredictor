@@ -326,8 +326,6 @@ class ChiPSeqReader(FileReader): #Class process files with ChipSeq peaks
                                       "minus_orientation!='0'",inplace=True)
             self.only_orient_peaks = True
 
-
-
     def delete_region(self,interval):
         debug = len(self.get_interval(interval))
         data = self.chr_data[interval.chr]
@@ -340,12 +338,14 @@ class ChiPSeqReader(FileReader): #Class process files with ChipSeq peaks
         assert len(self.chr_data[interval.chr]) + debug == old_length
 
     def duplicate_region(self, interval):
+        raise NotImplementedError
         st, en = self.get_interval(interval, return_ids=True)
         dup_data=self.get_interval(interval)
         drop_indecies = []
         if dup_data.iloc[st, dup_data.columns.get_loc("start")] < interval.start:
             drop_indecies.append(st)
         elif dup_data.iloc[st, dup_data.columns.get_loc("end")] > interval.end:
+            # TODO: why elif here? Couldn't it be that both left and right boundaries destroy interval?
             drop_indecies.append(en)
         dup_data.drop(dup_data.index[drop_indecies], inplace=True)
         dup_data["start"]+=interval.len
@@ -370,9 +370,15 @@ class ChiPSeqReader(FileReader): #Class process files with ChipSeq peaks
         return res
 
     def inverse_region(self, interval,CTCF=False):
+        raise NotImplementedError
+        # TODO rewrite this function conseidering that index is not intervalindex object
         debug = len(self.chr_data[interval.chr])
         st, en = self.get_interval(interval, return_ids=True)
         en-=1 #we do it because we use .loc, not.iloc
+        # TODO this is not clear. loc and iloc return the same then using simple interer index:
+        # see https://github.com/labdevgen/3DPredictorTests/blob/master/compare_loc_iloc.py
+        # moreover, I think using loc is not a good idea, since as soom as you modify number of rows ind data
+        # ids returned by get_interval will become in disagreement with indexes
         data_interval = self.get_interval(interval, return_ids=False)   
         drop_indecies = []
         if self.chr_data[interval.chr].loc[st, "start"] < interval.start:

@@ -1,3 +1,11 @@
+import os
+import sys
+# add source directory into path to allow import
+project_basedir = os.path.dirname(os.path.dirname(os.path.abspath(sys.argv[0])))
+sourcedir = os.path.join(project_basedir,"source")
+sys.path.append(sourcedir)
+os.chdir(project_basedir)
+
 import logging
 from ChiPSeqReader import ChiPSeqReader
 from Contacts_reader import ContactsReader
@@ -11,10 +19,6 @@ from PredictorGenerators import E1PredictorGenerator, ChipSeqPredictorGenerator,
     SitesOrientPredictorGenerator, OrientBlocksPredictorGenerator, ConvergentPairPredictorGenerator, Distance_to_TSS_PG
 from VectPredictorGenerators import loopsPredictorGenerator
 from LoopReader import LoopReader
-import pandas as pd
-import os
-import sys
-import pickle
 
 chr_num = sys.argv[1]  # comma separated number of chromosomes for predictor generation
 chr_nums = chr_num.split(",")
@@ -33,11 +37,12 @@ if __name__ == '__main__':  # Requiered for parallelization, at least on Windows
         params.window_size = 25000  # region around contact to be binned for predictors
         params.mindist = 50001  # minimum distance between contacting regions
         params.maxdist = 1500000  # maximum distance between contacting regions
-        params.sample_size = 1  # how many contacts write to file
+        params.sample_size = 100  # how many contacts write to file
         params.conttype = conttype
         params.max_cpus = 11
         params.keep_only_orient = False  # set True if you want use only CTCF with orient
-        params.use_only_contacts_with_CTCF = "cont_with_CTCF"   # "cont_with_CTCF"
+        #params.use_only_contacts_with_CTCF = "cont_with_CTCF"   # "cont_with_CTCF"
+        params.use_only_contacts_with_CTCF = "no"
         # use this option to change proportion
         # of contacts with nearest ctcf sites in training datasets
 
@@ -52,9 +57,11 @@ if __name__ == '__main__':  # Requiered for parallelization, at least on Windows
         # set path to the coefficient file and to contacts files
         # contacts file format: bin_start--bin_end--contact_count
         [contacts_files.append(input_folder + "chr" + chr + ".5MB.K562." + params.conttype) for chr in chr_nums]
-        params.contacts_reader.read_files(contacts_files, coeff_fname="coefficient." + cell_type + ".25000.txt",
+        params.contacts_reader.read_files(contacts_files,
+                                          coeff_fname=input_folder + "coefficient." + cell_type + ".25000.txt",
                                           max_cpus=params.max_cpus,
-                                          fill_empty_contacts=fill_empty_contacts, maxdist=params.maxdist)
+                                          fill_empty_contacts=fill_empty_contacts, maxdist=params.maxdist,
+                                          expected_binsize = 25000)
 
         if params.use_only_contacts_with_CTCF == "cont_with_CTCF":
             params.proportion = 1  # propotion of contacts with ctcf in train data (if 1: contacts with ctcf/random contacts = 1/1)

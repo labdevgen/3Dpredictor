@@ -1,3 +1,10 @@
+import os
+import sys
+# add source directory into path to allow import
+sourcedir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(sys.argv[0]))),
+                         "source")
+sys.path.append(sourcedir)
+
 import logging
 from Predictor import Predictor
 from Weight_funcs_modul import *
