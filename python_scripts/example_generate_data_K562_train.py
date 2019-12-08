@@ -27,6 +27,8 @@ conttype = sys.argv[2]  # contacts.gz or oe.gz
 # chr_num="12,13,14"
 # conttype = "contacts.gz"
 
+logging.basicConfig(level=logging.DEBUG)
+
 if __name__ == '__main__':  # Requiered for parallelization, at least on Windows
     for conttype in [conttype]:
         logging.basicConfig(format='%(asctime)s %(name)s: %(message)s', datefmt='%I:%M:%S', level=logging.DEBUG)
@@ -136,7 +138,8 @@ if __name__ == '__main__':  # Requiered for parallelization, at least on Windows
         for trainChrName in train_chrs:
             training_file_name = "training.RandOn" + trainChrName + str(params) + ".txt"
             # set it if you want to use all contacts of chromosome for training:
-            params.sample_size = len(params.contacts_reader.data[trainChrName])
+            # params.sample_size = len(params.contacts_reader.data[trainChrName])
+
             # if you want to use only an interval of chromosome, set its coordinates:
             params.interval = Interval(trainChrName,
                                        params.contacts_reader.get_min_contact_position(trainChrName),

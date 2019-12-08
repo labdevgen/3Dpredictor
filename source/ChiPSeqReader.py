@@ -59,8 +59,9 @@ class ChiPSeqReader(FileReader): #Class process files with ChipSeq peaks
                 logging.getLogger(__name__).debug(data[nested].head(1))
                 print_example = False
         if nested_intevals_count > 0:
-            logging.getLogger(__name__).warning("Number of nested intervals: "+str(nested_intevals_count)+" in"+str(len(data)))
-
+            logging.getLogger(__name__).warning("Number of nested intervals: "+\
+                                                str(nested_intevals_count)+" in "+\
+                                                str(sum([len(i) for i in sorted_data.values()])))
 
         return sorted_data
 
