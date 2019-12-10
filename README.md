@@ -1,5 +1,10 @@
 **3DPredictor**
 
+**The paper describing 3DPredictor is out in genome research:**
+
+https://genome.cshlp.org/content/early/2019/11/27/gr.249367.119.abstract
+
+
 **Dependences:**
 1. To train/validate/use models: python3 (we used 3.5, although any version above 3.4 should work) with: numpy, pandas, 
 dicttoxml, termcolor, sklearn/xgboost, swifter
