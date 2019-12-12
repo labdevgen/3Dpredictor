@@ -103,7 +103,6 @@ class SmallChipSeqPredictorGenerator(ChipSeqPredictorGenerator):
     def __init__(self, chipSeq_reader, window_size, N_closest, **kwargs):
         self.name = chipSeq_reader.proteinName + "_SmallChip"
         self.N_closest = N_closest
-        #print(self.name)
         super(SmallChipSeqPredictorGenerator, self).__init__(chipSeq_reader, 0, window_size, **kwargs)
 
     def get_header(self,contact):
@@ -118,7 +117,6 @@ class SmallChipSeqPredictorGenerator(ChipSeqPredictorGenerator):
         return self.header
 
     def get_predictors(self,contact):
-        #print(self.name)
         assert contact.contact_st < contact.contact_en
         if contact.chr not in set(self.chipSeq_reader.chr_data.keys()):
             return [0]*len(self.header)
