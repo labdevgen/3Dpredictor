@@ -4,6 +4,7 @@
 
 https://genome.cshlp.org/content/early/2019/11/27/gr.249367.119.abstract
 
+We are actively upgrading our 3DPredictor tool now. If you want to reproduce results of the paper, please use commit de22c741325a44385aad184634ed6506a465ab62
 
 **Dependences:**
 1. To train/validate/use models: python3 (we used 3.5, although any version above 3.4 should work) with: numpy, pandas, 

@@ -150,10 +150,10 @@ class DataGenerator():
         logging.getLogger(__name__).info("Writing data to file " + params.out_file)
 
         #Save some variables if we would like to have stats later on
-        self.not_vect_predictor_generators = [p for p in params.pgs if not p.vectorizable]
-        self.vect_predictor_generators = [p for p in params.pgs if p.vectorizable]
-
-        self.predictor_generators = self.not_vect_predictor_generators + self.vect_predictor_generators
+        # self.not_vect_predictor_generators = [p for p in params.pgs if not p.vectorizable]
+        # self.vect_predictor_generators = [p for p in params.pgs if p.vectorizable]
+        #
+        # self.predictor_generators = self.not_vect_predictor_generators + self.vect_predictor_generators
 
         # example of contact df row
         # needed for toXML_dict funct

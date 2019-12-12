@@ -1,0 +1,2 @@
+cell_type	coeff	median	std
+K562	2585	2542	419
