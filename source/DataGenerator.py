@@ -210,7 +210,7 @@ class DataGenerator():
             pool.close()
         else:
             initializer(contacts,self)
-            result = list(map(_apply_df, [(d, self) for d in np.array_split(contacts, n_cpus)]))
+            result = list(map(_apply_df, [(0, len(d)) for d in np.array_split(contacts, n_cpus)]))
 
         logging.getLogger(__name__).debug("Writing to file")
         for i in result:
