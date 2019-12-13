@@ -1,6 +1,9 @@
 import sys, os
-sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(sys.argv[0]))))
-#from bigWigFileReader import bigWigReader
+# Add main source directory to import path
+root_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+source_dir = os.path.join(root_dir,"source")
+sys.path.append(source_dir)#from bigWigFileReader import bigWigReader
+
 #from fastaFileReader import fastaReader
 #from hicFileReader import hicReader
 from shared import Interval, Genome

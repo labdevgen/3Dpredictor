@@ -1,6 +1,10 @@
 import sys, os
-sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(sys.argv[0]))))
-print(os.path.dirname(os.path.dirname(os.path.dirname(sys.argv[0]))))
+
+# Add main source directory to import path
+root_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+source_dir = os.path.join(root_dir,"source")
+sys.path.append(source_dir)
+
 from fastaFileReader import fastaReader
 from shared import Interval
 from PredictorGenerators import PredictorGenerator

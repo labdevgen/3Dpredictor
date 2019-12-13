@@ -8,7 +8,11 @@ import logging
 logging.basicConfig(level=logging.DEBUG)
 
 import sys, os
-sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(sys.argv[0]))))
+
+# Add main source directory to import path
+root_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+source_dir = os.path.join(root_dir,"source")
+sys.path.append(source_dir)
 
 def calc_corr(chr, resolution = 5000, window_size = 20):
     logging.basicConfig(level=logging.DEBUG) # set to INFO for less detailed output
