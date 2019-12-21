@@ -63,11 +63,6 @@ class hicReader(FileReader):
             return self.load(self.genome)
 
         # if we found no dump, lets read data and dump file
-
-        # TODO whe shell we remove the chrM here?
-        # If you don't want to have chrM,
-        # the proper way is to pass chrM in excludechrm list when reading fasta file
-        # del self.genome.chrmSizes["chrM"]
         for chr in self.genome.chrmSizes.keys():
             print(chr)
             logging.getLogger(__name__).info("Processing chrm "+chr)

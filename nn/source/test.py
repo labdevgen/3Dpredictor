@@ -91,20 +91,22 @@ def simple_test():
 
     ### load data ###
     # load genome
-    faReader = fastaReader("../input/hg38/hg38.fa",useOnlyChromosomes=["chr1"])
+    input_folder = "../input/"
+    faReader = fastaReader(input_folder+"hg38/hg38.fa",useOnlyChromosomes=["chr1"])
     faReader = faReader.read_data()
     # load chipSeq
-    bwReader1 = bigWigReader("../input/ENCFF966IHQ.bigWig", genome = faReader, inMemory=True)
+    bwReader1 = bigWigReader(input_folder+"ENCFF473IZV_H1_CTCF.bigWig", genome = faReader, inMemory=True)
     bwReader1 = bwReader1.readData()
 
     # load chipSeq
-    bwReader2 = bigWigReader("../input/ENCFF966IHQ.bigWig", genome = faReader, inMemory=False)
+    bwReader2 = bigWigReader(input_folder+"ENCFF966IHQ.bigWig", genome = faReader, inMemory=False)
     bwReader2 = bwReader2.readData()
 
 
     #load contacts
     resolution = 5000
-    hic = hicReader("../input/4DNFI2TK7L2F.hic", genome=faReader, resolution = resolution)
+    hic = hicReader(input_folder+"4DNFI2TK7L2F.hic", genome=faReader, binsize = resolution,
+                    indexedData = True)
     hic = hic.read_data()
 
     ### run simple check that contact count correlate with ChipSeq signal ###
@@ -135,7 +137,7 @@ def simple_test():
     for start,end in zip(random_points_starts,random_points_ends):
         interval = Interval("chr1",start,end)
         contact = hic.get_contact(interval)
-        if contact == None:
+        if contact == None or not np.isfinite(contact):
             continue
         else:
             chipSignal = np.nansum(bwReader1.get_interval(interval))
@@ -167,7 +169,13 @@ def simple_test():
     from scipy.stats import spearmanr
     import matplotlib.pyplot as plt
 
+    print(contacts)
+    print(chipSignals)
+
     print (spearmanr(np.array(contacts),np.array(chipSignals)))
+    print (np.all(np.isfinite(contacts)))
+    print (np.all(np.isfinite(chipSignals)))
+
     plt.scatter(contacts,chipSignals)
     plt.show()
 

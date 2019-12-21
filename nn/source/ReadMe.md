@@ -74,9 +74,9 @@ Same as above, but use:
 
 4.) to load Hi-C contacts:
 
-    hic = hicReader(path, genome=faReader, resolution = 5000, indexedData = True)
+    hic = hicReader(path, genome=faReader, binsize = 5000, indexedData = True)
     # path and genome - same as above
-    # resolution - size of the bin of Hi-C matrix.
+    # binsize - size of the bin of Hi-C matrix.
     # I recommend to use 100000 for tests (low memory, but not much biological scense), 1000 or 5000 for real trainings
     # Again, only data for chromsomes in genome object will be loaded
     hic = hic.read_data()
