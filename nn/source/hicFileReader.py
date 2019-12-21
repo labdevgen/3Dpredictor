@@ -22,9 +22,14 @@ from shared import FileReader
 
 class hicReader(FileReader):
     def __init__(self, fname, genome, binsize, maxdist=1000000, normalization = "KR", name = None,
-                 indexedData = False):
+                 indexedData = False, removeNans = True):
         # indexedData - store data in new indexed format
         # allows fast extraction of single contact, but not compatible with most of contact_reader function
+        # dropNans - drop contacts with contact frequency = Nan
+        # Note that contacts are stored in sparce matrix format. This means that all missing contacts = 0
+        # When we drop Nans, we are unable to distinguish between contacts equal to 0
+        # and contacts with KR norm values equal to Nan (i.e. contacts within white lines on hic-maps)
+
         self.genome = genome
         self.genomeName = genome.name
         self.fname = fname
@@ -34,10 +39,19 @@ class hicReader(FileReader):
         self.indexedData = indexedData
         self.norms = {}
         self.data = {}
+        self.droppedNans = removeNans
         if name == None:
             self.name = os.path.basename(fname)
         self.full_name = str(sorted(self.toXMLDict(exludedMembers=("data","norms")).items()))
         super(hicReader, self).__init__(fname)
+
+    def dropNans(self):
+        # drop all contacts with Nan values
+        # IMPORTATN: see comments in init func explaining why this leads to confusion of 0 and Nan contacts
+        for chr in self.data.keys():
+            self.data[chr] = self.data[chr][pd.notna(self.data[chr].count)]
+            assert len(self.data[chr] > 0)
+        self.droppedNans = True
 
     def dump(self):
         descriptiveXML = {"XML": self.toXMLDict(exludedMembers=("data", "dataPointer")),
@@ -88,7 +102,7 @@ class hicReader(FileReader):
             result = np.array(result).T
             logging.getLogger(__name__).debug("Transpose time: " + str(datetime.datetime.now() - now))
             now = datetime.datetime.now()
-            result = pd.DataFrame(result, columns = ["contact_st", "contact_en", "contact_count"], copy=False)
+            result = pd.DataFrame(result, columns = ["contact_st", "contact_en", "count"], copy=False)
             logging.getLogger(__name__).debug("DF conversion time: " + str(datetime.datetime.now() - now))
             now = datetime.datetime.now()
 
@@ -103,7 +117,7 @@ class hicReader(FileReader):
             assert len(subsample) >= subsample_size / 10
             s = []
             for i in subsample:
-                local_count = result.query("contact_st==@i | contact_en==@i")["contact_count"].sum()
+                local_count = result.query("contact_st==@i | contact_en==@i")["count"].sum()
                 if local_count == 0:
                     # these are probably NAN samples
                     continue
@@ -123,7 +137,7 @@ class hicReader(FileReader):
 
             if not debug_mode:
                 assert max(result.contact_en.values) <= self.genome.chrmSizes[chr] + self.binsize
-            result["count"] = result["contact_count"] / np.average(s)
+            result["contact_count"] = result["count"] / np.average(s)
             result["dist"] = result["contact_en"] - result["contact_st"]
             assert np.all(result["dist"].values>=0)
             if self.indexedData:
@@ -133,7 +147,7 @@ class hicReader(FileReader):
             self.norms[chr] = np.average(s)
             logging.getLogger(__name__).info("Total hic load time: "+str(datetime.datetime.now()-load_start_time))
         assert len(self.data.keys()) > 0
-
+        self.dropNans()
         self.dump()
         return self
 
@@ -156,7 +170,7 @@ class hicReader(FileReader):
             raise Exception()
         chr_contacts = self.data[interval.chr]
         try:
-            return chr_contacts.loc()[(interval.start,interval.end),"count"]
+            return chr_contacts.loc()[(interval.start,interval.end),"contact_count"]
             # Uncomment these if you would like to return dataframe with contact(s) information
             # contacts = chr_contacts.loc()[[(interval.start,interval.end)]]
         except KeyError:
