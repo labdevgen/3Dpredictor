@@ -7,6 +7,7 @@ sys.path.append(source_dir)#from bigWigFileReader import bigWigReader
 from fastaFileReader import fastaReader
 from hicFileReader import hicReader
 from shared import Interval, Genome
+from bigWigFileReader import bigWigReader
 
 from straw import straw
 import numpy as np
