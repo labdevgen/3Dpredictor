@@ -91,7 +91,6 @@ def simple_test():
 
     ### load data ###
     # load genome
-    input_folder = ""
     input_folder = "../input/"
     faReader = fastaReader(input_folder+"hg38/hg38.fa",useOnlyChromosomes=["chr1"])
     faReader = faReader.read_data()
