@@ -100,12 +100,14 @@ def MatPlot2HiC(matplot_obj, fname, out_folder):
     print(colored("[SUCCESS]", 'green') + ' CONTROL pre-HiC file created.\n')
 
     #call juicer
+    import sys
+    source_path = os.path.dirname(os.path.abspath(sys.argv[0]))+"/3Dpredictor/source/"
     subprocess.call(
-        ['java', '-jar', './juicer_tools.jar', 'pre', pre_data_filename, hic_data_filename, chromsizes_filename, '-n',
+        ['java', '-jar', source_path+'juicer_tools.jar', 'pre', pre_data_filename, hic_data_filename, chromsizes_filename, '-n',
          '-r', binsize])
     print(colored("[SUCCESS]", 'green') + ' DATA HiC file created.\n')
 
     subprocess.call(
-        ['java', '-jar', './juicer_tools.jar', 'pre', pre_control_filename, hic_control_filename, chromsizes_filename,
+        ['java', '-jar', source_path+'juicer_tools.jar', 'pre', pre_control_filename, hic_control_filename, chromsizes_filename,
          '-n', '-r', binsize])
     print(colored("[SUCCESS]", 'green') + ' CONTROL HiC file created.\n')

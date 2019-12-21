@@ -33,9 +33,10 @@ class hicReader(FileReader):
         self.normalization = normalization
         self.indexedData = indexedData
         self.norms = {}
+        self.data = {}
         if name == None:
             self.name = os.path.basename(fname)
-        self.full_name = str(self.toXMLDict(exludedMembers=("data","norms")))
+        self.full_name = str(sorted(self.toXMLDict(exludedMembers=("data","norms"))))
         super(hicReader, self).__init__(fname)
 
     def dump(self):
@@ -54,7 +55,6 @@ class hicReader(FileReader):
     def read_data(self, debug_mode = False, noDump = False, fill_empty_contacts = False):
         # if noDump, will not try load data from dump file
         #  debug_mode = False will skip some assertions, useful only for intentionally incorrect input data
-
         if fill_empty_contacts:
             raise NotImplemented
 
@@ -63,7 +63,9 @@ class hicReader(FileReader):
             return self.load(self.genome)
 
         # if we found no dump, lets read data and dump file
+        del self.genome.chrmSizes["chrM"]
         for chr in self.genome.chrmSizes.keys():
+            print(chr)
             logging.getLogger(__name__).info("Processing chrm "+chr)
             load_start_time = datetime.datetime.now()
             try:
@@ -75,8 +77,12 @@ class hicReader(FileReader):
                     logging.getLogger(__name__).warning("Failed to find chr "+chr+"; trying to find "+new_chr)
                     result = straw.straw(self.normalization, self.fname,
                                     new_chr, new_chr, "BP", self.binsize)
+                    print(self.normalization, self.fname,
+                                    new_chr, new_chr, "BP", self.binsize)
+                    # print(result)
                 else:
-                    raise TypeError
+                    logging.getLogger(__name__).warning("Failed to find chr "+ chr +"in hic file!")
+                    continue
             logging.getLogger(__name__).debug("Load time: " + str(datetime.datetime.now() - load_start_time))
             now = datetime.datetime.now()
 
@@ -117,7 +123,7 @@ class hicReader(FileReader):
             assert len(result) > 0
 
             if not debug_mode:
-                assert max(result.en.values) <= self.genome.chrmSizes[chr] + self.binsize
+                assert max(result.contact_en.values) <= self.genome.chrmSizes[chr] + self.binsize
             result["count"] = result["contact_count"] / np.average(s)
             result["dist"] = result["contact_en"] - result["contact_st"]
             assert np.all(result["dist"].values>=0)
@@ -126,7 +132,6 @@ class hicReader(FileReader):
             self.data[chr] = result
             self.norms[chr] = np.average(s)
             logging.getLogger(__name__).info("Total hic load time: "+str(datetime.datetime.now()-load_start_time))
-
         assert len(self.data.keys()) > 0
 
         self.dump()

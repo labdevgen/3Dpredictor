@@ -73,7 +73,7 @@ class FileReader(object):
         members = inspect.getmembers(self, lambda a: not (inspect.isroutine(a)))
 
         # next, we filter these items exclude those provided in excludeMembers
-        members = OrderedDict((a[0],str(a[1])) for a in members if not (a[0].startswith('__') and a[0].endswith('__')) and \
+        members = OrderedDict((a[0],str(a[1])) for a in sorted(members) if not (a[0].startswith('__') and a[0].endswith('__')) and \
              not (a[0] in exludedMembers))
 
         # this gives a dict key--val of all members of class

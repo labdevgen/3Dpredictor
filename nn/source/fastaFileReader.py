@@ -20,6 +20,8 @@ sys.path.append(source_dir)
 
 from shared import FileReader
 
+def default_chr_name_ranamer(chr):
+    return chr
 
 def rm_chr_from_chrName(chr):
     if chr.startswith("chr"):
@@ -110,14 +112,10 @@ class fastaReader(FileReader): #Reading, processing and storing the data from
             raise Exception("Item " + f + " is neither file nor folder")
 
     def __init__(self,files,
-                 converter =  OrderedDict({"A":0,"a":0,
-                               "T":1,"t":1,
-                               "G":2,"g":2,
-                                "C":3,"c":3,
-                               "N":4,"n":4}),
-                 excludeChromosomes = [],
-                 useOnlyChromosomes = [],
-                 chrm_names_renamer = lambda x: x,
+                 converter =  None,
+                 excludeChromosomes = None,
+                 useOnlyChromosomes = None,
+                 chrm_names_renamer = default_chr_name_ranamer,
                  name=None):
         #fpath could be:
         #1.) path to single fasta/multifasta file
@@ -125,6 +123,18 @@ class fastaReader(FileReader): #Reading, processing and storing the data from
         #3.) iterable with files/folders
         # converter is used to converts letters to integers
         # One can provide either excludeChromsomes or useOnlyChromosomes list. Names are self-explanatory =(
+
+        # set default inputs
+        if excludeChromosomes is None:
+            excludeChromosomes = []
+        if useOnlyChromosomes is None:
+            useOnlyChromosomes = []
+        if converter is None:
+            converter = OrderedDict({"A":0,"a":0,
+                               "T":1,"t":1,
+                               "G":2,"g":2,
+                                "C":3,"c":3,
+                               "N":4,"n":4})
 
         # initialize variables
         self.chrmSizes = {}
@@ -161,13 +171,12 @@ class fastaReader(FileReader): #Reading, processing and storing the data from
         else:
             self.name = name
 
-        self.full_name = "".join(sorted(self.files)+sorted(self.excludeChr)+sorted(self.useOnlyChromosomes)+\
+        self.full_name = "".join(sorted([os.path.basename(f) for f in self.files])+sorted(self.excludeChr)+sorted(self.useOnlyChromosomes)+\
                                  [str(sorted(self.converter))]+[self.chrm_names_renamer.__name__])
 
     def read_data(self):
         if os.path.exists(self.get_dump_path()):
             return self.load()
-
         for i in self.files:
             self.read_file(i)
 
