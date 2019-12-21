@@ -128,7 +128,7 @@ class hicReader(FileReader):
             assert np.all(result["dist"].values>=0)
             if self.indexedData:
                 result = result.set_index(["contact_st","contact_en"])
-                assert result.index.is_unique()
+                assert result.index.is_unique
             self.data[chr] = result
             self.norms[chr] = np.average(s)
             logging.getLogger(__name__).info("Total hic load time: "+str(datetime.datetime.now()-load_start_time))
