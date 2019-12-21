@@ -11,6 +11,9 @@ from collections import OrderedDict
 from functools import partial
 import pickle
 
+# changing this values will result in rewriting all dumps of FileReader objects generated previously
+# the only exception is for dumps of objects which overload standard toXMLDict function
+# or do not use toXMLDict do generate full_name
 
 version = 0
 
@@ -89,11 +92,11 @@ class FileReader(object):
 
     def get_full_name(self):
         # full name is id, which should represent file reader with all its paramters
-        # if any of paramters changed, is should change full name
+        # if any of parameters changed, is should change full name
         try:
             return self.full_name
         except:
-            raise Exception("Dump is only possible if full name defined")
+            raise Exception("Dump is only possible if full name is defined")
 
     def get_dump_path(self):
         # construct dump path based on fname and full_name
