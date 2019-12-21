@@ -12,6 +12,8 @@ from functools import partial
 import pickle
 
 
+version = 0
+
 class Interval:
     def __init__(self,chr,start,end=None,strand=0):
         self.chr = chr
@@ -75,6 +77,12 @@ class FileReader(object):
         # next, we filter these items exclude those provided in excludeMembers
         members = OrderedDict((a[0],str(a[1])) for a in sorted(members) if not (a[0].startswith('__') and a[0].endswith('__')) and \
              not (a[0] in exludedMembers))
+
+        # we have global parameter version for the whole code
+        # this term is reverved and should not be used by classes
+        assert not "version" in members.keys()
+
+        members["version"] = version
 
         # this gives a dict key--val of all members of class
         return members

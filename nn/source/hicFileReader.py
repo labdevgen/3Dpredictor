@@ -49,7 +49,7 @@ class hicReader(FileReader):
         # drop all contacts with Nan values
         # IMPORTATN: see comments in init func explaining why this leads to confusion of 0 and Nan contacts
         for chr in self.data.keys():
-            self.data[chr] = self.data[chr][pd.notna(self.data[chr].count)]
+            self.data[chr] = self.data[chr][pd.notna(self.data[chr]["contact_count"])]
             assert len(self.data[chr] > 0)
         self.droppedNans = True
 
@@ -68,7 +68,9 @@ class hicReader(FileReader):
 
     def read_data(self, debug_mode = False, noDump = False, fill_empty_contacts = False):
         # if noDump, will not try load data from dump file
-        #  debug_mode = False will skip some assertions, useful only for intentionally incorrect input data
+        # debug_mode = False will skip some assertions, useful only for intentionally incorrect input data
+        # returns object with "self.data" containig data
+
         if fill_empty_contacts:
             raise NotImplemented
 
