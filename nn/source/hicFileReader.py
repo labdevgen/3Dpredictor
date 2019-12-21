@@ -36,7 +36,7 @@ class hicReader(FileReader):
         self.data = {}
         if name == None:
             self.name = os.path.basename(fname)
-        self.full_name = str(sorted(self.toXMLDict(exludedMembers=("data","norms"))))
+        self.full_name = str(sorted(self.toXMLDict(exludedMembers=("data","norms")).items()))
         super(hicReader, self).__init__(fname)
 
     def dump(self):
@@ -63,7 +63,11 @@ class hicReader(FileReader):
             return self.load(self.genome)
 
         # if we found no dump, lets read data and dump file
-        del self.genome.chrmSizes["chrM"]
+
+        # TODO whe shell we remove the chrM here?
+        # If you don't want to have chrM,
+        # the proper way is to pass chrM in excludechrm list when reading fasta file
+        # del self.genome.chrmSizes["chrM"]
         for chr in self.genome.chrmSizes.keys():
             print(chr)
             logging.getLogger(__name__).info("Processing chrm "+chr)
@@ -129,6 +133,7 @@ class hicReader(FileReader):
             assert np.all(result["dist"].values>=0)
             if self.indexedData:
                 result = result.set_index(["contact_st","contact_en"])
+                assert result.index.is_unique()
             self.data[chr] = result
             self.norms[chr] = np.average(s)
             logging.getLogger(__name__).info("Total hic load time: "+str(datetime.datetime.now()-load_start_time))
@@ -141,7 +146,10 @@ class hicReader(FileReader):
         raise NotImplementedError
 
     def get_contact(self, interval):
-        # note: this won't work for not-indexed data
+        # interval - should contain interval, start (left anchor) and end (right anchor) of two loci
+        # returns number of contacts between the left and right anchor
+        #
+        # note: this function won't work for not-indexed data
         assert self.indexedData
         if interval.start % self.binsize != 0 or interval.end % self.binsize != 0:
             logging.getLogger(__name__).error("Start or end of the contact does not match binsize")
@@ -153,16 +161,22 @@ class hicReader(FileReader):
             raise Exception()
         chr_contacts = self.data[interval.chr]
         try:
-            contacts = chr_contacts.loc(axis=0)[(interval.start,interval.end)]
+            return chr_contacts.loc()[(interval.start,interval.end),"count"]
+            # Uncomment these if you would like to return dataframe with contact(s) information
+            # contacts = chr_contacts.loc()[[(interval.start,interval.end)]]
         except KeyError:
             return None # TODO maybe should change this to 0
-        if len(contacts) == 1:
-            return contacts.iloc[0]
-        elif len(contacts) > 1:
-            logging.getLogger(__name__).error("More than 1 contact for region "+str(interval))
-            raise Exception()
-        else:
-            raise NotImplementedError
+        # Uncomment these if you would like to return dataframe with contact(s) information
+        #if len(contacts) == 1:
+        #    return contacts.iloc[0]
+        # elif len(contacts) > 1:
+        #     logging.getLogger(__name__).error(chr_contacts.head())
+        #     logging.getLogger(__name__).error("More than 1 contact for region "+str(interval))
+        #     logging.getLogger(__name__).error(str(contacts))
+        #     logging.getLogger(__name__).error(str(len(contacts)))
+        #     raise Exception()
+        # else:
+        #     raise NotImplementedError
 
     def read_file(self):
         logging.getLogger(__name__).error("This function is not implemented")
