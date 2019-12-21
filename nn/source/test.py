@@ -4,8 +4,8 @@ root_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__fil
 source_dir = os.path.join(root_dir,"source")
 sys.path.append(source_dir)#from bigWigFileReader import bigWigReader
 
-#from fastaFileReader import fastaReader
-#from hicFileReader import hicReader
+from fastaFileReader import fastaReader
+from hicFileReader import hicReader
 from shared import Interval, Genome
 
 from straw import straw
@@ -192,6 +192,7 @@ def test_dump():
     # hic = hic.read_data(debug_mode = True)
     # print(hic.get_contact(Interval("chr1",300000,500000)))
 
+simple_test()
 #test_dump()
 
 # now = datetime.datetime.now()
