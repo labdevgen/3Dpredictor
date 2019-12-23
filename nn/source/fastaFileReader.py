@@ -18,7 +18,7 @@ root_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__fil
 source_dir = os.path.join(root_dir,"source")
 sys.path.append(source_dir)
 
-from shared import FileReader
+from shared import FileReader, get_version
 
 def default_chr_name_ranamer(chr):
     return chr
@@ -133,11 +133,11 @@ class fastaReader(FileReader): #Reading, processing and storing the data from
             converter = OrderedDict({"A":0,"a":0,
                                "T":1,"t":1,
                                "G":2,"g":2,
-                                "C":3,"c":3,
+                               "C":3,"c":3,
                                "N":4,"n":4})
 
         # initialize variables
-        self.chrmSizes = {}
+        self.chrmSizes = OrderedDict({})
         self.files = []
         self.data = {}
         self.converter = converter
@@ -172,7 +172,7 @@ class fastaReader(FileReader): #Reading, processing and storing the data from
             self.name = name
 
         self.full_name = "".join(sorted([os.path.basename(f) for f in self.files])+sorted(self.excludeChr)+sorted(self.useOnlyChromosomes)+\
-                                 [str(sorted(self.converter))]+[self.chrm_names_renamer.__name__])
+                                 [str(sorted(self.converter))]+[self.chrm_names_renamer.__name__]+[str(get_version())])
 
     def read_data(self):
         if os.path.exists(self.get_dump_path()):

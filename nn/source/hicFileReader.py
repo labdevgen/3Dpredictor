@@ -18,7 +18,10 @@ source_dir = os.path.join(root_dir,"source")
 sys.path.append(source_dir)
 
 from shared import FileReader
+from ChiPSeqReader import ChiPSeqReader
+from Contacts_reader import ContactsReader
 
+MAX_CHR_DIST = 3000000000
 
 class hicReader(FileReader):
     def __init__(self, fname, genome, binsize, maxdist=1000000, normalization = "KR", name = None,
@@ -47,10 +50,10 @@ class hicReader(FileReader):
 
     def dropNans(self):
         # drop all contacts with Nan values
-        # IMPORTATN: see comments in init func explaining why this leads to confusion of 0 and Nan contacts
+        # IMPORTANT: see comments in init func explaining why this leads to confusion of 0 and Nan contacts
         for chr in self.data.keys():
             self.data[chr] = self.data[chr][pd.notna(self.data[chr]["contact_count"])]
-            assert len(self.data[chr] > 0)
+            assert len(self.data[chr]) > 0
         self.droppedNans = True
 
     def dump(self):
@@ -80,7 +83,6 @@ class hicReader(FileReader):
 
         # if we found no dump, lets read data and dump file
         for chr in self.genome.chrmSizes.keys():
-            print(chr)
             logging.getLogger(__name__).info("Processing chrm "+chr)
             load_start_time = datetime.datetime.now()
             try:
@@ -90,14 +92,14 @@ class hicReader(FileReader):
                 if "chr" in chr:
                     new_chr = chr.replace("chr","",1)
                     logging.getLogger(__name__).warning("Failed to find chr "+chr+"; trying to find "+new_chr)
-                    result = straw.straw(self.normalization, self.fname,
+                    if new_chr in chr:
+                        result = straw.straw(self.normalization, self.fname,
                                     new_chr, new_chr, "BP", self.binsize)
-                    print(self.normalization, self.fname,
+                        print(self.normalization, self.fname,
                                     new_chr, new_chr, "BP", self.binsize)
-                    # print(result)
-                else:
-                    logging.getLogger(__name__).warning("Failed to find chr "+ chr +"in hic file!")
-                    continue
+                    else:
+                        logging.getLogger(__name__).warning("Failed to find chr "+ chr +"in hic file!")
+                        continue
             logging.getLogger(__name__).debug("Load time: " + str(datetime.datetime.now() - load_start_time))
             now = datetime.datetime.now()
 
@@ -140,6 +142,7 @@ class hicReader(FileReader):
             if not debug_mode:
                 assert max(result.contact_en.values) <= self.genome.chrmSizes[chr] + self.binsize
             result["contact_count"] = result["count"] / np.average(s)
+            result["chr"] = [str(chr)] * len(result)
             result["dist"] = result["contact_en"] - result["contact_st"]
             assert np.all(result["dist"].values>=0)
             if self.indexedData:
@@ -153,8 +156,13 @@ class hicReader(FileReader):
         self.dump()
         return self
 
-    def get_contacts(self, interval):
-        raise NotImplementedError
+    def get_contacts(self, interval, mindist=0, maxdist=MAX_CHR_DIST):
+        assert not self.indexedData
+        return self.data[interval.chr].query(
+            "@interval.start <= contact_st < @interval.end & "
+            + "@interval.start < contact_en <= @interval.end & "
+            + "dist <=@maxdist & "
+            + "dist >=@mindist")
 
     def get_contact(self, interval):
         # interval - should contain interval, start (left anchor) and end (right anchor) of two loci
@@ -195,3 +203,47 @@ class hicReader(FileReader):
 
     def get_binsize(self):
         return self.binsize
+
+    def get_min_contact_position(self,chr):
+        print(self.data.keys())
+        return min(self.data[chr]["contact_st"].values)
+
+    def get_max_contact_position(self,chr):
+        return max(self.data[chr]["contact_en"].values)
+
+    def get_chrms(self):
+        return list(self.data.keys())
+
+    def get_all_chr_contacts(self,chr):
+        return self.data[chr]
+
+    def use_contacts_with_CTCF(self, CTCFfile, maxdist, proportion, keep_only_orient, CTCForientfile):
+        mindist = self.binsize * 2 + 1
+        ctcf_reader = ChiPSeqReader(CTCFfile)
+        ctcf_reader.read_file()
+        if keep_only_orient:
+            ctcf_reader.set_sites_orientation(CTCForientfile)
+            ctcf_reader.keep_only_with_orient_data()
+        conts_with_ctcf = []
+        for chr in self.data.keys():
+            contacts_data=self.data[chr]
+            ctcf_data=ctcf_reader.chr_data[chr]
+            ctcf_bins=[] #list of bins which contain CTCF
+            ctcf_data["mids"].apply(lambda x: ctcf_bins.extend([x//self.binsize*self.binsize, x//self.binsize*self.binsize+self.binsize,
+                                                            x//self.binsize*self.binsize-self.binsize]))
+            assert len(ctcf_data)*3==len(ctcf_bins)
+            ctcf_bins=sorted(list(set(ctcf_bins)))
+            contacts_with_ctcf=[]
+            for i in range(0, len(ctcf_bins)):
+                for j in range(i + 1, len(ctcf_bins)):
+                    if self.binsize * 2 + 1 <= abs(ctcf_bins[j] - ctcf_bins[i]) <= maxdist:
+                        contacts_with_ctcf.append((ctcf_bins[i], ctcf_bins[j]))
+            contacts_with_ctcf_df = pd.DataFrame(contacts_with_ctcf, columns=['contact_st', 'contact_en'])
+            merging_dfs = pd.merge(contacts_data, contacts_with_ctcf_df, how='outer', on=['contact_st', 'contact_en'], indicator=True)
+            df_with_CTCF=merging_dfs[merging_dfs["_merge"]=="both"].query("dist <=@maxdist & dist >=@mindist")
+            df_wo_CTCF=merging_dfs[merging_dfs["_merge"]=="left_only"].query("dist <=@maxdist & dist >=@mindist")
+            df_wo_CTCF =df_wo_CTCF.sample(n=len(df_with_CTCF)*proportion)
+            result=pd.concat([df_with_CTCF, df_wo_CTCF])
+            self.data[chr]=result
+            conts_with_ctcf.append(len(df_with_CTCF))
+        self.conts_with_ctcf= np.sum(conts_with_ctcf)

@@ -15,7 +15,10 @@ import pickle
 # the only exception is for dumps of objects which overload standard toXMLDict function
 # or do not use toXMLDict do generate full_name
 
-version = 0
+version = 1
+
+def get_version():
+    return version
 
 class Interval:
     def __init__(self,chr,start,end=None,strand=0):
