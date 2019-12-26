@@ -79,7 +79,7 @@ class ChiPSeqReader(FileReader): #Class process files with ChipSeq peaks
         temp_file.close()
 
         names = list(map(str, list(range(Nfields))))
-        data = pd.read_csv(self.fname, sep="\t", header=None, names=names)
+        data = pd.read_csv(self.fname, sep="\t", header=None, names=names, comment='#')
 
         # subset and rename
         data_fields = list(map(int,renamer.keys()))
@@ -242,7 +242,7 @@ class ChiPSeqReader(FileReader): #Class process files with ChipSeq peaks
         temp_file.close()
 
         names = list(map(str, list(range(Nfields))))
-        data = pd.read_csv(orient_fname, sep="\t", header=None, names=names)
+        data = pd.read_csv(orient_fname, sep="\t", header=None, names=names, comment='#')
 
         # subset and rename
         data = data.iloc[:, [0, 1, 2, 4, 5]]
