@@ -24,8 +24,8 @@ from Contacts_reader import ContactsReader
 MAX_CHR_DIST = 3000000000
 
 class hicReader(FileReader):
-    def __init__(self, fname, genome, binsize, maxdist=1000000, normalization = "KR", name = None,
-                 indexedData = False, removeNans = True):
+    def __init__(self, fname, genome, binsize, maxdist=1000000, normalization = "KR",
+                 name = None, indexedData = False, removeNans = True):
         # indexedData - store data in new indexed format
         # allows fast extraction of single contact, but not compatible with most of contact_reader function
         # dropNans - drop contacts with contact frequency = Nan

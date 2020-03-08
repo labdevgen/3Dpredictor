@@ -174,6 +174,19 @@ class fastaReader(FileReader): #Reading, processing and storing the data from
         self.full_name = "".join(sorted([os.path.basename(f) for f in self.files])+sorted(self.excludeChr)+sorted(self.useOnlyChromosomes)+\
                                  [str(sorted(self.converter))]+[self.chrm_names_renamer.__name__]+[str(get_version())])
 
+    # create genome from  chr size file, i.e.
+    # to pass it to hic reader without reading whole fasta sequence
+    def from_chr_size_file(self):
+        assert len(self.files)==1
+        with open(self.files[0]) as fin:
+            for line in fin:
+                line = line.strip().split()
+                chr = self.chrm_names_renamer(line[0])
+                size = int(line[0])
+                assert not chr in self.chrmSizes.keys()
+                self.chrmSizes[chr] = size
+        return self
+
     def read_data(self):
         if os.path.exists(self.get_dump_path()):
             return self.load()
