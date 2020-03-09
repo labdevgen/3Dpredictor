@@ -11,11 +11,11 @@ import pandas as pd
 import numpy as np
 import logging
 import datetime
+from distutils.version import LooseVersion
 
 # Add main source directory to import path
 root_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 source_dir = os.path.join(root_dir,"source")
-sys.path.append(source_dir)
 
 from shared import FileReader
 from ChiPSeqReader import ChiPSeqReader
@@ -74,6 +74,48 @@ class hicReader(FileReader):
         # debug_mode = False will skip some assertions, useful only for intentionally incorrect input data
         # returns object with "self.data" containig data
 
+        def get_data_straw006():
+            try:
+                return straw.straw(self.normalization, self.fname,
+                                     chr, chr, "BP", self.binsize)
+            except TypeError:
+                if "chr" in chr:
+                    new_chr = chr.replace("chr", "", 1)
+                    logging.getLogger(__name__).warning("Failed to find chr " + chr + "; trying to find " + new_chr)
+                    if new_chr in chr:
+                        return straw.straw(self.normalization, self.fname,
+                                             new_chr, new_chr, "BP", self.binsize)
+                    else:
+                        return None
+
+        def get_data_straw008():
+            strawObj = straw.straw(self.fname)
+
+            # check chr exists in hic file
+            if not chr in strawObj.chromDotSizes.data.keys():
+                if "chr" in chr:
+                    new_chr = chr.replace("chr", "", 1)
+                    logging.getLogger(__name__).warning("Failed to find chr " + chr + "; trying to find " + new_chr)
+                    if not new_chr in chr:
+                        return None
+                else:
+                    return None
+                hic_chr = new_chr
+            else:
+                hic_chr = chr
+
+            # check chromosome sizes
+            if self.genome.chrmSizes[chr] != strawObj.chromDotSizes.getLength(hic_chr):
+                logging.getLogger(__name__).error("Genome version mismatch!")
+                raise BaseException
+
+            chr1, X1, X2 = strawObj.chromDotSizes.figureOutEndpoints(hic_chr)
+            matrxObj = strawObj.getNormalizedMatrix(chr1, chr, self.normalization,
+                                                    "BP", self.binsize)
+
+            assert matrxObj is not None
+            return matrxObj.getDataFromGenomeRegion(X1, X2, X1, X2)
+
         if fill_empty_contacts:
             raise NotImplemented
 
@@ -82,24 +124,27 @@ class hicReader(FileReader):
             return self.load(self.genome)
 
         # if we found no dump, lets read data and dump file
+
+        # first define straw version
+        if LooseVersion(straw.__version__) == "0.0.6":
+            get_data_straw = get_data_straw006()
+        elif LooseVersion(straw.__version__) >= "0.0.8":
+            get_data_straw = get_data_straw008()
+        else:
+            logging.error("Unsupported straw version. "+ straw.__version__ +\
+                          "Please use straw 0.0.6 or >=0.0.8")
+            raise ValueError
+
+        # now get and process data using straw
         for chr in self.genome.chrmSizes.keys():
             logging.getLogger(__name__).info("Processing chrm "+chr)
             load_start_time = datetime.datetime.now()
-            try:
-                result = straw.straw(self.normalization, self.fname,
-                                    chr, chr, "BP", self.binsize)
-            except TypeError:
-                if "chr" in chr:
-                    new_chr = chr.replace("chr","",1)
-                    logging.getLogger(__name__).warning("Failed to find chr "+chr+"; trying to find "+new_chr)
-                    if new_chr in chr:
-                        result = straw.straw(self.normalization, self.fname,
-                                    new_chr, new_chr, "BP", self.binsize)
-                        print(self.normalization, self.fname,
-                                    new_chr, new_chr, "BP", self.binsize)
-                    else:
-                        logging.getLogger(__name__).warning("Failed to find chr "+ chr +"in hic file!")
-                        continue
+            result = get_data_straw()
+            if result is None:
+                logging.getLogger(__name__).warning("Failed to find chr " + chr + "in hic file!")
+                continue
+            logging.getLogger(__name__).warning("Failed to find chr " + chr + "in hic file!")
+
             logging.getLogger(__name__).debug("Load time: " + str(datetime.datetime.now() - load_start_time))
             now = datetime.datetime.now()
 
