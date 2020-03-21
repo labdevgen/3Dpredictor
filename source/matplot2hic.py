@@ -16,12 +16,12 @@ from shared import  get_bin_size
 #   matplot_obj             Matrix_Plotter Object
 #   fname                   name of current visualisation
 #   out_folder              folder where all the visualisation files are
-#
+#   juicer_path             path to juicer .jar-file
 #   ----------------------
 #
 #   Love, Emil
 
-def MatPlot2HiC(matplot_obj, fname, out_folder):
+def MatPlot2HiC(matplot_obj, fname, out_folder, juicer_path=None):
     def Pandas2ChrSizes(chrsizes_filename,
                         pandas_df):  # This func takes all the chromosomes from pandas object, find out their sizes and write into file
         chromosomes = pandas_df.ix[:, 0].unique()
@@ -101,13 +101,14 @@ def MatPlot2HiC(matplot_obj, fname, out_folder):
 
     #call juicer
     import sys
-    source_path = os.path.dirname(os.path.abspath(sys.argv[0]))+"/3Dpredictor/source/"
-    subprocess.call(
-        ['java', '-jar', source_path+'juicer_tools.jar', 'pre', pre_data_filename, hic_data_filename, chromsizes_filename, '-n',
+    if juicer_path is None:
+        juicer_path = os.path.dirname(os.path.abspath(os.path.abspath(__file__)))+'juicer_tools.jar'
+    subprocess.check_output(
+        ['java', '-jar', juicer_path, 'pre', pre_data_filename, hic_data_filename, chromsizes_filename, '-n',
          '-r', binsize])
     print(colored("[SUCCESS]", 'green') + ' DATA HiC file created.\n')
 
-    subprocess.call(
-        ['java', '-jar', source_path+'juicer_tools.jar', 'pre', pre_control_filename, hic_control_filename, chromsizes_filename,
+    subprocess.check_output(
+        ['java', '-jar', juicer_path+'juicer_tools.jar', 'pre', pre_control_filename, hic_control_filename, chromsizes_filename,
          '-n', '-r', binsize])
     print(colored("[SUCCESS]", 'green') + ' CONTROL HiC file created.\n')
