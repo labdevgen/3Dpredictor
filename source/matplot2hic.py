@@ -108,12 +108,21 @@ def MatPlot2HiC(matplot_obj, fname, out_folder, juicer_path=None):
          '-r', binsize]
     print("Running command:")
     print (" ".join(map(str,cmd)))
-    subprocess.check_output(cmd)
+    try:
+        subprocess.check_output(cmd)
+    except subprocess.CalledProcessError as e:
+        print (e.output)
+        raise Exception()
     print(colored("[SUCCESS]", 'green') + ' DATA HiC file created.\n')
 
     cmd = ['java', '-jar', juicer_path, 'pre', pre_control_filename, hic_control_filename, chromsizes_filename,
          '-n', '-r', binsize]
     print("Running command:")
     print (" ".join(map(str,cmd)))
-    subprocess.check_output(cmd)
+    try:
+        subprocess.check_output(cmd)
+    except subprocess.CalledProcessError as e:
+        print (e.output)
+        raise Exception()
+
     print(colored("[SUCCESS]", 'green') + ' CONTROL HiC file created.\n')
