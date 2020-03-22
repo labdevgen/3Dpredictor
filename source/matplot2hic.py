@@ -55,7 +55,8 @@ def MatPlot2HiC(matplot_obj, fname, out_folder, juicer_path=None):
 
         pandas_df.to_csv(pre_file, sep=" ",
                          columns=['str1', 'chr1', 'start', 'start', 'str1', 'chr1', 'end', 'end', 'exp'], header=False,
-                         index=False)
+                         index=False,
+                         line_terminator="\n")
 
         pre_file.close()
 
