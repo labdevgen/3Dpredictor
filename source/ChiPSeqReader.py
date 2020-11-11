@@ -2,7 +2,7 @@ import logging,os
 import pandas as pd
 import numpy as np
 from collections import OrderedDict
-from shared import Position,FileReader,intersect_intervals
+from shared import Position,FileReader,intersect_intervals, intersect_with_interval
 
 
 class ChiPSeqReader(FileReader): #Class process files with ChipSeq peaks
@@ -62,7 +62,12 @@ class ChiPSeqReader(FileReader): #Class process files with ChipSeq peaks
             logging.getLogger(__name__).warning("Number of nested intervals: "+\
                                                 str(nested_intevals_count)+" in "+\
                                                 str(sum([len(i) for i in sorted_data.values()])))
-
+        # set IntervalIndex used by intersect_intervals function
+        for chr in sorted_data.keys():
+            df = sorted_data[chr]
+            sorted_data[chr] = df.set_index(df.apply(
+                lambda x: pd.Interval(x.start, x.end, closed="both"),
+                axis="columns"))
         return sorted_data
 
     def read_file(self,
@@ -112,36 +117,44 @@ class ChiPSeqReader(FileReader): #Class process files with ChipSeq peaks
         data["minus_orientation"] = [0] * N
         return data
 
-    def get_nearest_peaks(self,point,side,N,N_is_strict=True):
-                #Some checks removed to speed up proccess
-        #assert point.start == point.end
-        #assert point.chr in self.chr_data.keys()
-        #try:
-        #    self.chr_data
-        #except:
-        #    logging.error("Please read data first")
-        #    return None
+    def get_nearest_peaks(self, point, side, N, N_is_strict=True):
 
-        search_id = np.searchsorted(self.chr_data[point.chr]["mids"].values,point.start,side)
+    # Some checks removed to speed up proccess
+    # assert point.start == point.end
+    # assert point.chr in self.chr_data.keys()
+    # try:
+    #    self.chr_data
+    # except:
+    #    logging.error("Please read data first")
+    #    return None
+
+        search_id = np.searchsorted(self.chr_data[point.chr]["mids"].values, point.start, side)
         if side == "left":
-            result = self.chr_data[point.chr].iloc[max(search_id-N,0):search_id,:]
+            result = self.chr_data[point.chr].iloc[max(search_id - N, 0):search_id, :]
             if len(result) == 0:
-                return self.get_mock_data(N=N - len(result),interval=point, midpos=0)
+                return self.get_mock_data(N=N - len(result), interval=point, midpos=0)
             if len(result) < N and N_is_strict:
-                return result.append(self.get_mock_data(N=N - len(result),interval=point, midpos=0))
+                return result.append(self.get_mock_data(N=N - len(result), interval=point, midpos=0))
             return result
         elif side == "right":
             if search_id == len(self.chr_data[point.chr]):
-                return self.get_mock_data(N=N,interval=point, midpos=(point.start + 1))
-            result = self.chr_data[point.chr].iloc[search_id:min(search_id+N,
-                                                                 len(self.chr_data[point.chr])),:]
+                return self.get_mock_data(N=N, interval=point, midpos=(point.start + 1))
+            result = self.chr_data[point.chr].iloc[search_id:min(search_id + N,
+                                                                 len(self.chr_data[point.chr])), :]
             if len(result) < N and N_is_strict:
-                return result.append(self.get_mock_data(N=(N - len(result)),interval=point,
-                                     midpos=self.chr_data[point.chr]["mids"].iat[-1]))
+                return result.append(self.get_mock_data(N=(N - len(result)), interval=point,
+                                                        midpos=self.chr_data[point.chr]["mids"].iat[-1]))
             return result
         else:
             raise Exception()
 
+    def get_interval(self, interval, return_ids=False):
+                                       # Return all peakes that intersect interval
+                                       # Also counts partial intersections
+        return intersect_with_interval(self.chr_data,interval, return_ids=return_ids)
+
+#this function is deprecated now
+    ''' 
     def get_interval(self,interval,return_ids=False): #return all peaks intersecting interval as pd.dataframe
                                                     #if return_ids=True returns int positions of first and last peak
         try:
@@ -163,7 +176,7 @@ class ChiPSeqReader(FileReader): #Class process files with ChipSeq peaks
             return self.chr_data[interval.chr].iloc[min(len(self.chr_data[interval.chr])-1,left):max(0,right),:]
         else:
             return min(len(self.chr_data[interval.chr]) - 1, left),max(0, right)
-
+      '''
     def get_N_peaks_near_interval_boundaries(self,interval,N,N_is_strict=True ):
         all_peaks_in_interval = self.get_interval(interval)
         if not self.orient_data_real:
@@ -329,17 +342,18 @@ class ChiPSeqReader(FileReader): #Class process files with ChipSeq peaks
 
     def delete_region(self,interval):
         debug = len(self.get_interval(interval))
-        data = self.chr_data[interval.chr]
-        st,en = self.get_interval(interval,return_ids=True)
-        self.chr_data[interval.chr].iloc[en:,data.columns.get_loc("start")] -= interval.len
-        self.chr_data[interval.chr].iloc[en:,data.columns.get_loc("end")] -= interval.len
-        self.chr_data[interval.chr].iloc[en:,data.columns.get_loc("mids")] -= interval.len
+        st, en = self.get_interval(interval, return_ids=True)
+        self.chr_data[interval.chr].iloc[en + 1:, self.chr_data[interval.chr].columns.get_loc("start")] -= interval.len
+        self.chr_data[interval.chr].iloc[en + 1:, self.chr_data[interval.chr].columns.get_loc("end")] -= interval.len
+        self.chr_data[interval.chr].iloc[en + 1:, self.chr_data[interval.chr].columns.get_loc("mids")] -= interval.len
         old_length = len(self.chr_data[interval.chr])
-        self.chr_data[interval.chr].drop(data.index[st:en],inplace=True)
+        self.chr_data[interval.chr].index = self.chr_data[interval.chr].index.map(str)
+        self.chr_data[interval.chr].drop(index=self.chr_data[interval.chr].index[st:en + 1], inplace=True)
         assert len(self.chr_data[interval.chr]) + debug == old_length
 
     def duplicate_region(self, interval):
         raise NotImplementedError
+        #need to write this function again, where indeces are intervalindex objects
         st, en = self.get_interval(interval, return_ids=True)
         dup_data=self.get_interval(interval)
         drop_indecies = []
@@ -372,7 +386,7 @@ class ChiPSeqReader(FileReader): #Class process files with ChipSeq peaks
 
     def inverse_region(self, interval,CTCF=False):
         raise NotImplementedError
-        # TODO rewrite this function conseidering that index is not intervalindex object
+        # TODO rewrite this function considering that index is not intervalindex object
         debug = len(self.chr_data[interval.chr])
         st, en = self.get_interval(interval, return_ids=True)
         en-=1 #we do it because we use .loc, not.iloc

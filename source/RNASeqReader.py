@@ -93,16 +93,16 @@ class RNAseqReader(ChiPSeqReader):
 
      def delete_region(self, interval):
          # TODO
-         # this won't work for long genes. Imagine, we are deleting regions from inside the gene
-         # then, it will, for example, change coordinate of its start
-         # in general, it's not working for datasets with overlapping intervals
-         raise NotImplementedError
+         # this won't work for long genes. Imagine, we are deleting regions about 40 base pairs from inside the gene
+         # then, we delete all this gene however usually in cells transcription is remained in this region.
+         # We should use TSS snd TSE for accurate prediction!
+         # raise NotImplementedError
          debug = len(self.get_interval(interval))
-         data = self.chr_data[interval.chr]
          st, en = self.get_interval(interval, return_ids=True)
-         self.chr_data[interval.chr].loc[en:, data.columns.get_loc("start")] -= interval.len
-         self.chr_data[interval.chr].loc[en:, data.columns.get_loc("end")] -= interval.len
-         self.chr_data[interval.chr].loc[en:, data.columns.get_loc("mids")] -= interval.len
+         self.chr_data[interval.chr].iloc[en+1:, self.chr_data[interval.chr].columns.get_loc("start")] -= interval.len
+         self.chr_data[interval.chr].iloc[en+1:, self.chr_data[interval.chr].columns.get_loc("end")] -= interval.len
+         self.chr_data[interval.chr].iloc[en+1:, self.chr_data[interval.chr].columns.get_loc("mids")] -= interval.len
          old_length = len(self.chr_data[interval.chr])
-         self.chr_data[interval.chr].drop(data.index[st:en], inplace=True)
+         self.chr_data[interval.chr].index = self.chr_data[interval.chr].index.map(str)
+         self.chr_data[interval.chr].drop(index=self.chr_data[interval.chr].index[st:en+1], inplace=True)
          assert len(self.chr_data[interval.chr]) + debug == old_length

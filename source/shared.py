@@ -221,8 +221,7 @@ def intersect_intervals(chr_int_data1, chr_int_data2, suppreseChrNumberCheck=Fal
 def intersect_with_interval(chr_int_data1,
                                interval,
                                return_ids=False):
-    if return_ids:
-        raise NotImplementedError
+
     chr = interval.chr
     if not chr in chr_int_data1:
         logging.getLogger(__name__).warning("No intervals on chr", chr)
@@ -230,7 +229,12 @@ def intersect_with_interval(chr_int_data1,
     intersection = chr_int_data1[chr].index.overlaps(pd.Interval(left=interval.start,
                                                                  right=interval.end,
                                                                  closed="both"))
-    return chr_int_data1[chr][intersection]
+    if return_ids:
+        start = np.min(np.where(intersection)[0])
+        end = np.max(np.where(intersection)[0])
+        return start,end
+    else:
+        return chr_int_data1[chr][intersection]
 
 # File descriptions are saved in XML form
 # Description should be dict-like

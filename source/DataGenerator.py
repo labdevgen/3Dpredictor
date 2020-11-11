@@ -40,10 +40,12 @@ def get_split_array_indexes(contacts,n_splits):
     return start_points,end_points
 
 def initializer(_main_data, _DataGeneratorObj):
+    logging.getLogger(__name__).debug("Initializing variables")
     global main_data
     global DataGeneratorObj
     main_data = _main_data # share _main_data so every child process has access to _main_data under "main_data" name
     DataGeneratorObj = _DataGeneratorObj # same for _DataGeneratorObj
+    logging.getLogger(__name__).debug("Done initialization")
 
 def _apply_df(args):
     #df, DataGeneratorObj = args
@@ -204,7 +206,9 @@ class DataGenerator():
 
         # Now get predictors
         if n_cpus > 1:
-            pool = multiprocessing.Pool(processes=n_cpus,initializer=initializer,initargs=(contacts,self))
+            #pool = multiprocessing.Pool(processes=n_cpus,initializer=initializer,initargs=(contacts,self))
+            initializer(contacts, self)
+            pool = multiprocessing.Pool(processes=n_cpus)#,initializer=initializer,initargs=(contacts,self))
             start_points,end_points = get_split_array_indexes(contacts,n_cpus)
             result = pool.map(_apply_df, [(st, end) for st,end in zip(start_points,end_points)])
             pool.close()
