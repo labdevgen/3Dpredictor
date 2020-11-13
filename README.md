@@ -25,7 +25,7 @@ python example_generate_data_K562_train.py 1,3,5,7,9 contacts.gz
 python example_generate_data_K562_test.py 18 contacts.gz
 ```
 
-It will be a lot of technickal info in the output. Pay attention to names of the generated files, e.g.:
+It will be a lot of technical info in the output. Pay attention to names of the generated files, e.g.:
 
 ```python
 DataGenerator: Writing data to file output/K562/chr1_chr3_chr5_chr7_chr9training.RandOncontacts.gz.False.11.1500000.50001.1.1.cont_with_CTCF666406.25000
