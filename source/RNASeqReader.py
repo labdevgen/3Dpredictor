@@ -97,12 +97,17 @@ class RNAseqReader(ChiPSeqReader):
          # then, we delete all this gene however usually in cells transcription is remained in this region.
          # We should use TSS snd TSE for accurate prediction!
          # raise NotImplementedError
-         debug = len(self.get_interval(interval))
+         data = self.chr_data[interval.chr]
          st, en = self.get_interval(interval, return_ids=True)
-         self.chr_data[interval.chr].iloc[en+1:, self.chr_data[interval.chr].columns.get_loc("start")] -= interval.len
-         self.chr_data[interval.chr].iloc[en+1:, self.chr_data[interval.chr].columns.get_loc("end")] -= interval.len
-         self.chr_data[interval.chr].iloc[en+1:, self.chr_data[interval.chr].columns.get_loc("mids")] -= interval.len
+         debug = len(self.get_interval(interval))
+         self.chr_data[interval.chr].iloc[en+1:, data.columns.get_loc("start")] -= interval.len
+         self.chr_data[interval.chr].iloc[en+1:, data.columns.get_loc("end")] -= interval.len
+         self.chr_data[interval.chr].iloc[en+1:, data.columns.get_loc("mids")] -= interval.len
          old_length = len(self.chr_data[interval.chr])
-         self.chr_data[interval.chr].index = self.chr_data[interval.chr].index.map(str)
-         self.chr_data[interval.chr].drop(index=self.chr_data[interval.chr].index[st:en+1], inplace=True)
+         if st != -1:
+            data.index = data.index.map(str)
+            data.drop(index=data.index[st:en+1], inplace=True)
+            self.chr_data[interval.chr] = data.set_index(data.apply(
+                lambda x: pd.Interval(x.start, x.end, closed="both"),
+                axis="columns"))
          assert len(self.chr_data[interval.chr]) + debug == old_length

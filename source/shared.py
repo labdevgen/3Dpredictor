@@ -230,9 +230,14 @@ def intersect_with_interval(chr_int_data1,
                                                                  right=interval.end,
                                                                  closed="both"))
     if return_ids:
-        start = np.min(np.where(intersection)[0])
-        end = np.max(np.where(intersection)[0])
-        return start,end
+        if len(np.where(intersection)[0]) == 0:
+            end = chr_int_data1[chr]["start"].searchsorted(interval.start)
+            start = -1
+            return start, end-1
+        else:
+            start = np.min(np.where(intersection)[0])
+            end = np.max(np.where(intersection)[0])
+            return start,end
     else:
         return chr_int_data1[chr][intersection]
 
@@ -292,16 +297,17 @@ def decorate_oe2obs(func,expected_folder, cell_type, coeff_fname):
     result.__name__ = str(cell_type) + func.__name__
     return result
 
-def return_coordinates_after_deletion(contacts, data, interval, **kwargs):
+def return_coordinates_after_deletion(contacts, data, intervals, **kwargs):
     if kwargs['data_type']=='predicted':
         return contacts
     elif kwargs['data_type'] == 'validation':
-        if interval.__repr__()=='no_deletion':
+        if intervals.__repr__()=='no_deletion':
             return data
         else:
-            data["contact_st"] = data["contact_st"].apply(lambda x: x if x < interval.start else x + interval.len)
-            data["contact_en"] = data["contact_en"].apply(lambda x: x if x < interval.start else x + interval.len)
-            return data
+            for interval in intervals:
+                data["contact_st"] = data["contact_st"].apply(lambda x: x if x < interval.start else x + interval.len)
+                data["contact_en"] = data["contact_en"].apply(lambda x: x if x < interval.start else x + interval.len)
+                return data
 
 
 # TODO check this function!
