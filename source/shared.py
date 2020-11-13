@@ -130,6 +130,31 @@ class FileReader(object):
         logging.getLogger(__name__).debug("Loading dump from the file"+self.get_dump_path())
         return pickle.load(open(self.get_dump_path(),"rb"))
 
+    def read_file(self,
+                  renamer = {"0":"chr","1":"start","2":"end","6":"sigVal"}): # example for chip-seq file
+        logging.getLogger(__name__).info(msg="Reading ChipSeq file "+self.fname)
+
+        # set random temporary labels
+        if self.fname.endswith(".gz"):  # check gzipped files
+            import gzip
+            temp_file = gzip.open(self.fname)
+        else:
+            temp_file = open(self.fname)
+        Nfields = len(temp_file.readline().strip().split())
+        temp_file.close()
+
+        names = list(map(str, list(range(Nfields))))
+        data = pd.read_csv(self.fname, sep="\t", header=None, names=names, comment='#')
+
+        # subset and rename
+        data_fields = list(map(int,renamer.keys()))
+        data = data.iloc[:,data_fields]
+        data.rename(columns=renamer,
+                        inplace=True)
+        #save
+        self.data = data
+        del data
+
 def expand_lnk_path(lnk):
     try:
         os.listdir(lnk)

@@ -2,14 +2,17 @@ import sys, os
 # Add main source directory to import path
 root_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 source_dir = os.path.join(root_dir,"source")
-sys.path.append(source_dir)#from bigWigFileReader import bigWigReader
+sys.path.append(source_dir)
+
+# Add straw source dir
+
+
 
 from fastaFileReader import fastaReader
 from hicFileReader import hicReader
 from shared import Interval, Genome
 from bigWigFileReader import bigWigReader
 
-from straw import straw
 import numpy as np
 
 from memory_profiler import memory_usage
@@ -27,6 +30,32 @@ def make_genome():
     return genome
 
 genome = make_genome()
+
+def test_straw():
+    import straw
+    # data = straw("KR", "../input/4DNFI2TK7L2F.hic",
+    #                                "19:8000000:10000000", "19:8000000:10000000", "BP", 1000000)
+    # print (data)
+    #straw_path = root_dir + "/straw/python/straw/straw.py"
+    #import importlib.util
+    #spec = importlib.util.spec_from_file_location("straw", straw_path)
+    #foo = importlib.util.module_from_spec(spec)
+    #spec.loader.exec_module(foo)
+    #straw8 = foo.straw
+    print (1)
+    strawObj = straw.straw("../input/4DNFI2TK7L2F.hic")
+    print ("19" in strawObj.chromDotSizes.data.keys())
+    print (strawObj.chromDotSizes.getLength("19"))
+    print (strawObj.chromDotSizes.getLength("19"))
+
+    print (2)
+    matrixObj = strawObj.getNormalizedMatrix("19", "19", "KR", "BP", 1000000)
+    if matrixObj is None:
+        print ("chr not found")
+    print (3)
+    data = matrixObj.getDataFromBinRegion(8,10,8,10)
+    print (4)
+    print (data)
 
 def test_bigWig(inMem):
     print ("Loading data")
@@ -193,7 +222,9 @@ def test_dump():
     # hic = hic.read_data(debug_mode = True)
     # print(hic.get_contact(Interval("chr1",300000,500000)))
 
-simple_test()
+test_straw()
+
+#simple_test()
 #test_dump()
 
 # now = datetime.datetime.now()
