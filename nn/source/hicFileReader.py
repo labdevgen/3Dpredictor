@@ -16,6 +16,7 @@ from distutils.version import LooseVersion
 # Add main source directory to import path
 root_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 source_dir = os.path.join(root_dir,"source")
+sys.path.append(source_dir)
 
 from shared import FileReader
 from ChiPSeqReader import ChiPSeqReader
@@ -194,6 +195,27 @@ class hicReader(FileReader):
                 result = result.set_index(["contact_st","contact_en"])
                 assert result.index.is_unique
             self.data[chr] = result
+
+            if fill_empty_contacts:
+                logging.getLogger(__name__).info("going to fill empty contacts")
+                print("i'm here!!!")
+                self.data[chr]["contact_st"] = self.data[chr]["contact_st"].apply(lambda x: int(x))
+                self.data[chr]["contact_st"] = self.data[chr]["contact_en"].apply(lambda x: int(x))
+                min_bin = min(np.min(self.data[chr]["contact_st"].values), np.min(self.data[chr]["contact_en"].values))
+                max_bin = max(np.max(self.data[chr]["contact_st"].values), np.min(self.data[chr]["contact_en"].values))
+                binsize = self.binsize
+                contacts = []
+                for i in range(min_bin, max_bin + 1, binsize):
+                    for j in range(i + binsize, max_bin + 1, binsize):
+                        if binsize * 2 + 1 <= abs(j - i) <= self.maxdist:
+                            contacts.append((i, j))
+                all_contacts = pd.DataFrame(contacts, columns=['contact_st', 'contact_en'])
+                result_merge = pd.merge(all_contacts, self.data[chr], how='left', on=['contact_st', 'contact_en'])
+                result_merge["chr"].fillna(chr, inplace=True)
+                result_merge["contact_count"].fillna(0, inplace=True)
+                result_merge.loc[pd.isna(result_merge["dist"]), "dist"] = result_merge.loc[pd.isna(result_merge["dist"]), "contact_en"] - \
+                                                              result_merge.loc[pd.isna(result_merge["dist"]), "contact_st"]
+                self.data[chr] = result_merge
             self.norms[chr] = np.average(s)
             logging.getLogger(__name__).info("Total hic load time: "+str(datetime.datetime.now()-load_start_time))
         assert len(self.data.keys()) > 0
@@ -292,3 +314,34 @@ class hicReader(FileReader):
             self.data[chr]=result
             conts_with_ctcf.append(len(df_with_CTCF))
         self.conts_with_ctcf= np.sum(conts_with_ctcf)
+
+    def delete_region(self,interval):
+        data = self.data[interval.chr]
+        #Drop contacts withing interval
+        #len_bins = int(round(float(interval.len)/self.binsize,0)) * self.binsize
+
+        bad_ids = data.query("@interval.start < contact_st < @interval.end | "
+            + "@interval.start < contact_en < @interval.end").index #either start or end in region to be removed
+        #logging.getLogger(__name__).info (bad_ids)
+        data.drop(bad_ids,inplace=True)
+        logging.getLogger(__name__).info("dropping contacts with index", bad_ids)
+        #logging.getLogger(__name__).info(data.head())
+
+        self.data[interval.chr] = data
+        #change coordinates
+        # TODO remove following 2 commands
+        data["st_red"] = data.contact_st.apply(lambda x: x >= interval.start)
+        data["en_red"] = data.contact_en.apply(lambda x: x >= interval.start)
+
+        new_starts = data.contact_st.apply(lambda x: (x - interval.len) if (x >= interval.start) else x).values
+        new_ends = data.contact_en.apply(lambda x: (x - interval.len) if (x >= interval.start) else x).values
+        new_dist = new_ends - new_starts
+        #logging.getLogger(__name__).debug(data.iloc[new_dist < 0,:].head())
+        #logging.getLogger(__name__).debug(new_starts[new_dist < 0])
+        #logging.getLogger(__name__).debug(new_ends[new_dist < 0])
+
+        assert np.all(new_dist >= 0)
+
+        self.data[interval.chr].loc[:,"contact_st"] = new_starts
+        self.data[interval.chr].loc[:,"contact_en"] = new_ends
+        self.data[interval.chr].loc[:,"dist"] = new_dist

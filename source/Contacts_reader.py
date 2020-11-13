@@ -102,9 +102,6 @@ class ContactsReader(): #Class process files with contacts
 
         self.data[interval.chr] = data
         #change coordinates
-        # TODO remove following 2 commands
-        data["st_red"] = data.contact_st.apply(lambda x: x >= interval.start)
-        data["en_red"] = data.contact_en.apply(lambda x: x >= interval.start)
 
         new_starts = data.contact_st.apply(lambda x: (x - interval.len) if (x >= interval.start) else x).values
         new_ends = data.contact_en.apply(lambda x: (x - interval.len) if (x >= interval.start) else x).values
@@ -171,3 +168,20 @@ class ContactsReader(): #Class process files with contacts
             self.data[chr]=result
             conts_with_ctcf.append(len(df_with_CTCF))
         self.conts_with_ctcf= np.sum(conts_with_ctcf)
+    def generate_contacts_for_region(self, interval, binsize, maxdist, mindist):
+        self.binsize = binsize
+        interval_start_bin = int(interval.start) // int(binsize) * int(binsize)
+        interval_end_bin = int(interval.end) // int(binsize) * int(binsize)
+        contact_starts = []
+        contact_ends = []
+        dists = []
+        for contact_st in range(interval_start_bin, interval_end_bin + binsize, int(binsize)):
+            logging.info(str(datetime.datetime.now()) + " " + str(contact_st))
+            for contact_en in range(contact_st, interval_end_bin + binsize, int(binsize)):
+                if (contact_en - contact_st) <= maxdist and (contact_en - contact_st) >= mindist:
+                    contact_starts.append(contact_st)
+                    contact_ends.append(contact_en)
+                    dists.append(contact_en - contact_st)
+        assert np.all(dists) >= 0
+        dict={'chr':[interval.chr]*len(dists), 'contact_st':contact_starts, 'contact_en':contact_ends, 'contact_count':[1]*len(dists)}
+        self.data[interval.chr] = pd.DataFrame(dict)

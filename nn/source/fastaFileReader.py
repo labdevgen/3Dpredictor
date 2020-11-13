@@ -6,7 +6,7 @@ import logging
 import os
 import sys
 import gzip
-from collections import OrderedDict
+from collections import OrderedDict, Counter
 
 import numpy as np
 
@@ -17,8 +17,10 @@ import sys, os
 root_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 source_dir = os.path.join(root_dir,"source")
 sys.path.append(source_dir)
-
-from shared import FileReader, get_version
+# print (sys.path)
+#import /mnt/storage/home/psbelokopytova/nn_anopheles/3Dpredictor/source/shared.py
+from shared import get_version
+from shared import FileReader
 
 def default_chr_name_ranamer(chr):
     return chr
@@ -207,3 +209,8 @@ class fastaReader(FileReader): #Reading, processing and storing the data from
     def __repr__(self):
         XMLrepresentation  = self.toXMLDict(exludedMembers=("data"))
         return "\n".join([key+"\t"+str(val) for key,val in XMLrepresentation.items()])
+
+def GC_content(seq):
+    counter_dict = Counter(seq)
+    gc = (counter_dict[2]+counter_dict[3]) / len(seq)
+    return gc

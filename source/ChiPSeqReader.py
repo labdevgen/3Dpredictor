@@ -380,7 +380,7 @@ class ChiPSeqReader(FileReader): #Class process files with ChipSeq peaks
         # see https://github.com/labdevgen/3DPredictorTests/blob/master/compare_loc_iloc.py
         # moreover, I think using loc is not a good idea, since as soom as you modify number of rows ind data
         # ids returned by get_interval will become in disagreement with indexes
-        data_interval = self.get_interval(interval, return_ids=False)   
+        data_interval = self.get_interval(interval, return_ids=False)
         drop_indecies = []
         if self.chr_data[interval.chr].loc[st, "start"] < interval.start:
             drop_indecies.append(st)
@@ -402,6 +402,3 @@ class ChiPSeqReader(FileReader): #Class process files with ChipSeq peaks
             self.chr_data[interval.chr].loc[st:en, "minus_orientation"] = plus_orient
         assert len(self.chr_data[interval.chr]) == debug - len(drop_indecies)
         self.chr_data[interval.chr].sort_values(by=["chr", "start"], inplace=True)
-
-
-

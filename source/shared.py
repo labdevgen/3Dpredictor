@@ -130,6 +130,31 @@ class FileReader(object):
         logging.getLogger(__name__).debug("Loading dump from the file"+self.get_dump_path())
         return pickle.load(open(self.get_dump_path(),"rb"))
 
+    def read_file(self,
+                  renamer = {"0":"chr","1":"start","2":"end","6":"sigVal"}): # example for chip-seq file
+        logging.getLogger(__name__).info(msg="Reading ChipSeq file "+self.fname)
+
+        # set random temporary labels
+        if self.fname.endswith(".gz"):  # check gzipped files
+            import gzip
+            temp_file = gzip.open(self.fname)
+        else:
+            temp_file = open(self.fname)
+        Nfields = len(temp_file.readline().strip().split())
+        temp_file.close()
+
+        names = list(map(str, list(range(Nfields))))
+        data = pd.read_csv(self.fname, sep="\t", header=None, names=names, comment='#')
+
+        # subset and rename
+        data_fields = list(map(int,renamer.keys()))
+        data = data.iloc[:,data_fields]
+        data.rename(columns=renamer,
+                        inplace=True)
+        #save
+        self.data = data
+        del data
+
 def expand_lnk_path(lnk):
     try:
         os.listdir(lnk)
@@ -221,8 +246,7 @@ def intersect_intervals(chr_int_data1, chr_int_data2, suppreseChrNumberCheck=Fal
 def intersect_with_interval(chr_int_data1,
                                interval,
                                return_ids=False):
-    if return_ids:
-        raise NotImplementedError
+
     chr = interval.chr
     if not chr in chr_int_data1:
         logging.getLogger(__name__).warning("No intervals on chr", chr)
@@ -230,7 +254,17 @@ def intersect_with_interval(chr_int_data1,
     intersection = chr_int_data1[chr].index.overlaps(pd.Interval(left=interval.start,
                                                                  right=interval.end,
                                                                  closed="both"))
-    return chr_int_data1[chr][intersection]
+    if return_ids:
+        if len(np.where(intersection)[0]) == 0:
+            end = chr_int_data1[chr]["start"].searchsorted(interval.start)
+            start = -1
+            return start, end-1
+        else:
+            start = np.min(np.where(intersection)[0])
+            end = np.max(np.where(intersection)[0])
+            return start,end
+    else:
+        return chr_int_data1[chr][intersection]
 
 # File descriptions are saved in XML form
 # Description should be dict-like
@@ -288,16 +322,17 @@ def decorate_oe2obs(func,expected_folder, cell_type, coeff_fname):
     result.__name__ = str(cell_type) + func.__name__
     return result
 
-def return_coordinates_after_deletion(contacts, data, interval, **kwargs):
+def return_coordinates_after_deletion(contacts, data, intervals, **kwargs):
     if kwargs['data_type']=='predicted':
         return contacts
     elif kwargs['data_type'] == 'validation':
-        if interval.__repr__()=='no_deletion':
+        if intervals.__repr__()=='no_deletion':
             return data
         else:
-            data["contact_st"] = data["contact_st"].apply(lambda x: x if x < interval.start else x + interval.len)
-            data["contact_en"] = data["contact_en"].apply(lambda x: x if x < interval.start else x + interval.len)
-            return data
+            for interval in intervals:
+                data["contact_st"] = data["contact_st"].apply(lambda x: x if x < interval.start else x + interval.len)
+                data["contact_en"] = data["contact_en"].apply(lambda x: x if x < interval.start else x + interval.len)
+                return data
 
 
 # TODO check this function!
