@@ -146,9 +146,7 @@ class hicReader(FileReader):
         for chr in self.genome.chrmSizes.keys():
             logging.getLogger(__name__).info("Processing chrm "+chr)
             load_start_time = datetime.datetime.now()
-            if LooseVersion(straw.__version__) == "0.0.6":
-               get_data_straw = get_data_straw006()
-               result = get_data_straw
+            result = get_data_straw()
             if result is None:
                 logging.getLogger(__name__).warning("Failed to find chr " + chr + "in hic file!")
                 continue
