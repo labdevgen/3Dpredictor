@@ -77,6 +77,7 @@ class hicReader(FileReader):
 
         def get_data_straw006():
             try:
+
                 return straw.straw(self.normalization, self.fname,
                                      chr, chr, "BP", self.binsize)
             except TypeError:
@@ -84,6 +85,7 @@ class hicReader(FileReader):
                     new_chr = chr.replace("chr", "", 1)
                     logging.getLogger(__name__).warning("Failed to find chr " + chr + "; trying to find " + new_chr)
                     if new_chr in chr:
+                        print(new_chr)
                         return straw.straw(self.normalization, self.fname,
                                              new_chr, new_chr, "BP", self.binsize)
                     else:
@@ -121,16 +123,20 @@ class hicReader(FileReader):
             raise NotImplemented
 
         # first try to load data from dump
-        if os.path.isfile(self.get_dump_path()) and not noDump:
+        if os.path.isfile(self.get_dump_path()) and (not noDump):
             return self.load(self.genome)
+        else:
+            print (os.path.isfile(self.get_dump_path()))
+            print (not noDump)
+            print (os.path.isfile(self.get_dump_path()) and (not noDump))
 
         # if we found no dump, lets read data and dump file
 
         # first define straw version
         if LooseVersion(straw.__version__) == "0.0.6":
-            get_data_straw = get_data_straw006()
+            get_data_straw = get_data_straw006
         elif LooseVersion(straw.__version__) >= "0.0.8":
-            get_data_straw = get_data_straw008()
+            get_data_straw = get_data_straw008
         else:
             logging.error("Unsupported straw version. "+ straw.__version__ +\
                           "Please use straw 0.0.6 or >=0.0.8")
@@ -140,7 +146,9 @@ class hicReader(FileReader):
         for chr in self.genome.chrmSizes.keys():
             logging.getLogger(__name__).info("Processing chrm "+chr)
             load_start_time = datetime.datetime.now()
-            result = get_data_straw()
+            if LooseVersion(straw.__version__) == "0.0.6":
+               get_data_straw = get_data_straw006()
+               result = get_data_straw
             if result is None:
                 logging.getLogger(__name__).warning("Failed to find chr " + chr + "in hic file!")
                 continue
