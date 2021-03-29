@@ -343,7 +343,6 @@ class hicReader(FileReader):
         data["st_red"] = data.contact_st.apply(lambda x: x >= interval.start)
         data["en_red"] = data.contact_en.apply(lambda x: x >= interval.start)
 
-
         new_starts = data.contact_st.apply(lambda x: (x - interval.len) if (x >= interval.start) else x).values
         new_ends = data.contact_en.apply(lambda x: (x - interval.len) if (x >= interval.start) else x).values
         new_dist = new_ends - new_starts
