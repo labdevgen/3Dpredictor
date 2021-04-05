@@ -22,7 +22,6 @@ from shared import FileReader
 from ChiPSeqReader import ChiPSeqReader
 from Contacts_reader import ContactsReader
 
-
 MAX_CHR_DIST = 3000000000
 
 class hicReader(FileReader):
