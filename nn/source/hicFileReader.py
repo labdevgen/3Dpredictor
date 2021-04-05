@@ -22,6 +22,7 @@ from shared import FileReader
 from ChiPSeqReader import ChiPSeqReader
 from Contacts_reader import ContactsReader
 
+
 MAX_CHR_DIST = 3000000000
 
 class hicReader(FileReader):
@@ -125,6 +126,10 @@ class hicReader(FileReader):
         # first try to load data from dump
         if os.path.isfile(self.get_dump_path()) and (not noDump):
             return self.load(self.genome)
+        else:
+            print (os.path.isfile(self.get_dump_path()))
+            print (not noDump)
+            print (os.path.isfile(self.get_dump_path()) and (not noDump))
 
         # if we found no dump, lets read data and dump file
 
@@ -142,7 +147,8 @@ class hicReader(FileReader):
         for chr in self.genome.chrmSizes.keys():
             logging.getLogger(__name__).info("Processing chrm "+chr)
             load_start_time = datetime.datetime.now()
-            result = get_data_straw() #get bins coordinats of chromosome as a list
+            result = get_data_straw()
+            print(str(result)) #A
             if result is None:
                 logging.getLogger(__name__).warning("Failed to find chr " + chr + " in hic file!")
                 continue
@@ -177,6 +183,7 @@ class hicReader(FileReader):
                     #logging.debug(str(result.query("st==@i | en==@i")))
                 else:
                     s.append(local_count)
+            #assert len(s) >= len(subsample) / 2
             if np.std(s) / np.average(s) >= 0.2:
                 logging.getLogger(__name__).warning("Sums of contacs for loci are very different. Examples: ")
                 logging.getLogger(__name__).warning(str(s))
