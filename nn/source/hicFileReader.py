@@ -78,7 +78,6 @@ class hicReader(FileReader):
 
         def get_data_straw006():
             try:
-
                 return straw.straw(self.normalization, self.fname,
                                      chr, chr, "BP", self.binsize)
             except TypeError:
