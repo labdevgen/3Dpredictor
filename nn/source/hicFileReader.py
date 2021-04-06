@@ -175,7 +175,8 @@ class hicReader(FileReader):
                     #logging.debug(str(result.query("st==@i | en==@i")))
                 else:
                     s.append(local_count)
-            #assert len(s) >= len(subsample) / 2
+            if len(s) >= len(subsample) / 2:
+                logging.getLogger(__name__).warning("There are more than half of genomic bins with 0 contacts!")
             if np.std(s) / np.average(s) >= 0.2:
                 logging.getLogger(__name__).warning("Sums of contacs for loci are very different. Examples: ")
                 logging.getLogger(__name__).warning(str(s))
