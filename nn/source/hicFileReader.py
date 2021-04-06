@@ -105,7 +105,7 @@ class hicReader(FileReader):
             else:
                 hic_chr = chr
 
-            # check chromosome sizes
+            #check chromosome sizes
             if self.genome.chrmSizes[chr] != strawObj.chromDotSizes.getLength(hic_chr):
                 logging.getLogger(__name__).error("Genome version mismatch!")
                 raise BaseException
@@ -141,7 +141,6 @@ class hicReader(FileReader):
             logging.getLogger(__name__).info("Processing chrm "+chr)
             load_start_time = datetime.datetime.now()
             result = get_data_straw()
-            print(str(result)) #A
             if result is None:
                 logging.getLogger(__name__).warning("Failed to find chr " + chr + " in hic file!")
                 continue
@@ -170,7 +169,7 @@ class hicReader(FileReader):
             for i in subsample:
                 local_count = result.query("contact_st==@i | contact_en==@i")["count"].sum()
                 if local_count == 0:
-                    # these are probably NAN samples
+                    # these are probably NAN samples 
                     continue
                     #logging.error("zero count for region ", i)
                     #logging.debug(str(result.query("st==@i | en==@i")))
@@ -199,7 +198,6 @@ class hicReader(FileReader):
 
             if fill_empty_contacts:
                 logging.getLogger(__name__).info("going to fill empty contacts")
-                print("i'm here!!!")
                 self.data[chr]["contact_st"] = self.data[chr]["contact_st"].apply(lambda x: int(x))
                 self.data[chr]["contact_st"] = self.data[chr]["contact_en"].apply(lambda x: int(x))
                 min_bin = min(np.min(self.data[chr]["contact_st"].values), np.min(self.data[chr]["contact_en"].values))
@@ -273,7 +271,6 @@ class hicReader(FileReader):
         return self.binsize
 
     def get_min_contact_position(self,chr):
-        print(self.data.keys())
         return min(self.data[chr]["contact_st"].values)
 
     def get_max_contact_position(self,chr):
