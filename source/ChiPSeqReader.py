@@ -327,7 +327,7 @@ class ChiPSeqReader(FileReader): #Class process files with ChipSeq peaks
                                       "minus_orientation!='0'",inplace=True)
             self.only_orient_peaks = True
 
-    def delete_region(self,interval):
+    def delete_region(self,interval): #,neighbour_interval):
         debug = len(self.get_interval(interval))
         data = self.chr_data[interval.chr]
         st,en = self.get_interval(interval,return_ids=True)
@@ -337,6 +337,14 @@ class ChiPSeqReader(FileReader): #Class process files with ChipSeq peaks
         old_length = len(self.chr_data[interval.chr])
         self.chr_data[interval.chr].drop(data.index[st:en],inplace=True)
         assert len(self.chr_data[interval.chr]) + debug == old_length
+        border_plase = searchsorted(data['mids'],interval.start)
+        peak_left = data['mids'].iloc[border_plase]
+        peak_right = data['mids'].iloc[border_plase + 1]
+        distance_right = interval.start - peak_right
+        distance_left = interval.start - peak_left
+        while (distance_right <= neighbour_interval):
+            peak_right_end
+            data.iloc[peak_right:,data.columns.get_loc("end")] -= data["end"].iloc[peak_right]
 
     def duplicate_region(self, interval):
         raise NotImplementedError
