@@ -78,7 +78,6 @@ class hicReader(FileReader):
 
         def get_data_straw006():
             try:
-
                 return straw.straw(self.normalization, self.fname,
                                      chr, chr, "BP", self.binsize)
             except TypeError:
@@ -86,7 +85,6 @@ class hicReader(FileReader):
                     new_chr = chr.replace("chr", "", 1)
                     logging.getLogger(__name__).warning("Failed to find chr " + chr + "; trying to find " + new_chr)
                     if new_chr in chr:
-                        print(new_chr)
                         return straw.straw(self.normalization, self.fname,
                                              new_chr, new_chr, "BP", self.binsize)
                     else:
@@ -126,11 +124,6 @@ class hicReader(FileReader):
         # first try to load data from dump
         if os.path.isfile(self.get_dump_path()) and (not noDump):
             return self.load(self.genome)
-        else:
-            print (os.path.isfile(self.get_dump_path()))
-            print (not noDump)
-            print (os.path.isfile(self.get_dump_path()) and (not noDump))
-
         # if we found no dump, lets read data and dump file
 
         # first define straw version
