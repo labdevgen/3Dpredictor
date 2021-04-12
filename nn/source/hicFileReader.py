@@ -347,3 +347,4 @@ class hicReader(FileReader):
         self.data[interval.chr].loc[:,"contact_st"] = new_starts
         self.data[interval.chr].loc[:,"contact_en"] = new_ends
         self.data[interval.chr].loc[:,"dist"] = new_dist
+assert True
