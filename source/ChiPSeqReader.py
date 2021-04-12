@@ -327,7 +327,7 @@ class ChiPSeqReader(FileReader): #Class process files with ChipSeq peaks
                                       "minus_orientation!='0'",inplace=True)
             self.only_orient_peaks = True
 
-    def delete_region(self,interval): #,neighbour_interval):
+    def delete_region(self,interval,neighbour_interval):
         debug = len(self.get_interval(interval))
         data = self.chr_data[interval.chr]
         st,en = self.get_interval(interval,return_ids=True)
@@ -337,15 +337,29 @@ class ChiPSeqReader(FileReader): #Class process files with ChipSeq peaks
         old_length = len(self.chr_data[interval.chr])
         self.chr_data[interval.chr].drop(data.index[st:en],inplace=True)
         assert len(self.chr_data[interval.chr]) + debug == old_length
-        border_plase = searchsorted(data['mids'],interval.start)
-        peak_left = data['mids'].iloc[border_plase]
-        peak_right = data['mids'].iloc[border_plase + 1]
+        #let's find where the border of deletion place
+        border_place = searchsorted(data['mids'],interval.start)
+        #now find closiest peaks
+        peak_left = data['end'].iloc[border_place]
+        peak_right = data['start'].iloc[border_place + 1]
+        #find distance btw border & end of right peak
         distance_right = interval.start - peak_right
+        # find distance btw border & start of left peak
         distance_left = interval.start - peak_left
-        while (distance_right <= neighbour_interval):
-            peak_right_end
-            data.iloc[peak_right:,data.columns.get_loc("end")] -= data["end"].iloc[peak_right]
+        #shift genome coordinates for all peaks after peaks crossing neighbour_interval
+        while distance_right <= neighbour_interval:
+            data.iloc[peak_right:,data.columns.get_loc("end")] -= data["start"].iloc[peak_right]
+            data.iloc[peak_right:,data.columns.get_loc("mids")] -= data["start"].iloc[peak_right]
+            data.iloc[peak_right:,data.columns.get_loc("start")] -= data["start"].iloc[peak_right]
+            # remember genome coordinates of start the last deleted peak
+            end = data['end'].iloc[border_place + 1]
+            #find new closiest peak & find new distance
+            border_place += 1
+            peak_right = data['start'].iloc[border_place + 1]
+            distance_right = interval.start - peak_right
+        #now let's do the same for the left part of neighbour_interval
 
+        self.chr_data[interval.chr].drop(data.index[start:end], inplace=True)
     def duplicate_region(self, interval):
         raise NotImplementedError
         st, en = self.get_interval(interval, return_ids=True)
