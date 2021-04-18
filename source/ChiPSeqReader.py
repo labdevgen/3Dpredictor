@@ -362,6 +362,32 @@ class ChiPSeqReader(FileReader): #Class process files with ChipSeq peaks
         self.chr_data[interval.chr].sort_values(by=["start"], inplace=True)
         assert len(self.chr_data[interval.chr]) - debug == old_length
 
+    def duplicate_region_v2(self, interval):                     # Modifies data according to the relationship
+        st, en = self.get_interval(interval, return_ids=True)    # between the "start" and "end" of each peak and
+        #print(st, en)                                           # the "start" and "end" of the duplication interval
+        old_length = len(self.chr_data[interval.chr])
+        drop_indices = []
+        dup_indices = []
+        for i in range(st, en + 1):
+            if (self.chr_data[interval.chr].iloc[i, self.chr_data[interval.chr].columns.get_loc("start")] < interval.start) and \
+                    (self.chr_data[interval.chr].iloc[i, self.chr_data[interval.chr].columns.get_loc("end")] > interval.end):
+                drop_indices.append(i)                # Duplication interval is within peak interval. Gets indices of destroyed peaks
+            elif (self.chr_data[interval.chr].iloc[i, self.chr_data[interval.chr].columns.get_loc("start")] > interval.start) and \
+                    (self.chr_data[interval.chr].iloc[i, self.chr_data[interval.chr].columns.get_loc("end")] < interval.end):
+                dup_indices.append(i)                 # Peak interval is within duplication interval. Gets indices of duplicated peaks
+        debug = len(dup_indices) - len(drop_indices)
+        dup_data = self.chr_data[interval.chr].loc[self.chr_data[interval.chr].index[dup_indices]]  # Duplicated peaks as df
+        dup_data["start"] += interval.len
+        dup_data["end"] += interval.len
+        dup_data["mids"] += interval.len
+        self.chr_data[interval.chr].iloc[en:, self.chr_data[interval.chr].columns.get_loc("start")] += interval.len
+        self.chr_data[interval.chr].iloc[en:, self.chr_data[interval.chr].columns.get_loc("end")] += interval.len
+        self.chr_data[interval.chr].iloc[en:, self.chr_data[interval.chr].columns.get_loc("mids")] += interval.len
+        self.chr_data[interval.chr].drop(self.chr_data[interval.chr].index[drop_indices], inplace=True)  # Deletes destroyed peaks
+        self.chr_data[interval.chr] = pd.concat([self.chr_data[interval.chr], dup_data])  # Adds duplicated peaks
+        self.chr_data[interval.chr].sort_values(by='start', inplace=True)
+        assert len(self.chr_data[interval.chr]) - debug == old_length
+
     def toXMLDict(self):
         res = OrderedDict([("ProteinName",self.proteinName),
                            ("fname",self.fname),
