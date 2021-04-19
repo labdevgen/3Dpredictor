@@ -328,6 +328,8 @@ class ChiPSeqReader(FileReader): #Class process files with ChipSeq peaks
             self.only_orient_peaks = True
 
     def delete_region(self,interval,neighbour_interval):
+        #interval - (chr, start, end) of deletion
+        #neighbour_interval - interval around deletion to delete peaks
         debug = len(self.get_interval(interval))
         data = self.chr_data[interval.chr]
         st,en = self.get_interval(interval,return_ids=True)
@@ -338,10 +340,11 @@ class ChiPSeqReader(FileReader): #Class process files with ChipSeq peaks
         self.chr_data[interval.chr].drop(data.index[st:en],inplace=True)
         assert len(self.chr_data[interval.chr]) + debug == old_length
         #let's find where the border of deletion place
-        border_place = numpy.searchsorted(data['mids'],interval.start)
+        border_place = numpy.searchsorted(data['mids'],interval.start,side="right")
+        #use side = right for cases when_place == some peak middle
         #now find closiest peaks
-        peak_left = data['end'].iloc[border_place]
-        peak_right = data['start'].iloc[border_place + 1]
+        peak_left = data['end'].iloc[border_place - 1]
+        peak_right = data['start'].iloc[border_place]
         assert peak_left < peak_right
         #find distance btw border & end of right peak
         distance_right = interval.start - peak_right
@@ -351,9 +354,6 @@ class ChiPSeqReader(FileReader): #Class process files with ChipSeq peaks
         position = border_place
         #shift genome coordinates for all peaks after right peaks crossing neighbour_interval
         while distance_right <= neighbour_interval:
-            data.iloc[peak_right:,data.columns.get_loc("end")] -= data["start"].iloc[peak_right]
-            data.iloc[peak_right:,data.columns.get_loc("mids")] -= data["start"].iloc[peak_right]
-            data.iloc[peak_right:,data.columns.get_loc("start")] -= data["start"].iloc[peak_right]
             # remember genome coordinates of the end of the last deleted peak
             end = data['end'].iloc[position + 1]
             #find new closiest peak & find new distance
@@ -363,9 +363,6 @@ class ChiPSeqReader(FileReader): #Class process files with ChipSeq peaks
         position = border_place
         #now let's do the same for the left part of neighbour_interval
         while distance_left <= neighbour_interval:
-            data.iloc[peak_left:, data.columns.get_loc("end")] -= data["start"].iloc[peak_left]
-            data.iloc[peak_left:, data.columns.get_loc("mids")] -= data["start"].iloc[peak_left]
-            data.iloc[peak_left:, data.columns.get_loc("start")] -= data["start"].iloc[peak_left]
             start = data['start'].iloc[position]
             position += 1
             peak_left = data['end'].iloc[position]
