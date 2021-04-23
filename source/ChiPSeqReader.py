@@ -2,7 +2,7 @@ import logging,os
 import pandas as pd
 import numpy as np
 from collections import OrderedDict
-from shared import Position,FileReader,intersect_intervals
+from shared import Position, FileReader, intersect_intervals, intersect_with_interval
 
 
 class ChiPSeqReader(FileReader): #Class process files with ChipSeq peaks
@@ -364,19 +364,12 @@ class ChiPSeqReader(FileReader): #Class process files with ChipSeq peaks
 
     def duplicate_region_v2(self, interval):                     # Modifies data according to the relationship
         st, en = self.get_interval(interval, return_ids=True)    # between the "start" and "end" of each peak and
-        #print(st, en)                                           # the "start" and "end" of the duplication interval
-        old_length = len(self.chr_data[interval.chr])
-        drop_indices = []
-        dup_indices = []
-        for i in range(st, en + 1):
-            if (self.chr_data[interval.chr].iloc[i, self.chr_data[interval.chr].columns.get_loc("start")] < interval.start) and \
-                    (self.chr_data[interval.chr].iloc[i, self.chr_data[interval.chr].columns.get_loc("end")] > interval.end):
-                drop_indices.append(i)                # Duplication interval is within peak interval. Gets indices of destroyed peaks
-            elif (self.chr_data[interval.chr].iloc[i, self.chr_data[interval.chr].columns.get_loc("start")] > interval.start) and \
-                    (self.chr_data[interval.chr].iloc[i, self.chr_data[interval.chr].columns.get_loc("end")] < interval.end):
-                dup_indices.append(i)                 # Peak interval is within duplication interval. Gets indices of duplicated peaks
+        old_length = len(self.chr_data[interval.chr])            # the "start" and "end" of the duplication interval
+        drop_indices = list(np.where((self.chr_data[interval.chr].start < interval.start) & (self.chr_data[interval.chr].end > interval.end))[0])
+        dup_indices = list(np.where((self.chr_data[interval.chr].start > interval.start) & (self.chr_data[interval.chr].end < interval.end))[0])
         debug = len(dup_indices) - len(drop_indices)
         dup_data = self.chr_data[interval.chr].loc[self.chr_data[interval.chr].index[dup_indices]]  # Duplicated peaks as df
+        print(self.chr_data[interval.chr].index[dup_indices])
         dup_data["start"] += interval.len
         dup_data["end"] += interval.len
         dup_data["mids"] += interval.len
