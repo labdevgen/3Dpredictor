@@ -2,7 +2,7 @@ import logging,os
 import pandas as pd
 import numpy as np
 from collections import OrderedDict
-from shared import Position, FileReader, intersect_intervals, intersect_with_interval
+from shared import Position, FileReader, intersect_intervals
 
 
 class ChiPSeqReader(FileReader): #Class process files with ChipSeq peaks
