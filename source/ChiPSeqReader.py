@@ -369,7 +369,6 @@ class ChiPSeqReader(FileReader): #Class process files with ChipSeq peaks
         dup_indices = list(np.where((self.chr_data[interval.chr].start > interval.start) & (self.chr_data[interval.chr].end < interval.end))[0])
         debug = len(dup_indices) - len(drop_indices)
         dup_data = self.chr_data[interval.chr].loc[self.chr_data[interval.chr].index[dup_indices]]  # Duplicated peaks as df
-        print(self.chr_data[interval.chr].index[dup_indices])
         dup_data["start"] += interval.len
         dup_data["end"] += interval.len
         dup_data["mids"] += interval.len
