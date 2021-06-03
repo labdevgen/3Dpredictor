@@ -111,3 +111,30 @@ class RNAseqReader(ChiPSeqReader):
                 lambda x: pd.Interval(x.start, x.end, closed="both"),
                 axis="columns"))
          assert len(self.chr_data[interval.chr]) + debug == old_length
+
+     def duplicate_region_RNA(self, interval):                  # Modifies data according to the relationship
+         st, en = self.get_interval(interval, return_ids=True)  # between the "start" and "end" of genes, transcription direction and
+         old_length = len(self.chr_data[interval.chr])          # the "start" and "end" of the duplication interval
+         tss_strand = pd.read_csv(r"C:\Users\Maria\PycharmProjects\example\tss_strand.csv", encoding='utf-8', sep='\t')
+         condition = np.where(                                                     # Search for genes affected by
+             (((tss_strand.position + 2000 * tss_strand.strand) > interval.end) &  # duplication in the file with
+              (tss_strand.position < interval.end) & (tss_strand.strand == 1)) |   # the transcription direction
+             (((tss_strand.position + 2000 * tss_strand.strand) < interval.end) &
+              (tss_strand.position > interval.end) & (tss_strand.strand == -1)))
+         dup_indices = list(self.chr_data[interval.chr].index[(self.chr_data[interval.chr].start > interval.start) & # List of gene indices
+                                                              (self.chr_data[interval.chr].end < interval.end)])     # to be duplicated
+         drop_indices = list(self.chr_data[interval.chr].index[np.in1d(self.chr_data[interval.chr].gene,   # Finding the intersection of affected genes in files with
+                                                                       tss_strand.gene.iloc[condition])])  # the direction of transcription and with RNAseq data.
+         debug = len(dup_indices) - len(drop_indices)                                                      # Creating a list from their indices.
+         dup_data = self.chr_data[interval.chr].loc[dup_indices]    # Duplicated genes as df
+         dup_data[["mids", "start", "end"]] += interval.len         # Change coordinates of duplicated genes
+         self.chr_data[interval.chr].iloc[en + 1:, [self.chr_data[interval.chr].columns.get_loc("start"),                # Change coordinates
+                                                    self.chr_data[interval.chr].columns.get_loc("end"),                  # of other genes
+                                                    self.chr_data[interval.chr].columns.get_loc("mids")]] += interval.len
+         if len(drop_indices) > 0:
+             self.chr_data[interval.chr].drop(drop_indices, inplace=True)   # Delete genes affected by duplication
+         self.chr_data[interval.chr] = pd.concat([self.chr_data[interval.chr], dup_data]) # # Adds duplicated genes
+         self.chr_data[interval.chr].sort_values(by="start", inplace=True)
+         self.chr_data[interval.chr].set_index(self.chr_data[interval.chr].apply(
+             lambda x: pd.Interval(x.start, x.end, closed="both"), axis="columns"), inplace=True)  # Set new indices according new "start" and "end"
+         assert len(self.chr_data[interval.chr]) - debug == old_length
