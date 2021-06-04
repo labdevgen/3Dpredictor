@@ -98,10 +98,9 @@ class RNAseqReader(ChiPSeqReader):
          old_length = len(self.chr_data[interval.chr])
          tss_file = pd.read_csv(tss_file, encoding='utf-8', sep='\t')
          # Search for genes affected by deletion in the file with the transcription direction:
-         condition = np.where(((interval.start < tss_file.position) & (interval.end > tss_file.position)) |
-                               ((tss_file.strand == 1) & (interval.start > tss_file.position) &
+         condition = np.where(((tss_file.strand == 1) & (interval.end > tss_file.position) &
                                 (interval.start < (tss_file.position + 2000 * tss_file.strand))) |
-                               ((tss_file.strand == -1) & (interval.end < tss_file.position) &
+                               ((tss_file.strand == -1) & (interval.start < tss_file.position) &
                                 (interval.end > (tss_file.position + 2000 * tss_file.strand))))
          # Finding the intersection of affected genes by gene name in file with the direction of transcription and
          # file with RNAseq data. Creating a list of their indices:
