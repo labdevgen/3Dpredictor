@@ -30,7 +30,7 @@ class hicReader(FileReader):
         # indexedData - store data in new indexed format
         # allows fast extraction of single contact, but not compatible with most of contact_reader function
         # dropNans - drop contacts with contact frequency = Nan
-        # Note that contacts are stored in sparce matrix format. This means that all missing contacts = 0
+        # Note that contacts are stored in sparse matrix format. This means that all missing contacts = 0
         # When we drop Nans, we are unable to distinguish between contacts equal to 0
         # and contacts with KR norm values equal to Nan (i.e. contacts within white lines on hic-maps)
 
@@ -110,27 +110,27 @@ class hicReader(FileReader):
                 logging.getLogger(__name__).error("Genome version mismatch!")
                 raise BaseException
 
-            chr1, X1, X2 = strawObj.chromDotSizes.figureOutEndpoints(hic_chr)
-            matrxObj = strawObj.getNormalizedMatrix(chr1, chr, self.normalization,
+            chr1, X1, X2 = strawObj.chromDotSizes.figureOutEndpoints(hic_chr) #get start & end of chromosome
+            matrxObj = strawObj.getNormalizedMatrix(chr1, chr, self.normalization,  # chr1 = chr = hic_chr
                                                     "BP", self.binsize)
 
             assert matrxObj is not None
-            return matrxObj.getDataFromGenomeRegion(X1, X2, X1, X2)
+            return matrxObj.getDataFromGenomeRegion(X1, X2, X1, X2) #return data for the chromosome
 
         if fill_empty_contacts:
             raise NotImplemented
 
         # first try to load data from dump
-        if os.path.isfile(self.get_dump_path()) and not noDump:
+        if os.path.isfile(self.get_dump_path()) and (not noDump):
             return self.load(self.genome)
 
         # if we found no dump, lets read data and dump file
 
         # first define straw version
         if LooseVersion(straw.__version__) == "0.0.6":
-            get_data_straw = get_data_straw006()
+            get_data_straw = get_data_straw006
         elif LooseVersion(straw.__version__) >= "0.0.8":
-            get_data_straw = get_data_straw008()
+            get_data_straw = get_data_straw008
         else:
             logging.error("Unsupported straw version. "+ straw.__version__ +\
                           "Please use straw 0.0.6 or >=0.0.8")
@@ -141,10 +141,11 @@ class hicReader(FileReader):
             logging.getLogger(__name__).info("Processing chrm "+chr)
             load_start_time = datetime.datetime.now()
             result = get_data_straw()
+            print(str(result)) #A
             if result is None:
-                logging.getLogger(__name__).warning("Failed to find chr " + chr + "in hic file!")
+                logging.getLogger(__name__).warning("Failed to find chr " + chr + " in hic file!")
                 continue
-            logging.getLogger(__name__).warning("Failed to find chr " + chr + "in hic file!")
+            logging.getLogger(__name__).warning("Failed to find chr " + chr + " in hic file!")
 
             logging.getLogger(__name__).debug("Load time: " + str(datetime.datetime.now() - load_start_time))
             now = datetime.datetime.now()
@@ -175,7 +176,7 @@ class hicReader(FileReader):
                     #logging.debug(str(result.query("st==@i | en==@i")))
                 else:
                     s.append(local_count)
-            assert len(s) >= len(subsample) / 2
+            #assert len(s) >= len(subsample) / 2
             if np.std(s) / np.average(s) >= 0.2:
                 logging.getLogger(__name__).warning("Sums of contacs for loci are very different. Examples: ")
                 logging.getLogger(__name__).warning(str(s))
@@ -285,6 +286,9 @@ class hicReader(FileReader):
         return self.data[chr]
 
     def use_contacts_with_CTCF(self, CTCFfile, maxdist, proportion, keep_only_orient, CTCForientfile):
+        #keep_only_orient [True or False] use only CTCF binding sites with known orientation,
+        # required CTCForientfile from GimmeMotifs
+
         mindist = self.binsize * 2 + 1
         ctcf_reader = ChiPSeqReader(CTCFfile)
         ctcf_reader.read_file()

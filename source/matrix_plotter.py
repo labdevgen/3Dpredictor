@@ -4,7 +4,7 @@ import logging
 import numpy as np
 from shared import get_bin_size
 
-class MatrixPlotter(): #A class that plot fragments of heatmap
+class MatrixPlotter(): #The class that plot fragments of heatmap
                         #Note - not optimized for large datasets such as whole chromosome
     def process(self,data):
         return data.loc[:,["chr","contact_st","contact_en","contact_count"]]
@@ -30,7 +30,7 @@ class MatrixPlotter(): #A class that plot fragments of heatmap
     #     self.apply_log = apply_log
 
     def getMatrix4plot(self, interval, binsize = None):
-        def appendSeries2matrix(x,matrix,triangle = "both"):
+        def appendSeries2matrix(x,matrix,triangle = "both"): #x - series to append into matrix
             if triangle == "both":
                 matrix[x["contact_en_bin"], x["contact_st_bin"]] = x["contact_count"]
                 matrix[x["contact_st_bin"], x["contact_en_bin"]] = x["contact_count"]
@@ -44,7 +44,7 @@ class MatrixPlotter(): #A class that plot fragments of heatmap
         try:
             self.data
         except:
-            logging.error("Please provide data firts")
+            logging.error("Please provide the data first")
             return
 
         if binsize == None: #infer binsize from data
@@ -60,7 +60,7 @@ class MatrixPlotter(): #A class that plot fragments of heatmap
             logging.getLogger(__name__).info("Using binsize "+str(binsize))
 
         Interval_size_bins = (interval.end - interval.start) // binsize + 1
-        matrix = np.zeros(shape = (Interval_size_bins , Interval_size_bins ))
+        matrix = np.zeros(shape=(Interval_size_bins, Interval_size_bins))
         data = self.data.query("@interval.start <= contact_st <= @interval.end &"
                                "@interval.start <= contact_en <= @interval.end")
         data = self.convert2binned(data, interval, binsize)
