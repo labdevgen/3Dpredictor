@@ -97,15 +97,15 @@ class RNAseqReader(ChiPSeqReader):
          st, en = self.get_interval(interval, return_ids=True)
          old_length = len(self.chr_data[interval.chr])
          tss_file = pd.read_csv(tss_file, encoding='utf-8', sep='\t')
-         # Search for genes affected by deletion in the file with the transcription direction:
-         condition = np.where(((tss_file.strand == 1) & (interval.end > tss_file.position) &
-                                (interval.start < (tss_file.position + 2000 * tss_file.strand))) |
-                               ((tss_file.strand == -1) & (interval.start < tss_file.position) &
-                                (interval.end > (tss_file.position + 2000 * tss_file.strand))))
-         # Finding the intersection of affected genes by gene name in file with the direction of transcription and
-         # file with RNAseq data. Creating a list of their indices:
-         drop_indices = list(self.chr_data[interval.chr].index[np.in1d(self.chr_data[interval.chr].gene,
-                                                                       tss_file.gene.iloc[condition])])
+         # Add a column with the direction of transcription by merging RNAseq data and tss file:
+         self.chr_data[interval.chr] = pd.merge(self.chr_data[interval.chr],
+                                                tss_file.loc[:, ['Strand', 'Gene stable ID']], how="left",
+                                                left_on="gene", right_on="Gene stable ID")
+         # Search for genes affected by deletion. Creating a list of their indices to be deleted:
+         drop_indices = list(np.where(((self.chr_data[interval.chr].Strand == 1) & (interval.end > self.chr_data[interval.chr].start) &
+                                (interval.start < (self.chr_data[interval.chr].start + 2000 * self.chr_data[interval.chr].Strand))) |
+                               ((self.chr_data[interval.chr].Strand == -1) & (interval.start < self.chr_data[interval.chr].end) &
+                                (interval.end > (self.chr_data[interval.chr].end + 2000 * self.chr_data[interval.chr].Strand))))[0])
          debug = -len(drop_indices)
          # Change coordinates of other genes:
          self.chr_data[interval.chr].iloc[en + 1:,[self.chr_data[interval.chr].columns.get_loc("start"),
@@ -117,6 +117,7 @@ class RNAseqReader(ChiPSeqReader):
          # Set new indices according new "start" and "end":
          self.chr_data[interval.chr].set_index(self.chr_data[interval.chr].apply(
              lambda x: pd.Interval(x.start, x.end, closed="both"), axis="columns"), inplace=True)
+         self.chr_data[interval.chr].drop(['Strand', 'Gene stable ID'], axis=1, inplace=True)
          assert len(self.chr_data[interval.chr]) - debug == old_length
 
      # Modifies data according to the relationship between the "start" and "end" of genes, transcription direction
@@ -125,19 +126,18 @@ class RNAseqReader(ChiPSeqReader):
          st, en = self.get_interval(interval, return_ids=True)
          old_length = len(self.chr_data[interval.chr])
          tss_file = pd.read_csv(tss_file, encoding='utf-8', sep='\t')
-         # Search for genes affected by duplication in the file with the transcription direction:
-         condition = np.where(
-             (((tss_file.position + 2000 * tss_file.strand) > interval.end) &
-              (tss_file.position < interval.end) & (tss_file.strand == 1)) |
-             (((tss_file.position + 2000 * tss_file.strand) < interval.end) &
-              (tss_file.position > interval.end) & (tss_file.strand == -1)))
+         # Add a column with the direction of transcription by merging RNAseq data and tss file:
+         self.chr_data[interval.chr] = pd.merge(self.chr_data[interval.chr], tss_file.loc[:, ['Strand', 'Gene stable ID']], how="left",
+                               left_on="gene", right_on="Gene stable ID")
+         # Search for genes affected by duplication. Creating a list of their indices to be deleted:
+         drop_indices = list(np.where(
+             (((self.chr_data[interval.chr].start + 2000 * self.chr_data[interval.chr].Strand) > interval.end) &
+              (self.chr_data[interval.chr].start < interval.end) & (self.chr_data[interval.chr].Strand == 1)) |
+             (((self.chr_data[interval.chr].end + 2000 * self.chr_data[interval.chr].Strand) < interval.end) &
+              (self.chr_data[interval.chr].end > interval.end) & (self.chr_data[interval.chr].Strand == -1)))[0])
          # List of genes indices to be duplicated:
          dup_indices = list(self.chr_data[interval.chr].index[(self.chr_data[interval.chr].start > interval.start) &
                                                               (self.chr_data[interval.chr].end < interval.end)])
-         # Finding the intersection of affected genes by gene name in file with the direction of transcription and
-         # file with RNAseq data. Creating a list of their indices:
-         drop_indices = list(self.chr_data[interval.chr].index[np.in1d(self.chr_data[interval.chr].gene,
-                                                                       tss_file.gene.iloc[condition])])
          debug = len(dup_indices) - len(drop_indices)
          dup_data = self.chr_data[interval.chr].loc[dup_indices]    # Duplicated genes as df
          dup_data[["mids", "start", "end"]] += interval.len         # Change coordinates of duplicated genes
@@ -154,4 +154,5 @@ class RNAseqReader(ChiPSeqReader):
          # Set new indices according new "start" and "end":
          self.chr_data[interval.chr].set_index(self.chr_data[interval.chr].apply(
              lambda x: pd.Interval(x.start, x.end, closed="both"), axis="columns"), inplace=True)
+         self.chr_data[interval.chr].drop(['Strand', 'Gene stable ID'], axis=1, inplace=True)
          assert len(self.chr_data[interval.chr]) - debug == old_length
