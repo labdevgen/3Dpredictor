@@ -1,4 +1,4 @@
-import logging,os
+import logging,os   #для отображения логов
 import pandas as pd
 import numpy as np
 from collections import OrderedDict
