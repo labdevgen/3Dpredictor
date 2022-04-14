@@ -156,3 +156,31 @@ class RNAseqReader(ChiPSeqReader):
              lambda x: pd.Interval(x.start, x.end, closed="both"), axis="columns"), inplace=True)
          self.chr_data[interval.chr].drop(['Strand', 'Gene stable ID'], axis=1, inplace=True)
          assert len(self.chr_data[interval.chr]) - debug == old_length
+
+
+
+     def inverse_region_RNA(self, interval, tss_file):
+         st, en = self.get_interval(interval, return_ids=True)
+         old_length = len(self.chr_data[interval.chr])
+         tss_file = pd.read_csv(tss_file, encoding='utf-8', sep='\t')
+         # Добавить колонку с направлением транскрипции путем слияния данных RNAseq и tss файла:
+         self.chr_data[interval.chr] = pd.merge(self.chr_data[interval.chr],
+                                                tss_file.loc[:, ['Strand', 'Gene stable ID']], how="left",
+                                                left_on="gene", right_on="Gene stable ID")
+        # Поиск генов, затронутых инверсией. Создание списка их индексов:
+         drop_indices = list(np.where(
+            ((self.chr_data[interval.chr].Strand == 1) & (interval.end > self.chr_data[interval.chr].start) &
+            (interval.start < (self.chr_data[interval.chr].start + 2000 * self.chr_data[interval.chr].Strand))) |
+            ((self.chr_data[interval.chr].Strand == -1) & (interval.start < self.chr_data[interval.chr].end) &
+            (interval.end > (self.chr_data[interval.chr].end + 2000 * self.chr_data[interval.chr].Strand))))[0])
+         debug = -len(drop_indices)
+         print("------------\nдропнули\n-------------", drop_indices)
+         print(self.chr_data[interval.chr])
+"""на самом деле я мало что понимаю в этом....
+посмотрим, как ты разобрался
+начало шевеления клеткой мозга 24.03.22"""
+
+""""необходимое место для полимеразы = 2000 от старта транскрипции гена в сторону экспресии. Если попадёт дальше, то считаем, что 3D организация не меняется
+нужно посмотреть, каккие гены пересекаются с границами перестройки
+потом поменять координаты из 
+starts and ends from chipseq"""
