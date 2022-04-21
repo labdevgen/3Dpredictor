@@ -145,6 +145,8 @@ class RNAseqReader(ChiPSeqReader):
          self.chr_data[interval.chr].iloc[en + 1:, [self.chr_data[interval.chr].columns.get_loc("start"),
                                                     self.chr_data[interval.chr].columns.get_loc("end"),
                                                     self.chr_data[interval.chr].columns.get_loc("mids")]] += interval.len
+
+
          # Delete genes affected by duplication:
          if len(drop_indices) > 0:
              self.chr_data[interval.chr].drop(drop_indices, inplace=True)
@@ -174,8 +176,33 @@ class RNAseqReader(ChiPSeqReader):
             ((self.chr_data[interval.chr].Strand == -1) & (interval.start < self.chr_data[interval.chr].end) &
             (interval.end > (self.chr_data[interval.chr].end + 2000 * self.chr_data[interval.chr].Strand))))[0])
          debug = -len(drop_indices)
-         print("------------\nдропнули\n-------------", drop_indices)
-         print(self.chr_data[interval.chr])
+         print("------------\nдропнули\n-------------\n", drop_indices, '\n-------------')
+         # print(self.chr_data[interval.chr])
+         # координаты других генов менять не нужно
+         # Delete genes affected by duplication:
+         if len(drop_indices) > 0:
+             self.chr_data[interval.chr].drop(drop_indices, inplace=True) # если этот ген есть в дроп, то его удаляют
+         # Set new indices according new "start" and "end":
+
+         # ''' из чипсека:'''
+         # starts = [interval.start + (interval.end - x) if x > (interval.start + interval.len / 2)
+         #           else interval.end - (x - interval.start) for x in
+         #           self.chr_data[interval.chr].iloc[st:en, self.chr_data[interval.chr].columns.get_loc("end")]]
+         # ends = [interval.start + (interval.end - x) if x > (interval.start + interval.len / 2)
+         #         else interval.end - (x - interval.start) for x in self.chr_data[interval.chr].iloc[st:en,
+         #                                                           self.chr_data[interval.chr].columns.get_loc(
+         #                                                               "start")]]
+         # """Из делеции:"""
+         # self.chr_data[interval.chr].set_index(self.chr_data[interval.chr].apply(
+         #  lambda x: pd.Interval(x.start, x.end, closed="both"), axis="columns"), inplace=True)
+
+         self.chr_data[interval.chr].drop(['Strand', 'Gene stable ID'], axis=1, inplace=True)
+         assert len(self.chr_data[interval.chr]) - debug == old_length
+
+
+
+
+
 """на самом деле я мало что понимаю в этом....
 посмотрим, как ты разобрался
 начало шевеления клеткой мозга 24.03.22"""
