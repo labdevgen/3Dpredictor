@@ -156,3 +156,66 @@ class RNAseqReader(ChiPSeqReader):
              lambda x: pd.Interval(x.start, x.end, closed="both"), axis="columns"), inplace=True)
          self.chr_data[interval.chr].drop(['Strand', 'Gene stable ID'], axis=1, inplace=True)
          assert len(self.chr_data[interval.chr]) - debug == old_length
+
+     # Modifies data according to the relationship between the "start" and "end" of genes, transcription direction
+     # (tss file) and the "start" and "end" of the duplication interval.
+     def inverse_region_RNA(self, interval, tss_file):
+         st, en = self.get_interval(interval, return_ids=True)
+         old_length = len(self.chr_data[interval.chr])
+         tss_file = pd.read_csv(tss_file, encoding='utf-8', sep='\t')
+         # Add a column with the direction of transcription by merging RNAseq data and tss file:
+         self.chr_data[interval.chr] = pd.merge(self.chr_data[interval.chr],
+                                                tss_file.loc[:, ['Strand', 'Gene stable ID']], how="left",
+                                                left_on="gene", right_on="Gene stable ID")
+
+         # Find genes affected by inversion. Create a list of their indices:
+         drop_indices = list(np.where(
+             (((self.chr_data[interval.chr].Strand == 1) & ((self.chr_data[interval.chr].start < interval.start) &
+                                                            ((self.chr_data[interval.chr].start + 2000 *
+                                                              self.chr_data[
+                                                                  interval.chr].Strand) > interval.start)) |
+               ((self.chr_data[interval.chr].start < interval.end) &
+                ((self.chr_data[interval.chr].start + 2000 * self.chr_data[
+                    interval.chr].Strand) > interval.end)))) |
+             (((self.chr_data[interval.chr].Strand == -1) & ((self.chr_data[interval.chr].end > interval.start) &
+                                                             ((self.chr_data[interval.chr].end + 2000 *
+                                                               self.chr_data[
+                                                                   interval.chr].Strand) < interval.start)) |
+               ((self.chr_data[interval.chr].end > interval.end) &
+                ((self.chr_data[interval.chr].end + 2000 * self.chr_data[interval.chr].Strand) < interval.end)))))[
+                                 0])
+
+         debug = len(self.chr_data[interval.chr])
+         # new coordinates for inverted genes
+         starts = self.chr_data[interval.chr].iloc[st:en + 1,
+                  self.chr_data[interval.chr].columns.get_loc("end")].apply(lambda x:
+                                                                            interval.start + (
+                                                                                        interval.end - x) if x > (
+                                                                                        interval.start + interval.len / 2) else interval.end - (
+                                                                                        x - interval.start))
+         # print(starts, 'starts')
+         ends = self.chr_data[interval.chr].iloc[st:en + 1,
+                self.chr_data[interval.chr].columns.get_loc("start")].apply(lambda x:
+                                                                            interval.start + (
+                                                                                        interval.end - x) if x > (
+                                                                                        interval.start + interval.len / 2) else interval.end - (
+                                                                                        x - interval.start))
+         # print(ends, 'ends')
+         # exit()
+         if len(starts) > 0:
+             self.chr_data[interval.chr].iloc[st:en + 1,
+             self.chr_data[interval.chr].columns.get_loc("start")] = starts
+         if len(ends) > 0:
+             self.chr_data[interval.chr].iloc[st:en + 1, self.chr_data[interval.chr].columns.get_loc("end")] = ends
+
+         self.chr_data[interval.chr].sort_values(by="start", inplace=True)
+
+         # Delete genes affected by inversion:
+         if len(drop_indices) > 0:
+             self.chr_data[interval.chr].drop(drop_indices, inplace=True)
+
+         # Set new indices according new "start" and "end":
+         self.chr_data[interval.chr].set_index(self.chr_data[interval.chr].apply(
+             lambda x: pd.Interval(x.start, x.end, closed="both"), axis="columns"), inplace=True)
+         self.chr_data[interval.chr].drop(['Strand', 'Gene stable ID'], axis=1, inplace=True)
+         assert old_length - debug == 0
