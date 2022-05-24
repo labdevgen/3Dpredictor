@@ -171,9 +171,7 @@ class RNAseqReader(ChiPSeqReader):
                                                tss_file.loc[:, ['Strand', 'Gene stable ID']], how="left",
                                                left_on="gene", right_on="Gene stable ID")
 
-        # Поиск генов, затронутых инверсией. Создание списка их индексов:
-
-
+        # Find genes affected by inversion. Create a list of their indices:
         drop_indices = list(np.where(
             (((self.chr_data[interval.chr].Strand == 1) & ((self.chr_data[interval.chr].start < interval.start) &
                                                            ((self.chr_data[interval.chr].start + 2000 * self.chr_data[
@@ -187,7 +185,7 @@ class RNAseqReader(ChiPSeqReader):
                ((self.chr_data[interval.chr].end + 2000 * self.chr_data[interval.chr].Strand) < interval.end)))))[0])
 
         debug = len(self.chr_data[interval.chr])
-        # новые координаты для инвертируемых генов
+        # new coordinates for inverted genes
         starts = self.chr_data[interval.chr].iloc[st:en + 1, self.chr_data[interval.chr].columns.get_loc("end")].apply(lambda x:
         interval.start + (interval.end - x) if x > (interval.start + interval.len / 2) else interval.end - (x - interval.start))
         # print(starts, 'starts')
